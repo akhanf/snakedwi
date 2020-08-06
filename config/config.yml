@@ -1,0 +1,7 @@
+singularity_neuroglia: /project/6050199/akhanf/singularity/bids-apps/khanlab_neuroglia-core_latest.sif
+#singularity_neuroglia: docker://khanlab/neuroglia-core:latest
+
+in_bids: /path/to/bids_folder
+in_other: /path/to/some/other/input_data/sub-{subject}
+
+participants_tsv: config/participants.tsv

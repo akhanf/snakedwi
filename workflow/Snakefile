@@ -1,0 +1,26 @@
+from os.path import join
+import pandas as pd
+from snakemake.utils import validate
+
+configfile: 'config/config.yml'
+validate(config, "schemas/config.schema.yml")
+
+#load participants.tsv file, and strip off sub- from participant_id column
+df = pd.read_table(config['participants_tsv'])
+validate(df, 'schemas/participants.schema.yml')
+
+subjects = df.participant_id.to_list() 
+subjects = [ s.strip('sub-') for s in subjects ]
+
+#this include is for the bids() function, and 
+#and any other global function declarations
+include: 'rules/common.smk'
+
+rule all:
+    input:
+        # The first rule should define the default target files
+        # Subsequent target rules can be specified below. They should start with all_*.
+
+
+
+include: "rules/other.smk"

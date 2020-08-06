@@ -1,0 +1,28 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+
+description: snakemake configuration file
+
+type: object
+
+definitions:
+  filterentry:
+    type: object
+    additionalProperties:
+      type: string
+  evententry:
+    type: object
+    properties:
+      workflow:
+        type: array
+        items: 
+          type: string
+      filter:
+        type: string
+
+properties:
+  participants_tsv:
+    type: string
+
+required:
+  - participants_tsv
+

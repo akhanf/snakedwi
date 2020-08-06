@@ -1,0 +1,16 @@
+.snakemake
+results
+output
+!config
+!config/*
+!resources
+!resources/*
+!workflow
+!workflow/**
+.gitignore
+!.gitattributes
+!.editorconfig
+!.travis.yml
+!.test
+!LICENSE
+!README.md
