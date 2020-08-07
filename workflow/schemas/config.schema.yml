@@ -22,7 +22,10 @@ definitions:
 properties:
   participants_tsv:
     type: string
+  in_dwi_prefix: 
+    type: string
+  
 
 required:
-  - participants_tsv
+  - in_dwi_prefix
 

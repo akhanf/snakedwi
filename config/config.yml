@@ -1,7 +1,32 @@
 singularity_neuroglia: /project/6050199/akhanf/singularity/bids-apps/khanlab_neuroglia-core_latest.sif
 #singularity_neuroglia: docker://khanlab/neuroglia-core:latest
 
-in_bids: /path/to/bids_folder
-in_other: /path/to/some/other/input_data/sub-{subject}
+singularity:
+ prepdwi: '/project/6050199/akhanf/singularity/bids-apps/khanlab_prepdwi_latest.sif'
 
-participants_tsv: config/participants.tsv
+#NOTE: all wildcards are fully configurable, e.g. you can add new types of dwi wildcards 
+
+#leave out extension, will grab nii.gz, bval, bvec, json
+in_dwi_prefix: '/scratch/akhanf/hcp_lifespan/HCP_Aging/raw_downloads/submission_20852/HCA{subject}_{session}_MR/unprocessed/Diffusion/HCA{subject}_{session}_MR_dMRI_dir{acq}_{dir}'
+
+#wildcards for dwi scans (e.g. will perform pre-topup/eddy processing on each scan, and combine them all for topup/eddy)
+dwi_dict:
+ dir: 
+  - 'AP'
+  - 'PA'
+ acq:
+  - '98'
+  - '99'
+
+#wildcards for subjects/sessions (e.g. will create final processed dwi for each combination)
+# subject is REQUIRED
+# session is OPTIONAL
+
+subj_dict:
+ subject:   
+  - '6000030'
+ session: 
+  - 'V1' 
+
+#can use this to override the subject list in subj_dict
+#participants_tsv: config/participants.tsv

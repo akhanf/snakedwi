@@ -1,26 +1,49 @@
-from os.path import join
+from os.path import join, exists
 import pandas as pd
+from bids import BIDSLayout
 from snakemake.utils import validate
 
 configfile: 'config/config.yml'
 validate(config, "schemas/config.schema.yml")
 
-#load participants.tsv file, and strip off sub- from participant_id column
-df = pd.read_table(config['participants_tsv'])
-validate(df, 'schemas/participants.schema.yml')
 
-subjects = df.participant_id.to_list() 
-subjects = [ s.strip('sub-') for s in subjects ]
+
+
+
+#bids-naming for subject and template (only alphanumeric characters)
+wildcard_constraints:
+    subject="[a-zA-Z0-9]+",
+    session="[a-zA-Z0-9]+",
+
+
+#use dwi_dict when you want to expand over all the dwi images for a subject
+dwi_dict = config['dwi_dict'] 
+
+#use dwi_wildcards when using the bids() function, as it contains the mappings,e.g. run='run'
+dwi_wildcards = { key: f'{{{key}}}' for key in dwi_dict.keys()}
+
+subj_dict = config['subj_dict']
+subj_wildcards = { key: f'{{{key}}}' for key in subj_dict.keys()}
+
+#load participants.tsv file, and strip off sub- from participant_id column
+if exists(config['participants_tsv']):
+    df = pd.read_table(config['participants_tsv'])
+    validate(df, 'schemas/participants.schema.yml')
+
+    subjects = df.participant_id.to_list() 
+    subjects = [ s.strip('sub-') for s in subjects ]
+    
+    #replace subjects with participants_tsv subjects:
+    subj_dict['subject'] = subjects
+
+
 
 #this include is for the bids() function, and 
 #and any other global function declarations
 include: 'rules/common.smk'
 
 rule all:
-    input:
-        # The first rule should define the default target files
-        # Subsequent target rules can be specified below. They should start with all_*.
+    input: expand(bids(root='results',suffix='dwi.nii.gz',desc='combined',**subj_wildcards),  **subj_dict)
 
 
-
-include: "rules/other.smk"
+include: "rules/prepdwi.smk"
