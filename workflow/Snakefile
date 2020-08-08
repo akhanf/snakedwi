@@ -43,7 +43,8 @@ if exists(config['participants_tsv']):
 include: 'rules/common.smk'
 
 rule all:
-    input: expand(bids(root='results',suffix='dwi.nii.gz',desc='combined',**subj_wildcards),  **subj_dict)
+    input: 
+        bzero_corrected = expand(bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards), **subj_dict)
 
 
 include: "rules/prepdwi.smk"
