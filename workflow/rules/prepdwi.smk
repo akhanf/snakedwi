@@ -41,25 +41,16 @@ rule cp_sidecars_unring:
 
 
 
-def get_dwiextract_cmd(wildcards, input, output):
-    if config['flags']['use_avgb0_topup'] == True:
-        return f'dwiextract {input.nii} - -fslgrad {input.bvec} {input.bval} -bzero | mrmath - mean {output} -axis 3'
-    else:
-        return f'dwiextract {input.nii} {output} -fslgrad {input.bvec} {input.bval} -bzero'
-
-rule extract_bzeros:
+rule extract_avg_bzero:
     input: 
         nii = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards), 
         bvec = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards,**dwi_wildcards), 
         bval = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards,**dwi_wildcards) 
-    params:
-        #get the avgb0 if use_avgb0_topup is set to true
-        cmd = get_dwiextract_cmd 
     output: bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards) 
     container: config['singularity']['prepdwi']
     log: bids(root='logs',suffix='extract_bzeros.log',**subj_wildcards,**dwi_wildcards)
     group: 'topup'
-    shell: '{params.cmd} &> {log}'
+    shell: 'dwiextract {input.nii} - -fslgrad {input.bvec} {input.bval} -bzero &> {log} | mrmath - mean {output} -axis 3 &>> {log}'
 
 
 
@@ -112,7 +103,6 @@ rule run_topup:
     shell: 'topup --imain={input.bzero_concat} --datain={input.phenc_concat} --config={params.config}'
            ' --out={params.out_prefix} --iout={output.bzero_corrected} --fout={output.fieldmap} -v 2> {log}'
 
-#note this will not work unless use_avgb0_topup=True 
 rule apply_topup:
     input:
         dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards), **dwi_dict, allow_missing=True),
@@ -162,16 +152,21 @@ rule concat_bval_for_eddy:
     output: bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards)
     script: '../scripts/concat_bv.py' 
 
-
+rule avg_b0_topup:
+    input: bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards),
+    output: bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
+    container: config['singularity']['prepdwi']
+    shell: 
+        'fslmaths {input} -Tmean {output}'
+ 
 rule gen_brainmask_for_eddy:
-    input:
-        bzero_corrected = bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards),
+    input: bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
     output: 
         brainmask = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
     container: config['singularity']['prepdwi']
     log: bids(root='logs',suffix='gen_brainmask_for_eddy.log',**subj_wildcards)
     shell: 
-        'bet {input} {output} -f 0.1 2> {log}'
+        'bet {input} {output} -f 0.1 &> {log}  && fslmaths {output} -bin {output}'
     
 rule get_slspec_txt:
     input:
@@ -198,11 +193,11 @@ rule run_eddy:
         s2v_opts = '--mporder=6 --s2v_niter=5 --s2v_lambda=1 --s2v_interp=trilinear'
     output:
         out_dwi = bids(root='results',suffix='dwi.nii.gz',desc='eddy',**subj_wildcards),
-        rot_bvec = bids(root='results',suffix='dwi.rotated_bvecs',desc='eddy',**subj_wildcards),
-        eddy_params = bids(root='results',suffix='dwi.eddy_parameters',desc='eddy',**subj_wildcards),
-        eddy_movement_rms = bids(root='results',suffix='dwi.eddy_movement_rms',desc='eddy',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    threads: 8
+        rot_bvec = bids(root='results',suffix='dwi.eddy_rotated_bvecs',desc='eddy',**subj_wildcards),
+#        eddy_params = bids(root='results',suffix='dwi.eddy_parameters',desc='eddy',**subj_wildcards),
+#        eddy_movement_rms = bids(root='results',suffix='dwi.eddy_movement_rms',desc='eddy',**subj_wildcards),
+    container: config['singularity']['fsl']
+    threads: 1
     resources:
         gpus = 1
     log: bids(root='logs',suffix='run_eddy.log',**subj_wildcards)
@@ -211,8 +206,59 @@ rule run_eddy:
             ' --bvecs={input.bvecs} --bvals={input.bvals} --topup={params.topup_prefix} '
             ' --slspec={input.eddy_slspec_txt} {params.s2v_opts} '
             ' --out={params.out_prefix} {params.eddy_opts} &> {log}'
-"""        
-        
-eddy_openmp --imain=$eddy_work/dwi_uncorrected --mask=$brainmask --acqp=$topup_work/pedir.txt --index=$eddy_work/index.txt --bvecs=$eddy_work/dwi_uncorrected.bvec --bvals=$eddy_work/dwi_uncorrected.bval --topup=$topup_work/topup --out=$eddy_dir/dwi -v --repol
 
-"""        
+
+
+#----- T1 registration
+
+
+#use top-up avgb0 to perform registration (so it can be done while eddy is running)
+
+rule import_t1w:
+    input:
+        t1w = config['in_t1w_preproc'],
+        mask = config['in_t1w_mask']
+    output:
+        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',**subj_wildcards),
+        mask = bids(root='results',suffix='mask.nii.gz',desc='brain',**subj_wildcards),
+    shell: 'cp -v {input.t1w} {output.t1w} && cp -v {input.mask} {output.mask}'
+
+#rule reg_aladin_b0_to_t1:
+    
+
+"""
+rule ants_linear_b0_to_t1:
+    input: 
+        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',**subj_wildcards),
+        b0 = bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards),
+    params:
+        out_prefix = bids(root='results',suffix='_',from_='dwi',to='T1w',**subj_wildcards),
+        base_opts = '-d {dim} --float 1 --verbose 1 --random-seed {random_seed}'.format(dim=config['ants']['dim'],random_seed=config['ants']['random_seed']),
+        intensity_opts = config['ants']['intensity_opts'],
+        init_translation = lambda wildcards, input: '-r [{template},{target},1]'.format(template=input.t1w,target=input.b0),
+        linear_multires = '-c [{reg_iterations},1e-6,10] -f {shrink_factors} -s {smoothing_factors}'.format(
+                                reg_iterations = config['ants']['linear']['reg_iterations'],
+                                shrink_factors = config['ants']['linear']['shrink_factors'],
+                                smoothing_factors = config['ants']['linear']['smoothing_factors']),
+        linear_metric = lambda wildcards, input: '-m MI[{template},{target},1,32,Regular,0.25]'.format( template=input.t1w,target=input.b0),
+    output:
+        out_affine = bids(root='results',suffix='_0GenericAffine.mat',from_='dwi',to='T1w',**subj_wildcards),
+        warped_b0 = bids(root='results',suffix='b0.nii.gz',space='T1w',**subj_wildcards),
+        warped_t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',space='dwi',**subj_wildcards),
+    log: bids(root='logs',suffix='ants_linear_b0_to_t1.log',**subj_wildcards)
+    threads: 16
+    resources:
+        mem_mb = 16000, # right now these are on the high-end -- could implement benchmark rules to do this at some point..
+        time = 60 # 1 hrs
+    container: config['singularity']['ants']
+    shell: 
+        'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} '
+        'antsRegistration {params.base_opts} {params.intensity_opts} '
+        '{params.init_translation} ' #initial translation
+        '-t Rigid[0.1] {params.linear_metric} {params.linear_multires} ' # rigid registration
+        '-t Affine[0.1] {params.linear_metric} {params.linear_multires} ' # affine registration
+        '-o [{params.out_prefix},{output.warped_b0},{output.warped_t1w}] &> {log}'
+"""
+
+
+
