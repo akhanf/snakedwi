@@ -198,7 +198,8 @@ rule run_eddy:
     container: config['singularity']['fsl']
     threads: 1
     resources:
-        gpus = 1
+        gpus = 1,
+        time = 240, #6 hours (this is a conservative estimate, may be shorter)
     log: bids(root='logs',suffix='run_eddy.log',**subj_wildcards)
     shell: 'eddy_cuda9.1 --imain={input.dwi_concat} --mask={input.brainmask} '
             ' --acqp={input.phenc_concat} --index={input.eddy_index_txt} '
