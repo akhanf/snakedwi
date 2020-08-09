@@ -48,9 +48,8 @@ rule extract_avg_bzero:
         bval = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards,**dwi_wildcards) 
     output: bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards) 
     container: config['singularity']['prepdwi']
-    log: bids(root='logs',suffix='extract_bzeros.log',**subj_wildcards,**dwi_wildcards)
     group: 'topup'
-    shell: 'dwiextract {input.nii} - -fslgrad {input.bvec} {input.bval} -bzero &> {log} | mrmath - mean {output} -axis 3 &>> {log}'
+    shell: 'dwiextract {input.nii} - -fslgrad {input.bvec} {input.bval} -bzero  | mrmath - mean {output} -axis 3'
 
 
 
