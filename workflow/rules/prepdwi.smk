@@ -217,11 +217,9 @@ rule run_eddy:
 rule import_t1w:
     input:
         t1w = config['in_t1w_preproc'],
-        mask = config['in_t1w_mask']
     output:
         t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',**subj_wildcards),
-        mask = bids(root='results',suffix='mask.nii.gz',desc='brain',**subj_wildcards),
-    shell: 'cp -v {input.t1w} {output.t1w} && cp -v {input.mask} {output.mask}'
+    shell: 'cp -v {input.t1w} {output.t1w}'
 
 #rule reg_aladin_b0_to_t1:
     
