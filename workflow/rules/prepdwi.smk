@@ -174,7 +174,12 @@ rule get_slspec_txt:
         eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
     script: '../scripts/get_slspec_txt.py'
          
-    
+   
+##def get_eddy_flags:
+#    for flags in config['eddy']['flags']:
+#        
+#    [f'--{}' for value in 
+ 
 rule run_eddy:
     input:        
         dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards),
@@ -186,28 +191,45 @@ rule run_eddy:
         bvals = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards),
         bvecs = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards)
     params:
+        #set eddy output prefix to 'dwi' inside the output folder
+        out_prefix = lambda wildcards, output: os.path.join(output.out_folder,'dwi'),
         topup_prefix = bids(root='results',suffix='topup',**subj_wildcards),
-        out_prefix = bids(root='results',suffix='dwi',desc='eddy',**subj_wildcards),
-        eddy_opts = '-v --repol --cnr_maps --residuals --data_is_shelled',
-        s2v_opts = '--mporder=6 --s2v_niter=5 --s2v_lambda=1 --s2v_interp=trilinear'
+        flags = ' '.join([f'--{key}' for (key,value) in config['eddy']['flags'].items() if value == True ] ),
+        options = ' '.join([f'--{key}={value}' for (key,value) in config['eddy']['opts'].items() if value is not None ] )
     output:
-        out_dwi = bids(root='results',suffix='dwi.nii.gz',desc='eddy',**subj_wildcards),
-        rot_bvec = bids(root='results',suffix='dwi.eddy_rotated_bvecs',desc='eddy',**subj_wildcards),
-#        eddy_params = bids(root='results',suffix='dwi.eddy_parameters',desc='eddy',**subj_wildcards),
-#        eddy_movement_rms = bids(root='results',suffix='dwi.eddy_movement_rms',desc='eddy',**subj_wildcards),
+        #eddy creates many files, so write them to a eddy subfolder instead
+        out_folder = directory(bids(root='results',suffix='eddy',**subj_wildcards)),
+        dwi = os.path.join(bids(root='results',suffix='eddy',**subj_wildcards),'dwi.nii.gz'),
+        bvec = os.path.join(bids(root='results',suffix='eddy',**subj_wildcards),'dwi.eddy_rotated_bvecs')
     container: config['singularity']['fsl']
     threads: 1
     resources:
         gpus = 1,
         time = 240, #6 hours (this is a conservative estimate, may be shorter)
+        mem_mb = 32000,
     log: bids(root='logs',suffix='run_eddy.log',**subj_wildcards)
+    group: 'eddy'
     shell: 'eddy_cuda9.1 --imain={input.dwi_concat} --mask={input.brainmask} '
             ' --acqp={input.phenc_concat} --index={input.eddy_index_txt} '
             ' --bvecs={input.bvecs} --bvals={input.bvals} --topup={params.topup_prefix} '
-            ' --slspec={input.eddy_slspec_txt} {params.s2v_opts} '
-            ' --out={params.out_prefix} {params.eddy_opts} &> {log}'
+            ' --slspec={input.eddy_slspec_txt} ' 
+            ' --out={params.out_prefix} '
+            ' {params.flags} {params.options}  &> {log}'
 
 
+rule cp_eddy_outputs:
+    input:
+        #get nii.gz, bvec, and bval from eddy output
+        dwi = os.path.join(bids(root='results',suffix='eddy',**subj_wildcards),'dwi.nii.gz'),
+        bvec = os.path.join(bids(root='results',suffix='eddy',**subj_wildcards),'dwi.eddy_rotated_bvecs'),
+        bval = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards),
+    output:
+        multiext(bids(root='results',suffix='dwi',desc='eddy',**subj_wildcards),'.nii.gz','.bvec','.bval')
+    group: 'eddy'
+    run:
+        for in_file,out_file in zip(input,output):
+            shell('cp -v {in_file} {out_file}')
+       
 
 #----- T1 registration
 

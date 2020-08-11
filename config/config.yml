@@ -5,23 +5,25 @@ singularity:
  fsl: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif' 
 
 #get preprocessed t1w and mask (e.g. from fmriprep)
-in_t1w_preproc: '/project/6007967/cfmm-projects/Peters/tle3T_phase2/derivatives/fmriprep_1.5.0_outputs/fmriprep/sub-{subject}/anat/sub-{subject}_desc-preproc_T1w.nii.gz'
-in_t1w_mask: '/project/6007967/cfmm-projects/Peters/tle3T_phase2/derivatives/fmriprep_1.5.0_outputs/fmriprep/sub-{subject}/anat/sub-{subject}_desc-brain_mask.nii.gz'
+in_t1w_preproc: '/project/6050199/akhanf/ext-bids/hcp_aging/bids/sub-{subject}/anat/sub-{subject}_acq-MPRvNav_T1w.nii.gz'
+#in_t1w_mask: '/project/6007967/cfmm-projects/Peters/tle3T_phase2/derivatives/fmriprep_1.5.0_outputs/fmriprep/sub-{subject}/anat/sub-{subject}_desc-brain_mask.nii.gz'
 
 
 #leave out extension, will grab nii.gz, bval, bvec, json
-in_dwi_prefix: '/project/6050199/akhanf/cfmm-bids/data/Peters/tle3T_phase2/bids/sub-{subject}/dwi/sub-{subject}_acq-{acq}_run-{run}_dwi'
+in_dwi_prefix: '/scratch/akhanf/hcp_lifespan/HCP_Aging/raw_downloads/submission_20852/HCA{subject}_V1_MR/unprocessed/Diffusion/HCA{subject}_V1_MR_dMRI_dir{acq}_{dir}'
 
 dwi_dict:
- run: 
-  - '01'
-  - '02'
+ dir: 
+  - 'AP'
+  - 'PA'
  acq:
-  - 'multiband'
+  - '98'
+  - '99'
+
 
 subj_dict:
  subject:   
-  - '0061'
+  - '6000030'
 
 #can use this to override bids participants.tsv - need to implement that override
 participants_tsv: /path/to/participants_tsv
@@ -43,3 +45,22 @@ ants:
         sim_metric: CC
     shape_update:
         gradient_step: 0.25
+
+#we convert flags and opts automatically 
+#so feel free to prescribe options that are not included here 
+#as long as they are passed to eddy using --name_of_flag or --name_of_opts=value
+eddy:
+    flags:
+        verbose: True
+        repol: True
+        cnr_maps: True
+        residuals: True
+        data_is_shelled: True
+    opts:
+        mporder: 6
+        s2v_niter: 5
+        s2v_lambda: 1
+        s2v_interp: trilinear
+        ol_type: 'both'  #can be sw, gw, or both (use sw if no multi-band)
+    
+
