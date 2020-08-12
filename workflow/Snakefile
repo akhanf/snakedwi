@@ -44,7 +44,7 @@ include: 'rules/common.smk'
 
 rule all:
     input: 
-        eddy = expand(bids(root='results',suffix='dwi.nii.gz',desc='eddy',**subj_wildcards), **subj_dict)
+        eddy = expand(bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards), **subj_dict)
 
 
 include: "rules/prepdwi.smk"

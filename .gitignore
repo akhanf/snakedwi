@@ -1,6 +1,7 @@
 .snakemake
 results
 output
+logs
 !config
 !config/*
 !resources

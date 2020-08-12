@@ -28,6 +28,21 @@ subj_dict:
 #can use this to override bids participants.tsv - need to implement that override
 participants_tsv: /path/to/participants_tsv
 
+# Options for resampling dwi in T1w space
+#  1. can resample as T1w resolution
+#  2. can resample as original dwi resolution 
+#  3. can resample as specified resolution
+
+resample_dwi:
+    resample_scheme: 'orig' # should be one of: ['T1w', 'orig', 'custom']
+    custom_resolution: #only needed if the 'custom' 
+    resample_mm: 
+        - 1.0
+        - 1.0
+        - 1.0
+    
+
+
 
 ants:
     dim: 3
