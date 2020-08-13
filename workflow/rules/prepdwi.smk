@@ -1,3 +1,4 @@
+
 rule import_dwi:
     input: multiext(config['in_dwi_prefix'],'.nii.gz','.bval','.bvec','.json')
     output:  multiext(bids(root='results',suffix='dwi',**subj_wildcards,**dwi_wildcards),\
@@ -167,6 +168,20 @@ rule gen_brainmask_for_eddy:
     shell: 
         'bet {input} {output} -f 0.1 &> {log}  && fslmaths {output} -bin {output}'
     
+rule qc_brainmask_for_eddy:
+    input: 
+        mask = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
+        b0 = bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
+    output:
+        png = report(bids(root='qc',suffix='mask.png',desc='topup',**subj_wildcards),\
+            caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
+            subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False)),
+
+        html = report(bids(root='qc',suffix='mask.html',desc='topup',**subj_wildcards),\
+            caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
+            subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False))
+    notebook: '../notebooks/vis_overlay_mask.py.ipynb'
+        
 rule get_slspec_txt:
     input:
         dwi_jsons = expand(bids(root='results',suffix='dwi.json',desc='unring',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
@@ -178,7 +193,6 @@ rule get_slspec_txt:
 rule run_eddy:
     input:        
         dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards),
-        bvecs_concat = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards),
         phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards),
         eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
         eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
@@ -224,6 +238,44 @@ rule cp_eddy_outputs:
     run:
         for in_file,out_file in zip(input,output):
             shell('cp -v {in_file} {out_file}')
+
+rule eddy_quad:
+    input:
+        phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards),
+        eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
+        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
+        brainmask = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
+        bvals = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards),
+        bvecs = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards),
+        fieldmap = bids(root='results',suffix='fmap.nii.gz',desc='topup',**subj_wildcards),
+        eddy_dir = bids(root='results',suffix='eddy',**subj_wildcards)
+    params: 
+        eddy_prefix = lambda wildcards, input: os.path.join(input.eddy_dir,'dwi'),
+    output:
+        out_dir = directory(bids(root='results',suffix='eddy.qc',**subj_wildcards)),
+    
+    container: config['singularity']['prepdwi']
+    shell: 
+        'rmdir {output.out_dir} && '
+        'eddy_quad {params.eddy_prefix} --eddyIdx={input.eddy_index_txt} --eddyParams={input.phenc_concat} '
+        ' --mask={input.brainmask} --bvals={input.bvals} --bvecs={input.bvecs} --output-dir={output.out_dir} '
+        '--slspec={input.eddy_slspec_txt} --verbose'
+        #' --field={input.fieldmap} ' #this seems to break it..
+
+rule split_eddy_qc_report:
+    input:
+        eddy_qc_pdf = bids(root='results',suffix='eddy.qc/qc.pdf',**subj_wildcards)
+    output:
+        report(directory(bids(root='results',suffix='eddy.qc_pages',**subj_wildcards)),patterns=['{pagenum}.png'],caption="../report/eddy_qc.rst", category="eddy_qc",subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False))
+    shell:
+        'mkdir -p {output} && convert {input} {output}/%02d.png'
+        
+#rule eddy_quad_report: #need this separate from eddy_quad, since adding to report seems to create folder too
+#    input: 
+#        out_dir = bids(root='results',suffix='eddy.qc',**subj_wildcards)
+#    output: 
+#        qc_pdf = report(bids(root='results',suffix='eddy.qc/qc.pdf',**subj_wildcards))
+       
        
 #----- T1 registration
 

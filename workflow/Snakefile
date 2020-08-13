@@ -38,13 +38,17 @@ if exists(config['participants_tsv']):
 
 
 
+report: '../workflow/report/workflow.rst'
+
 #this include is for the bids() function, and 
 #and any other global function declarations
 include: 'rules/common.smk'
 
 rule all:
     input: 
-        eddy = expand(bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards), **subj_dict)
+        eddy = expand(bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards), **subj_dict),
+        eddy_qc = expand(bids(root='results',suffix='eddy.qc_pages',**subj_wildcards), **subj_dict),
+        qc = expand(bids(root='qc',suffix='mask.png',desc='topup',**subj_wildcards), **subj_dict)
 
 
 include: "rules/prepdwi.smk"
