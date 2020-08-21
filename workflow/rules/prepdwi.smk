@@ -170,8 +170,8 @@ rule gen_brainmask_for_eddy:
     
 rule qc_brainmask_for_eddy:
     input: 
-        mask = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
-        b0 = bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
+        img = bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
+        seg = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
     output:
         png = report(bids(root='qc',suffix='mask.png',desc='topup',**subj_wildcards),\
             caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
@@ -180,7 +180,7 @@ rule qc_brainmask_for_eddy:
         html = report(bids(root='qc',suffix='mask.html',desc='topup',**subj_wildcards),\
             caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
             subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False))
-    notebook: '../notebooks/vis_overlay_mask.py.ipynb'
+    script: '../scripts/vis_qc_dseg.py'
         
 rule get_slspec_txt:
     input:
@@ -253,6 +253,7 @@ rule eddy_quad:
         eddy_prefix = lambda wildcards, input: os.path.join(input.eddy_dir,'dwi'),
     output:
         out_dir = directory(bids(root='results',suffix='eddy.qc',**subj_wildcards)),
+        eddy_qc_pdf = bids(root='results',suffix='eddy.qc/qc.pdf',**subj_wildcards)
     
     container: config['singularity']['prepdwi']
     shell: 
