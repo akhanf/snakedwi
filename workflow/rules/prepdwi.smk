@@ -96,30 +96,49 @@ rule run_topup:
         config = 'b02b0.cnf' #this config sets the multi-res schedule and other params..
     output:
         bzero_corrected = bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards),
-        fieldmap = bids(root='results',suffix='fmap.nii.gz',desc='topup',**subj_wildcards)
+        fieldmap = bids(root='results',suffix='fmap.nii.gz',desc='topup',**subj_wildcards),
+        topup_fieldcoef = bids(root='results',suffix='topup_fieldcoef.nii.gz',**subj_wildcards),
+        topup_movpar = bids(root='results',suffix='topup_movpar.txt',**subj_wildcards),
+
     container: config['singularity']['prepdwi']
     log: bids(root='logs',suffix='topup.log',**subj_wildcards)
     group: 'topup'
     shell: 'topup --imain={input.bzero_concat} --datain={input.phenc_concat} --config={params.config}'
            ' --out={params.out_prefix} --iout={output.bzero_corrected} --fout={output.fieldmap} -v 2> {log}'
 
-rule apply_topup:
+#this is for equal positive and negative blipped data -- need to implement the alternative scenario (e.g. b0-only blipped)
+rule apply_topup_pos_neg:
     input:
         dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards), **dwi_dict, allow_missing=True),
-        phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards)
+        phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards),
+        topup_fieldcoef = bids(root='results',suffix='topup_fieldcoef.nii.gz',**subj_wildcards),
+        topup_movpar = bids(root='results',suffix='topup_movpar.txt',**subj_wildcards),
     params:
         #create comma-seperated list of dwi nii
         imain = lambda wildcards, input: ','.join(input.dwi_niis), 
         # create comma-sep list of indices 1-N
         inindex = lambda wildcards, input: ','.join([str(i) for i in range(1,len(input.dwi_niis)+1)]), 
         topup_prefix = bids(root='results',suffix='topup',**subj_wildcards),
+        out_prefix = 'dwi_topup',
     output: 
         dwi_topup = bids(root='results',suffix='dwi.nii.gz',desc='topup',**subj_wildcards)
     container: config['singularity']['prepdwi']
-    log: bids(root='logs',suffix='apply_topup.log',**subj_wildcards)
+    shadow: 'minimal'
     group: 'topup'
     shell: 'applytopup --datain={input.phenc_concat} --imain={params.imain} --inindex={params.inindex} '
-            '-t {params.topup_prefix} -o {output.dwi_topup} 2> {log}'
+           ' -t {params.topup_prefix} -o {params.out_prefix} && '
+           ' fslmaths {params.out_prefix}.nii.gz {output.dwi_topup}'
+
+
+
+rule cp_sidecars_topup_pos_neg:
+    input: multiext(bids(root='results',suffix='dwi',desc='unring',**subj_wildcards,**dwi_exemplar_dict),\
+                '.bvec','.bval','.json')
+    output: multiext(bids(root='results',suffix='dwi',desc='topup',**subj_wildcards),\
+                '.bvec','.bval','.json')
+    run:
+        for in_file,out_file in zip(input,output):
+            shell('cp -v {in_file} {out_file}')
 
 
 rule get_eddy_index_txt:
@@ -152,32 +171,71 @@ rule concat_bval_for_eddy:
     output: bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards)
     script: '../scripts/concat_bv.py' 
 
+rule get_shells_from_bvals:
+    input: '{dwi_prefix}.bval'
+    output: '{dwi_prefix}.shells.json'
+    script:
+        '../scripts/get_shells_from_bvals.py'
+ 
+#writes 4d file
+rule get_shell_avgs:
+    input: 
+        dwi = '{dwi_prefix}.nii.gz',
+        shells = '{dwi_prefix}.shells.json'
+    output: 
+        avgshells = '{dwi_prefix}.avgshells.nii.gz'
+    script:
+        '../scripts/get_shell_avgs.py'
+
+       
 rule avg_b0_topup:
     input: bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards),
     output: bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
     container: config['singularity']['prepdwi']
     shell: 
         'fslmaths {input} -Tmean {output}'
+
+rule cp_brainmask_avg_b0:
+    input:
+        mask = bids(root='results',subfolder='mask_avgb0',suffix='mask.nii.gz',desc='bet',frac='0.1',smooth='2mm',**subj_wildcards),
+    output:
+        mask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='avgb0',**subj_wildcards),
+    shell:
+        'cp -v {input} {output}' 
+        
+rule cp_brainmask_multishell:
+    input:
+        mask = bids(root='results',desc='topup',suffix='dwi.avgshells/',**subj_wildcards) + 
+                    'atropos_k-6_initmasking_label-brain_smooth-2mm_mask.nii.gz' 
+    output:
+        mask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
+    shell:
+        'cp -v {input} {output}' 
  
-rule gen_brainmask_for_eddy:
-    input: bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
-    output: 
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    log: bids(root='logs',suffix='gen_brainmask_for_eddy.log',**subj_wildcards)
-    shell: 
-        'bet {input} {output} -f 0.1 &> {log}  && fslmaths {output} -bin {output}'
-    
-rule qc_brainmask_for_eddy:
+rule qc_brainmask_multishell:
     input: 
         img = bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
-        seg = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
+        seg = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
     output:
-        png = report(bids(root='qc',suffix='mask.png',desc='topup',**subj_wildcards),\
+        png = report(bids(root='qc',suffix='mask.png',desc='multishell',**subj_wildcards),
             caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
             subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False)),
 
-        html = report(bids(root='qc',suffix='mask.html',desc='topup',**subj_wildcards),\
+        html = report(bids(root='qc',suffix='mask.html',desc='multishell',k='6',smooth='2mm',**subj_wildcards),
+            caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
+            subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False))
+    script: '../scripts/vis_qc_dseg.py'
+ 
+rule qc_brainmask_avg_b0:
+    input: 
+        img = bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
+        seg = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='avgb0',**subj_wildcards),
+    output:
+        png = report(bids(root='qc',suffix='mask.png',desc='avgb0',**subj_wildcards),
+            caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
+            subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False)),
+
+        html = report(bids(root='qc',suffix='mask.html',desc='bet',frac='0.1',smooth='2mm',**subj_wildcards),
             caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
             subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False))
     script: '../scripts/vis_qc_dseg.py'
@@ -196,7 +254,7 @@ rule run_eddy:
         phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards),
         eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
         eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
+        brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
         bvals = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards),
         bvecs = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards)
     params:
@@ -244,7 +302,7 @@ rule eddy_quad:
         phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards),
         eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
         eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
+        brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
         bvals = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards),
         bvecs = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards),
         fieldmap = bids(root='results',suffix='fmap.nii.gz',desc='topup',**subj_wildcards),
@@ -386,7 +444,7 @@ rule resample_dwi_to_t1w:
 rule resample_brainmask_to_t1w:
     input:
         ref = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='topup',**subj_wildcards),
+        brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
         xfm_itk = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',**subj_wildcards),
     params:
         interpolation = 'NearestNeighbor'

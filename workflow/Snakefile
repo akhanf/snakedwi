@@ -19,6 +19,10 @@ wildcard_constraints:
 #use dwi_dict when you want to expand over all the dwi images for a subject
 dwi_dict = config['dwi_dict'] 
 
+
+#get dictionary for grabbing the first dwi run as an exemplar
+dwi_exemplar_dict = { k:dwi_dict[k][0] for k in dwi_dict.keys() }
+
 #use dwi_wildcards when using the bids() function, as it contains the mappings,e.g. run='run'
 dwi_wildcards = { key: f'{{{key}}}' for key in dwi_dict.keys()}
 
@@ -48,7 +52,10 @@ rule all:
     input: 
         eddy = expand(bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards), **subj_dict),
         eddy_qc = expand(bids(root='results',suffix='eddy.qc_pages',**subj_wildcards), **subj_dict),
-        qc = expand(bids(root='qc',suffix='mask.png',desc='topup',**subj_wildcards), **subj_dict)
+        qc = expand(bids(root='qc',suffix='mask.png',desc='{method}',**subj_wildcards), method=['avgb0','multishell'],**subj_dict),
+        dtifit = expand(bids(root='results',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),**subj_dict)
 
 
 include: "rules/prepdwi.smk"
+include: "rules/mask_avgb0.smk"
+include: "rules/mask_multishell.smk"

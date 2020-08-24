@@ -1,4 +1,4 @@
-def bids (root=None, prefix=None, suffix=None, subject=None, session=None,include_subject_dir=True,include_session_dir=True,**entities):
+def bids (root=None, subfolder=None, prefix=None, suffix=None, subject=None, session=None,include_subject_dir=True,include_session_dir=True,**entities):
     """Helper function for generating bids paths for snakemake workflows
 
     File path is of the form:
@@ -6,6 +6,7 @@ def bids (root=None, prefix=None, suffix=None, subject=None, session=None,includ
     [root]/[sub-{subject}]/[ses-{session]/[prefix]_[sub-{subject}]_[ses-{session}]_[{key}-{val}_ ... ]_[suffix]
 
     root -- root folder to include in the path (e.g. 'results'))
+    subfolder -- folder to include after sub-/ses- (e.g. anat, dwi )
     prefix -- string to prepend to the file name (typically not defined, unless you want tpl-{tpl}, or a subfolder)
     suffix -- bids suffix including extension (e.g. 'T1w.nii.gz')
     subject -- subject to use, for folder and filename
@@ -120,6 +121,9 @@ def bids (root=None, prefix=None, suffix=None, subject=None, session=None,includ
         if include_session_dir is True:
             folder.append(f'ses-{session}')
         filename.append(f'ses-{session}')
+    
+    if isinstance(subfolder,str):
+        folder.append(subfolder)
     
     #add the entities
     for key, val in order.items():
