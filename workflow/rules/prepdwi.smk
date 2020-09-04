@@ -1,3 +1,5 @@
+wildcard_constraints:
+    shell = "[0-9]+"
 
 rule import_dwi:
     input: multiext(config['in_dwi_prefix'],'.nii.gz','.bval','.bvec','.json')
@@ -41,16 +43,18 @@ rule cp_sidecars_unring:
             shell('cp -v {in_file} {out_file}')
 
 
+#this seems to not find bzeros in low-bval scans.. 
+# instead of this, we can use the get_shell_avg rule.. 
+#rule extract_avg_bzero:
+#    input: 
+#        nii = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards), 
+#        bvec = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards,**dwi_wildcards), 
+#        bval = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards,**dwi_wildcards) 
+#    output: bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards) 
+#    container: config['singularity']['prepdwi']
+#    group: 'topup'
+#    shell: 'dwiextract {input.nii} - -fslgrad {input.bvec} {input.bval} -bzero  | mrmath - mean {output} -axis 3'
 
-rule extract_avg_bzero:
-    input: 
-        nii = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards), 
-        bvec = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards,**dwi_wildcards), 
-        bval = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards,**dwi_wildcards) 
-    output: bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards) 
-    container: config['singularity']['prepdwi']
-    group: 'topup'
-    shell: 'dwiextract {input.nii} - -fslgrad {input.bvec} {input.bval} -bzero  | mrmath - mean {output} -axis 3'
 
 
 
@@ -60,7 +64,7 @@ rule get_phase_encode_txt:
         bzero_nii = bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards),
         json = bids(root='results',suffix='dwi.json',desc='unring',**subj_wildcards,**dwi_wildcards)
     output:
-        phenc_txt = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards,**dwi_wildcards),
+        phenc_txt = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards,**dwi_wildcards),
     group: 'topup'
     script: '../scripts/get_phase_encode_txt.py'
         
@@ -68,10 +72,10 @@ rule get_phase_encode_txt:
 
 rule concat_phase_encode_txt:
     input:
-        phenc_txts = expand(bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards,**dwi_wildcards),\
+        phenc_txts = expand(bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards,**dwi_wildcards),\
                             **dwi_dict,allow_missing=True)
     output:
-        phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards)
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards)
     group: 'topup'
     shell: 'cat {input} > {output}'
 
@@ -80,7 +84,7 @@ rule concat_bzeros:
         bzero_niis = expand(bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards),\
                             **dwi_dict,allow_missing=True),
     output:
-        bzero_concat = bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards)
+        bzero_concat = bids(root='results',suffix='concatb0.nii.gz',desc='unring',**subj_wildcards)
     container: config['singularity']['prepdwi']
     log: bids(root='logs',suffix='concat_bzeros.log',**subj_wildcards)
     group: 'topup'
@@ -89,13 +93,13 @@ rule concat_bzeros:
 
 rule run_topup:
     input:
-        bzero_concat = bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards),
-        phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards)
+        bzero_concat = bids(root='results',suffix='concatb0.nii.gz',desc='unring',**subj_wildcards),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards)
     params:
         out_prefix = bids(root='results',suffix='topup',**subj_wildcards),
         config = 'b02b0.cnf' #this config sets the multi-res schedule and other params..
     output:
-        bzero_corrected = bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards),
+        bzero_corrected = bids(root='results',suffix='concatb0.nii.gz',desc='topup',**subj_wildcards),
         fieldmap = bids(root='results',suffix='fmap.nii.gz',desc='topup',**subj_wildcards),
         topup_fieldcoef = bids(root='results',suffix='topup_fieldcoef.nii.gz',**subj_wildcards),
         topup_movpar = bids(root='results',suffix='topup_movpar.txt',**subj_wildcards),
@@ -110,7 +114,7 @@ rule run_topup:
 rule apply_topup_pos_neg:
     input:
         dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards), **dwi_dict, allow_missing=True),
-        phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards),
         topup_fieldcoef = bids(root='results',suffix='topup_fieldcoef.nii.gz',**subj_wildcards),
         topup_movpar = bids(root='results',suffix='topup_movpar.txt',**subj_wildcards),
     params:
@@ -187,9 +191,21 @@ rule get_shell_avgs:
     script:
         '../scripts/get_shell_avgs.py'
 
+#this gets a particular shell (can use to get b0)
+rule get_shell_avg:
+    input:
+        dwi = '{dwi_prefix}_dwi.nii.gz',
+        shells = '{dwi_prefix}_dwi.shells.json'
+    params:
+        bval = '{shell}'
+    output:
+        avgshell = '{dwi_prefix}_b{shell}.nii.gz'
+    script:
+        '../scripts/get_shell_avg.py'
+        
        
 rule avg_b0_topup:
-    input: bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards),
+    input: bids(root='results',suffix='concatb0.nii.gz',desc='topup',**subj_wildcards),
     output: bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
     container: config['singularity']['prepdwi']
     shell: 
@@ -251,7 +267,7 @@ rule get_slspec_txt:
 rule run_eddy:
     input:        
         dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards),
-        phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards),
         eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
         eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
         brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
@@ -299,7 +315,7 @@ rule cp_eddy_outputs:
 
 rule eddy_quad:
     input:
-        phenc_concat = bids(root='results',suffix='b0.phenc.txt',desc='unring',**subj_wildcards),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards),
         eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
         eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
         brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
