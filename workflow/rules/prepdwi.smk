@@ -1,5 +1,10 @@
 wildcard_constraints:
-    shell = "[0-9]+"
+    shell = "[0-9]+",
+    desc ="[a-zA-Z0-9]+",
+    acq = "[a-zA-Z0-9]+",
+    dir = "[a-zA-Z0-9]+",
+    run = "[a-zA-Z0-9]+",
+
 
 rule import_dwi:
     input: multiext(config['in_dwi_prefix'],'.nii.gz','.bval','.bvec','.json')
@@ -8,49 +13,51 @@ rule import_dwi:
     run:
         for in_file,out_file in zip(input,output):
             shell('cp -v {in_file} {out_file}')
- 
-rule denoise:
-    input: bids(root='results',suffix='dwi.nii.gz',**subj_wildcards,**dwi_wildcards) 
-    output: bids(root='results',suffix='dwi.nii.gz',desc='denoise',**subj_wildcards,**dwi_wildcards)
+
+rule dwidenoise:
+    input: multiext(bids(root='results',suffix='dwi',**subj_wildcards,**dwi_wildcards),\
+                    '.nii.gz','.bvec','.bval','.json')
+    output: multiext(bids(root='results',suffix='dwi',desc='denoise',**subj_wildcards,**dwi_wildcards),\
+                    '.nii.gz','.bvec','.bval','.json')
     container: config['singularity']['prepdwi']
     log: bids(root='logs',suffix='denoise.log',**subj_wildcards,**dwi_wildcards)
-    shell: 'dwidenoise {input} {output} 2> {log}' 
-
-rule cp_sidecars_denoise:
-    input: multiext(bids(root='results',suffix='dwi',**subj_wildcards,**dwi_wildcards),\
-                    '.bvec','.bval','.json')
-    output: multiext(bids(root='results',suffix='dwi',desc='denoise',**subj_wildcards,**dwi_wildcards),\
-                    '.bvec','.bval','.json')
-    run:
-        for in_file,out_file in zip(input,output):
-            shell('cp -v {in_file} {out_file}')
+    shell: 'dwidenoise {input[0]} {output[0]} 2> {log} && ' 
+            'cp {input[1]} {output[1]} && '
+            'cp {input[2]} {output[2]} && '
+            'cp {input[3]} {output[3]}'
 
 
-rule run_unring:
-    input: bids(root='results',suffix='dwi.nii.gz',desc='denoise',**subj_wildcards,**dwi_wildcards) 
-    output: bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards)
+def get_degibbs_inputs (wildcards):
+    # if input dwi at least 30 dirs, then grab denoised as input
+    # else grab without denoising 
+    import numpy as np
+    in_dwi_prefix = config['in_dwi_prefix'].format(**wildcards)
+    bvals = np.loadtxt(f'{in_dwi_prefix}.bval')
+    if bvals.size < 30:
+        prefix = bids(root='results',suffix='dwi',**wildcards)
+    else:
+        prefix = bids(root='results',suffix='dwi',desc='denoise',**wildcards)
+    return multiext(prefix,'.nii.gz','.bvec','.bval','.json')
+ 
+rule mrdegibbs:
+    input: get_degibbs_inputs
+    output: multiext(bids(root='results',suffix='dwi',desc='degibbs',**subj_wildcards,**dwi_wildcards),\
+                    '.nii.gz','.bvec','.bval','.json')
     container: config['singularity']['prepdwi']
-    log: bids(root='logs',suffix='unring.log',**subj_wildcards,**dwi_wildcards)
-    shell: 'unring {input} {output} 2> {log}' 
-
-rule cp_sidecars_unring:
-    input: multiext(bids(root='results',suffix='dwi',desc='denoise',**subj_wildcards,**dwi_wildcards),\
-                '.bvec','.bval','.json')
-    output: multiext(bids(root='results',suffix='dwi',desc='unring',**subj_wildcards,**dwi_wildcards),\
-                '.bvec','.bval','.json')
-    run:
-        for in_file,out_file in zip(input,output):
-            shell('cp -v {in_file} {out_file}')
-
+#    log: bids(root='logs',suffix='degibbs.log',**subj_wildcards,**dwi_wildcards)
+    shell: 'mrdegibbs {input[0]} {output[0]} && '#2> {log} && ' 
+            'cp {input[1]} {output[1]} && '
+            'cp {input[2]} {output[2]} && '
+            'cp {input[3]} {output[3]}'
 
 #this seems to not find bzeros in low-bval scans.. 
 # instead of this, we can use the get_shell_avg rule.. 
 #rule extract_avg_bzero:
 #    input: 
-#        nii = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards), 
-#        bvec = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards,**dwi_wildcards), 
-#        bval = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards,**dwi_wildcards) 
-#    output: bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards) 
+#        nii = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards), 
+#        bvec = bids(root='results',suffix='dwi.bvec',desc='degibbs',**subj_wildcards,**dwi_wildcards), 
+#        bval = bids(root='results',suffix='dwi.bval',desc='degibbs',**subj_wildcards,**dwi_wildcards) 
+#    output: bids(root='results',suffix='b0.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards) 
 #    container: config['singularity']['prepdwi']
 #    group: 'topup'
 #    shell: 'dwiextract {input.nii} - -fslgrad {input.bvec} {input.bval} -bzero  | mrmath - mean {output} -axis 3'
@@ -61,10 +68,10 @@ rule cp_sidecars_unring:
 #now have nii with just the b0's, want to create the topup phase-encoding text files for each one:
 rule get_phase_encode_txt:
     input:
-        bzero_nii = bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards),
-        json = bids(root='results',suffix='dwi.json',desc='unring',**subj_wildcards,**dwi_wildcards)
+        bzero_nii = bids(root='results',suffix='b0.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards),
+        json = bids(root='results',suffix='dwi.json',desc='degibbs',**subj_wildcards,**dwi_wildcards)
     output:
-        phenc_txt = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards,**dwi_wildcards),
+        phenc_txt = bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards,**dwi_wildcards),
     group: 'topup'
     script: '../scripts/get_phase_encode_txt.py'
         
@@ -72,19 +79,19 @@ rule get_phase_encode_txt:
 
 rule concat_phase_encode_txt:
     input:
-        phenc_txts = expand(bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards,**dwi_wildcards),\
+        phenc_txts = expand(bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards,**dwi_wildcards),\
                             **dwi_dict,allow_missing=True)
     output:
-        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards)
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards)
     group: 'topup'
     shell: 'cat {input} > {output}'
 
 rule concat_bzeros:
     input:
-        bzero_niis = expand(bids(root='results',suffix='b0.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards),\
+        bzero_niis = expand(bids(root='results',suffix='b0.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards),\
                             **dwi_dict,allow_missing=True),
     output:
-        bzero_concat = bids(root='results',suffix='concatb0.nii.gz',desc='unring',**subj_wildcards)
+        bzero_concat = bids(root='results',suffix='concatb0.nii.gz',desc='degibbs',**subj_wildcards)
     container: config['singularity']['prepdwi']
     log: bids(root='logs',suffix='concat_bzeros.log',**subj_wildcards)
     group: 'topup'
@@ -93,8 +100,8 @@ rule concat_bzeros:
 
 rule run_topup:
     input:
-        bzero_concat = bids(root='results',suffix='concatb0.nii.gz',desc='unring',**subj_wildcards),
-        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards)
+        bzero_concat = bids(root='results',suffix='concatb0.nii.gz',desc='degibbs',**subj_wildcards),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards)
     params:
         out_prefix = bids(root='results',suffix='topup',**subj_wildcards),
         config = 'b02b0.cnf' #this config sets the multi-res schedule and other params..
@@ -110,11 +117,11 @@ rule run_topup:
     shell: 'topup --imain={input.bzero_concat} --datain={input.phenc_concat} --config={params.config}'
            ' --out={params.out_prefix} --iout={output.bzero_corrected} --fout={output.fieldmap} -v 2> {log}'
 
-#this is for equal positive and negative blipped data -- need to implement the alternative scenario (e.g. b0-only blipped)
-rule apply_topup_pos_neg:
+#this is for equal positive and negative blipped data - method=lsr
+rule apply_topup_lsr:
     input:
-        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards), **dwi_dict, allow_missing=True),
-        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards),
+        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards), **dwi_dict, allow_missing=True),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards),
         topup_fieldcoef = bids(root='results',suffix='topup_fieldcoef.nii.gz',**subj_wildcards),
         topup_movpar = bids(root='results',suffix='topup_movpar.txt',**subj_wildcards),
     params:
@@ -125,55 +132,115 @@ rule apply_topup_pos_neg:
         topup_prefix = bids(root='results',suffix='topup',**subj_wildcards),
         out_prefix = 'dwi_topup',
     output: 
-        dwi_topup = bids(root='results',suffix='dwi.nii.gz',desc='topup',**subj_wildcards)
+        dwi_topup = bids(root='results',suffix='dwi.nii.gz',desc='topup',method='lsr',**subj_wildcards)
     container: config['singularity']['prepdwi']
     shadow: 'minimal'
     group: 'topup'
-    shell: 'applytopup --datain={input.phenc_concat} --imain={params.imain} --inindex={params.inindex} '
+    shell: 'applytopup --verbose --datain={input.phenc_concat} --imain={params.imain} --inindex={params.inindex} '
            ' -t {params.topup_prefix} -o {params.out_prefix} && '
            ' fslmaths {params.out_prefix}.nii.gz {output.dwi_topup}'
 
+#create command for applytopup -- apply for each phenc dir
+def get_applytopup_jac_cmds (wildcards, input,output):
+    cmds = []
+    topup_prefix = bids(root='results',suffix='topup',**subj_wildcards).format(**wildcards)
+    for inindex,(imain,out_nii) in enumerate(zip(input.dwi_niis,output.dwi_niis)):
+        out_prefix = bids(root='results',suffix='topup',**subj_wildcards).format(**wildcards),
+        cmds.append( f'applytopup --verbose --datain={input.phenc_concat} --imain={imain} --inindex={inindex+1}' \
+               f' -t {topup_prefix} -o dwi_topup --method=jac') 
+        cmds.append(f'mv dwi_topup.nii.gz {out_nii}')
+
+    return ' && '.join(cmds)
+
+#for applying topup to each phenc dir individually (method=jac)
+rule apply_topup_jac:
+    input:
+        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards), **dwi_dict, allow_missing=True),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards),
+        topup_fieldcoef = bids(root='results',suffix='topup_fieldcoef.nii.gz',**subj_wildcards),
+        topup_movpar = bids(root='results',suffix='topup_movpar.txt',**subj_wildcards),
+    params:
+        #create comma-seperated list of dwi nii
+        cmds = get_applytopup_jac_cmds
+    output: 
+        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='topup',method='jac',**subj_wildcards,**dwi_wildcards), **dwi_dict, allow_missing=True)
+    container: config['singularity']['prepdwi']
+    shadow: 'minimal'
+    group: 'topup'
+    shell: '{params.cmds}'
 
 
-rule cp_sidecars_topup_pos_neg:
-    input: multiext(bids(root='results',suffix='dwi',desc='unring',**subj_wildcards,**dwi_exemplar_dict),\
+
+#topup-corrected data is only used for brainmasking.. 
+# here, use the jac method by default (later can decide if lsr approach can be used based on headers)
+# with jac approach, the jac images need to be concatenated, then avgshell extracted
+
+
+rule cp_sidecars_topup_lsr:
+    input: multiext(bids(root='results',suffix='dwi',desc='degibbs',**subj_wildcards,**dwi_exemplar_dict),\
                 '.bvec','.bval','.json')
-    output: multiext(bids(root='results',suffix='dwi',desc='topup',**subj_wildcards),\
+    output: multiext(bids(root='results',suffix='dwi',desc='topup',method='lsr',**subj_wildcards),\
                 '.bvec','.bval','.json')
     run:
         for in_file,out_file in zip(input,output):
             shell('cp -v {in_file} {out_file}')
 
+rule cp_sidecars_topup_jac:
+    input: multiext(bids(root='results',suffix='dwi',desc='degibbs',**subj_wildcards),\
+                '.bvec','.bval','.json')
+    output: multiext(bids(root='results',suffix='dwi',desc='topup',method='jac',**subj_wildcards),\
+                '.bvec','.bval','.json')
+    run:
+        for in_file,out_file in zip(input,output):
+            shell('cp -v {in_file} {out_file}')
+
+rule concat_dwi_topup_jac:
+    input:
+        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='topup',method='jac',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
+    output:
+        dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='topup',method='jac',**subj_wildcards)
+    container: config['singularity']['prepdwi']
+    group: 'topup'
+    shell: 'mrcat {input} {output}' 
+
 
 rule get_eddy_index_txt:
     input:
-        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
+        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
     output:
-        eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
+        eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='degibbs',**subj_wildcards),
     group: 'topup'
     script: '../scripts/get_eddy_index_txt.py'
  
-rule concat_dwi_for_eddy:
+rule concat_degibbs_dwi:
     input:
-        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
+        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
     output:
-        dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards)
+        dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',**subj_wildcards)
     container: config['singularity']['prepdwi']
-    log: bids(root='logs',suffix='concat_dwi_for_eddy.log',**subj_wildcards)
+    log: bids(root='logs',suffix='concat_degibbs_dwi.log',**subj_wildcards)
     group: 'topup'
     shell: 'mrcat {input} {output} 2> {log}' 
 
-rule concat_bvec_for_eddy:
+rule concat_runs_bvec:
     input:
-        expand(bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
-    output: bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards)
+        expand(bids(root='results',suffix='dwi.bvec',desc='{desc}',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
+    output: bids(root='results',suffix='dwi.bvec',desc='{desc}',**subj_wildcards)
     script: '../scripts/concat_bv.py' 
 
-rule concat_bval_for_eddy:
+rule concat_runs_bval:
     input:
-        expand(bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
-    output: bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards)
+        expand(bids(root='results',suffix='dwi.bval',desc='{desc}',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
+    output: bids(root='results',suffix='dwi.bval',desc='{desc}',**subj_wildcards)
     script: '../scripts/concat_bv.py' 
+
+#combines json files from multiple scans -- for now as a hack just copying first json over..
+rule concat_runs_json:
+    input:
+        expand(bids(root='results',suffix='dwi.json',desc='{desc}',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
+    output: bids(root='results',suffix='dwi.json',desc='{desc}',**subj_wildcards)
+    shell: 'cp {input[0]} {output}'
+#    script: '../scripts/concat_json.py' 
 
 rule get_shells_from_bvals:
     input: '{dwi_prefix}.bval'
@@ -203,14 +270,32 @@ rule get_shell_avg:
     script:
         '../scripts/get_shell_avg.py'
         
-       
-rule avg_b0_topup:
-    input: bids(root='results',suffix='concatb0.nii.gz',desc='topup',**subj_wildcards),
-    output: bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    shell: 
-        'fslmaths {input} -Tmean {output}'
+#unused?       
+#rule avg_b0_topup:
+#    input: bids(root='results',suffix='concatb0.nii.gz',desc='topup',**subj_wildcards),
+#    output: bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
+#    container: config['singularity']['prepdwi']
+#    shell: 
+#        'fslmaths {input} -Tmean {output}'
 
+
+#have multiple brainmasking workflows -- then a rule to import the one we want..
+#this is the output:
+#mask = bids(root='results',suffix='mask.nii.gz',desc='brain',for_='eddy',**subj_wildcards),
+
+def get_mask_for_eddy(wildcards):
+
+    #first get name of method
+    if wildcards.subject in config['masking']['custom']:
+        method = config['masking']['custom'][wildcards.subject]
+    else:
+        method = config['masking']['default_method']
+
+    #then get bids name of file 
+    return bids(root='results',suffix='mask.nii.gz',desc='brain',method=method,**subj_wildcards)
+
+    
+"""
 rule cp_brainmask_avg_b0:
     input:
         mask = bids(root='results',subfolder='mask_avgb0',suffix='mask.nii.gz',desc='bet',frac='0.1',smooth='2mm',**subj_wildcards),
@@ -221,7 +306,7 @@ rule cp_brainmask_avg_b0:
         
 rule cp_brainmask_multishell:
     input:
-        mask = bids(root='results',desc='topup',suffix='dwi.avgshells/',**subj_wildcards) + 
+        mask = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/',**subj_wildcards) + 
                     'atropos_k-6_initmasking_label-brain_smooth-2mm_mask.nii.gz' 
     output:
         mask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
@@ -230,7 +315,7 @@ rule cp_brainmask_multishell:
  
 rule qc_brainmask_multishell:
     input: 
-        img = bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
+        img = bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',**subj_wildcards),
         seg = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
     output:
         png = report(bids(root='qc',suffix='mask.png',desc='multishell',**subj_wildcards),
@@ -244,7 +329,7 @@ rule qc_brainmask_multishell:
  
 rule qc_brainmask_avg_b0:
     input: 
-        img = bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
+        img = bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',**subj_wildcards),
         seg = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='avgb0',**subj_wildcards),
     output:
         png = report(bids(root='qc',suffix='mask.png',desc='avgb0',**subj_wildcards),
@@ -255,24 +340,26 @@ rule qc_brainmask_avg_b0:
             caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
             subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False))
     script: '../scripts/vis_qc_dseg.py'
-        
+   
+"""
+     
 rule get_slspec_txt:
     input:
-        dwi_jsons = expand(bids(root='results',suffix='dwi.json',desc='unring',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
+        dwi_jsons = expand(bids(root='results',suffix='dwi.json',desc='degibbs',**subj_wildcards,**dwi_wildcards),**dwi_dict,allow_missing=True),
     output:
-        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
+        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',**subj_wildcards),
     script: '../scripts/get_slspec_txt.py'
          
  
 rule run_eddy:
     input:        
-        dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='unring',**subj_wildcards),
-        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards),
-        eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
-        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
-        bvals = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards),
-        bvecs = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards)
+        dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',**subj_wildcards),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards),
+        eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='degibbs',**subj_wildcards),
+        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',**subj_wildcards),
+        brainmask = get_mask_for_eddy,
+        bvals = bids(root='results',suffix='dwi.bval',desc='degibbs',**subj_wildcards),
+        bvecs = bids(root='results',suffix='dwi.bvec',desc='degibbs',**subj_wildcards)
     params:
         #set eddy output prefix to 'dwi' inside the output folder
         out_prefix = lambda wildcards, output: os.path.join(output.out_folder,'dwi'),
@@ -305,7 +392,7 @@ rule cp_eddy_outputs:
         #get nii.gz, bvec, and bval from eddy output
         dwi = os.path.join(bids(root='results',suffix='eddy',**subj_wildcards),'dwi.nii.gz'),
         bvec = os.path.join(bids(root='results',suffix='eddy',**subj_wildcards),'dwi.eddy_rotated_bvecs'),
-        bval = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards),
+        bval = bids(root='results',suffix='dwi.bval',desc='degibbs',**subj_wildcards),
     output:
         multiext(bids(root='results',suffix='dwi',desc='eddy',**subj_wildcards),'.nii.gz','.bvec','.bval')
     group: 'eddy'
@@ -315,12 +402,12 @@ rule cp_eddy_outputs:
 
 rule eddy_quad:
     input:
-        phenc_concat = bids(root='results',suffix='phenc.txt',desc='unring',**subj_wildcards),
-        eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='unring',**subj_wildcards),
-        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='unring',**subj_wildcards),
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
-        bvals = bids(root='results',suffix='dwi.bval',desc='unring',**subj_wildcards),
-        bvecs = bids(root='results',suffix='dwi.bvec',desc='unring',**subj_wildcards),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards),
+        eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='degibbs',**subj_wildcards),
+        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',**subj_wildcards),
+        brainmask = get_mask_for_eddy,
+        bvals = bids(root='results',suffix='dwi.bval',desc='degibbs',**subj_wildcards),
+        bvecs = bids(root='results',suffix='dwi.bvec',desc='degibbs',**subj_wildcards),
         fieldmap = bids(root='results',suffix='fmap.nii.gz',desc='topup',**subj_wildcards),
         eddy_dir = bids(root='results',suffix='eddy',**subj_wildcards)
     params: 
@@ -351,162 +438,7 @@ rule split_eddy_qc_report:
 #    output: 
 #        qc_pdf = report(bids(root='results',suffix='eddy.qc/qc.pdf',**subj_wildcards))
        
-       
-#----- T1 registration
-
-rule import_t1w:
-    input:
-        t1w = config['in_t1w_preproc'],
-    output:
-        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',**subj_wildcards),
-    shell: 'cp -v {input.t1w} {output.t1w}'
-
-rule reg_aladin_b0_to_t1:
-    input: 
-        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',**subj_wildcards),
-        avgb0 =  bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
-    output: 
-        warped_avgb0 = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',**subj_wildcards),
-        xfm_ras = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    shell:
-        'reg_aladin -rigOnly -flo {input.avgb0} -ref {input.t1w} -res {output.warped_avgb0} -aff {output.xfm_ras}'
-
-rule convert_xfm_ras2itk:
-    input:
-        xfm_ras = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',**subj_wildcards),
-    output:
-        xfm_itk = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    shell:
-        'c3d_affine_tool {input.xfm_ras}  -oitk {output.xfm_itk}'
-
-
-rule convert_xfm_ras2fsl:
-    input:
-        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',**subj_wildcards),
-        avgb0 =  bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
-        xfm_ras = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',**subj_wildcards),
-    output:
-        xfm_fsl = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='fsl',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    shell:
-        'c3d_affine_tool {input.xfm_ras} -ref {input.t1w} -src {input.avgb0} -ras2fsl -o {output.xfm_fsl}'
-
-#tight crop around b0 after rotating into T1w space
-rule create_cropped_ref:
-    input:
-        warped_avgb0 = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',**subj_wildcards),
-    output:
-        cropped_avgb0 = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    shell:
-        'c3d {input} -trim 0vox {output}'
-
-
-#for later resampling.. 
-rule write_nii_resolution_to_txt:
-    input: '{prefix}.nii.gz'
-    output: '{prefix}.resolution_mm.txt'
-    script: '../scripts/write_nii_resolution_to_txt.py'
-    
-
-#rules for creating reference image for each resampling scheme -- only the rules that are required will be run..
-rule create_cropped_ref_t1_resolution:
-    input:
-        cropped_avgb0 = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',**subj_wildcards),
-    output:
-        avgb0_crop_resample = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',res='T1w',**subj_wildcards),
-    shell:
-        'cp {input} {output}'
-
-rule create_cropped_ref_dwi_resolution:
-    input:
-        cropped = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',**subj_wildcards),
-        res_txt_orig = bids(root='results',suffix='avgb0.resolution_mm.txt',desc='topup',**subj_wildcards),
-    output:
-        resampled = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',res='orig',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    shell:
-        'c3d {input.cropped} -resample-mm `cat {input.res_txt_orig}` {output}'
-
-
-rule create_cropped_ref_custom_resolution:
-    input:
-        cropped = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',**subj_wildcards),
-    params:
-        resolution = 'x'.join([str(vox) for vox in config['resample_dwi']['resample_mm']]) + 'mm'
-    output:
-        resampled = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',res='custom',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    shell:
-        'c3d {input} -resample-mm {params.resolution} {output}'
-
-rule resample_dwi_to_t1w:
-    input:
-        ref = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-        dwi = bids(root='results',suffix='dwi.nii.gz',desc='eddy',**subj_wildcards),
-        xfm_itk = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',**subj_wildcards),
-    params:
-        interpolation = 'Linear'
-    output:
-        dwi = bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards)
-    container: config['singularity']['ants']
-    resources:
-        mem_mb = 32000, #-- this is going to be dependent on size of image.. 
-    shell:
-        'antsApplyTransforms -d 3 --input-image-type 3 --input {input.dwi} --reference-image {input.ref} --transform {input.xfm_itk} --interpolation {params.interpolation} --output {output.dwi} --verbose '
-   
-rule resample_brainmask_to_t1w:
-    input:
-        ref = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='topup',proc='crop',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
-        xfm_itk = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',**subj_wildcards),
-    params:
-        interpolation = 'NearestNeighbor'
-    output:
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='topup',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-    container: config['singularity']['ants']
-    resources:
-        mem_mb = 32000, #-- this is going to be dependent on size of image.. 
-    shell:
-        'antsApplyTransforms -d 3 --input-image-type 0 --input {input.brainmask} --reference-image {input.ref} --transform {input.xfm_itk} --interpolation {params.interpolation} --output {output.brainmask} --verbose'
-   
-
-
-rule rotate_bvecs_to_t1w:
-    input:
-        bvecs = bids(root='results',suffix='dwi.bvec',desc='eddy',**subj_wildcards),
-        xfm_fsl = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='fsl',**subj_wildcards),
-        bvals = bids(root='results',suffix='dwi.bval',desc='eddy',**subj_wildcards)
-    output:
-        bvecs = bids(root='results',suffix='dwi.bvec',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-        bvals = bids(root='results',suffix='dwi.bval',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards)
-    container: config['singularity']['prepdwi']
-    shell: 
-        'workflow/scripts/rotate_bvecs.sh {input.bvecs} {input.xfm_fsl} {output.bvecs} && '
-        'cp -v {input.bvals} {output.bvals}'    
-
-
-#dti fitting on dwi in t1w space
-rule dtifit_resampled_t1w:
-    input:
-        dwi = bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-        bvals = bids(root='results',suffix='dwi.bval',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-        bvecs = bids(root='results',suffix='dwi.bvec',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-        brainmask = bids(root='results',suffix='mask.nii.gz',desc='topup',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),
-    params:
-        out_basename = lambda wildcards, output: os.path.join(output.out_folder, 'dti')
-    output:
-        out_folder = directory(bids(root='results',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards)),
-        out_fa = os.path.join(directory(bids(root='results',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards)),'dti_FA.nii.gz')
-    container: config['singularity']['prepdwi']
-    shell:
-        'mkdir -p {output.out_folder} && '
-        'dtifit --data={input.dwi} --bvecs={input.bvecs} --bvals={input.bvals} --mask={input.brainmask} --out={params.out_basename}'
-
-
-#TODO: gradient correction (optional step -- only if gradient file is provided).. 
+    #TODO: gradient correction (optional step -- only if gradient file is provided).. 
 #  gradient_unwarp.py
 #  reg_jacobian
 #  convertwarp -> change this to wb_command -convert-warpfield  to get itk transforms 

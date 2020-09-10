@@ -5,11 +5,11 @@
 #this checkpoint allows us to use {shell} wildcard for downstream rules
 checkpoint split_shell_avgs:
     input: 
-        avg_4d = bids(root='results',desc='topup',suffix='dwi.avgshells.nii.gz',**subj_wildcards)
+        avg_4d = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells.nii.gz',**subj_wildcards)
     params:
         out_prefix = lambda wildcards, output: os.path.join(output.nii_dir,'dwi.')
     output:
-        nii_dir = directory(bids(root='results',desc='topup',suffix='dwi.avgshells',**subj_wildcards))
+        nii_dir = directory(bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells',**subj_wildcards))
     container: config['singularity']['prepdwi']
     shell:
         'mkdir -p {output}; fslsplit {input} {params.out_prefix}'
@@ -19,9 +19,9 @@ checkpoint split_shell_avgs:
 #n4 on each shell
 rule n4_shell_avg:
     input:
-        avg_nii = bids(root='results',desc='topup',suffix='dwi.avgshells/dwi.{shell}.nii.gz',**subj_wildcards)
+        avg_nii = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/dwi.{shell}.nii.gz',**subj_wildcards)
     output:
-        n4_nii = bids(root='results',desc='topup',suffix='dwi.avgshells/dwi_n4.{shell}.nii.gz',**subj_wildcards)
+        n4_nii = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/dwi_n4.{shell}.nii.gz',**subj_wildcards)
     container: config['singularity']['prepdwi']
     shell:
         'N4BiasFieldCorrection -i {input} -o {output}'
@@ -66,10 +66,10 @@ rule smooth_binarize_shell_avg:
 #now, run n4 using mask from b0 processing, with many more iterations
 rule n4_shell_avg_withb0mask:
     input:
-        avg_nii = bids(root='results',desc='topup',suffix='dwi.avgshells/dwi.{shell}.nii.gz',**subj_wildcards),
+        avg_nii = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/dwi.{shell}.nii.gz',**subj_wildcards),
         mask_nii = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='avgb0',**subj_wildcards),
     output:
-        n4_nii = bids(root='results',desc='topup',suffix='dwi.avgshells/dwi_n4withb0mask.{shell}.nii.gz',**subj_wildcards)
+        n4_nii = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/dwi_n4withb0mask.{shell}.nii.gz',**subj_wildcards)
     container: config['singularity']['prepdwi']
     shell:
         'N4BiasFieldCorrection -i {input.avg_nii} -o {output} -x {input.mask_nii} --convergence [200x200x200x200] '
@@ -79,7 +79,7 @@ rule n4_shell_avg_withb0mask:
 
 def get_diffweighted_shells_for_tissue_seg(wildcards):
     checkpoint_output = checkpoints.split_shell_avgs.get(**wildcards).output[0]
-    return sorted(expand( bids(root='results',desc='topup',suffix='dwi.avgshells/dwi_n4_rescale.{shell}.nii.gz',**subj_wildcards),
+    return sorted(expand( bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/dwi_n4_rescale.{shell}.nii.gz',**subj_wildcards),
            **wildcards,
            shell=glob_wildcards( os.path.join(checkpoint_output, "dwi.{i}.nii.gz")).i[1:]))
 
@@ -95,8 +95,8 @@ rule tissue_seg_kmeans_init:
         posterior_fmt = 'posteriors_%d.nii.gz',
         posterior_glob = 'posteriors_*.nii.gz',
     output:
-        seg = bids(root='results',desc='topup',suffix='dwi.avgshells/atropos_k-{k}_initmasking_dseg.nii.gz',**subj_wildcards),
-        posteriors = bids(root='results',desc='topup',suffix='dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz',**subj_wildcards)
+        seg = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/atropos_k-{k}_initmasking_dseg.nii.gz',**subj_wildcards),
+        posteriors = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz',**subj_wildcards)
     shadow: 'minimal'    
     container: config['singularity']['prepdwi']
     shell:
@@ -107,9 +107,9 @@ rule tissue_seg_kmeans_init:
 #get class 0 from tissue seg - corresponds to lowest intensity
 rule extract_posterior_bgnd:
     input:
-        posterior_4d = bids(root='results',desc='topup',suffix='dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz',**subj_wildcards)
+        posterior_4d = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz',**subj_wildcards)
     output:
-        posterior_bgnd = bids(root='results',desc='topup',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz',**subj_wildcards)
+        posterior_bgnd = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz',**subj_wildcards)
     container: config['singularity']['prepdwi']
     shell:
         'fslroi {input} {output} 0 1'
@@ -119,9 +119,9 @@ rule extract_posterior_bgnd:
 rule refine_mask_with_tissue_prob:
     input:  
         mask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='avgb0',**subj_wildcards),
-        posterior_bgnd = bids(root='results',desc='topup',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz',**subj_wildcards)
+        posterior_bgnd = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz',**subj_wildcards)
     output:
-        mask = bids(root='results',desc='topup',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz',**subj_wildcards)
+        mask = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz',**subj_wildcards)
     container: config['singularity']['prepdwi']
     shell:
         'fslmaths {input.mask} -sub {input.posterior_bgnd} {output.mask}'
@@ -129,11 +129,11 @@ rule refine_mask_with_tissue_prob:
 #smooth and threshold to binarize 
 rule smooth_threshold_refined_mask:
     input:
-        mask = bids(root='results',desc='topup',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz',**subj_wildcards)
+        mask = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz',**subj_wildcards)
     params:
         smooth = '{smooth}'
     output:
-        mask = bids(root='results',desc='topup',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-brain_smooth-{smooth}_mask.nii.gz',**subj_wildcards)
+        mask = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/atropos_k-{k}_initmasking_label-brain_smooth-{smooth}_mask.nii.gz',**subj_wildcards)
     container: config['singularity']['prepdwi']
     shell:
         'c3d {input.mask} -smooth {params.smooth} -threshold 0.5 Inf 1 0 -o {output.mask}'

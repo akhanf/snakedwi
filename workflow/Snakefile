@@ -52,10 +52,15 @@ rule all:
     input: 
         eddy = expand(bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards), **subj_dict),
         eddy_qc = expand(bids(root='results',suffix='eddy.qc_pages',**subj_wildcards), **subj_dict),
-        qc = expand(bids(root='qc',suffix='mask.png',desc='{method}',**subj_wildcards), method=['avgb0','multishell'],**subj_dict),
+#        qc = expand(bids(root='qc',suffix='mask.png',desc='{method}',**subj_wildcards), method=['avgb0','multishell'],**subj_dict),
         dtifit = expand(bids(root='results',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),**subj_dict)
 
 
 include: "rules/prepdwi.smk"
-include: "rules/mask_avgb0.smk"
-include: "rules/mask_multishell.smk"
+include: "rules/reg_dwi_to_t1.smk"
+include: "rules/masking_bet_from-b0.smk"
+#include: "rules/mask_multishell.smk"
+include: "rules/templateflow.smk"
+include: "rules/reg_t1_to_template.smk"
+include: "rules/seg_t1_brain_tissue.smk"
+
