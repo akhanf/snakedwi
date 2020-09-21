@@ -50,20 +50,6 @@ rule mrdegibbs:
             'cp {input[2]} {output[2]} && '
             'cp {input[3]} {output[3]}'
 
-#this seems to not find bzeros in low-bval scans.. 
-# instead of this, we can use the get_shell_avg rule.. 
-#rule extract_avg_bzero:
-#    input: 
-#        nii = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards), 
-#        bvec = bids(root='results',suffix='dwi.bvec',desc='degibbs',**subj_wildcards,**dwi_wildcards), 
-#        bval = bids(root='results',suffix='dwi.bval',desc='degibbs',**subj_wildcards,**dwi_wildcards) 
-#    output: bids(root='results',suffix='b0.nii.gz',desc='degibbs',**subj_wildcards,**dwi_wildcards) 
-#    container: config['singularity']['prepdwi']
-#    group: 'topup'
-#    shell: 'dwiextract {input.nii} - -fslgrad {input.bvec} {input.bval} -bzero  | mrmath - mean {output} -axis 3'
-
-
-
 
 #now have nii with just the b0's, want to create the topup phase-encoding text files for each one:
 rule get_phase_encode_txt:
@@ -270,19 +256,8 @@ rule get_shell_avg:
     script:
         '../scripts/get_shell_avg.py'
         
-#unused?       
-#rule avg_b0_topup:
-#    input: bids(root='results',suffix='concatb0.nii.gz',desc='topup',**subj_wildcards),
-#    output: bids(root='results',suffix='avgb0.nii.gz',desc='topup',**subj_wildcards),
-#    container: config['singularity']['prepdwi']
-#    shell: 
-#        'fslmaths {input} -Tmean {output}'
 
-
-#have multiple brainmasking workflows -- then a rule to import the one we want..
-#this is the output:
-#mask = bids(root='results',suffix='mask.nii.gz',desc='brain',for_='eddy',**subj_wildcards),
-
+#have multiple brainmasking workflows -- this rule picks the method chosen in the config file
 def get_mask_for_eddy(wildcards):
 
     #first get name of method
@@ -294,54 +269,26 @@ def get_mask_for_eddy(wildcards):
     #then get bids name of file 
     return bids(root='results',suffix='mask.nii.gz',desc='brain',method=method,**subj_wildcards)
 
-    
-"""
-rule cp_brainmask_avg_b0:
-    input:
-        mask = bids(root='results',subfolder='mask_avgb0',suffix='mask.nii.gz',desc='bet',frac='0.1',smooth='2mm',**subj_wildcards),
-    output:
-        mask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='avgb0',**subj_wildcards),
-    shell:
-        'cp -v {input} {output}' 
-        
-rule cp_brainmask_multishell:
-    input:
-        mask = bids(root='results',desc='topup',method='jac',suffix='dwi.avgshells/',**subj_wildcards) + 
-                    'atropos_k-6_initmasking_label-brain_smooth-2mm_mask.nii.gz' 
-    output:
-        mask = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
-    shell:
-        'cp -v {input} {output}' 
- 
-rule qc_brainmask_multishell:
-    input: 
-        img = bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',**subj_wildcards),
-        seg = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='multishell',**subj_wildcards),
-    output:
-        png = report(bids(root='qc',suffix='mask.png',desc='multishell',**subj_wildcards),
-            caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
-            subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False)),
 
-        html = report(bids(root='qc',suffix='mask.html',desc='multishell',k='6',smooth='2mm',**subj_wildcards),
-            caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
-            subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False))
-    script: '../scripts/vis_qc_dseg.py'
- 
-rule qc_brainmask_avg_b0:
-    input: 
+#generate qc snapshot for brain  mask 
+rule qc_brainmask_for_eddy:
+    input:
         img = bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',**subj_wildcards),
-        seg = bids(root='results',suffix='mask.nii.gz',desc='brain',from_='avgb0',**subj_wildcards),
+        seg = get_mask_for_eddy
     output:
-        png = report(bids(root='qc',suffix='mask.png',desc='avgb0',**subj_wildcards),
-            caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
-            subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False)),
+#        png = bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),
+        png = report(bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),
+                caption='../report/brainmask_dwi.rst',
+                category='Brainmask'),
 
-        html = report(bids(root='qc',suffix='mask.html',desc='bet',frac='0.1',smooth='2mm',**subj_wildcards),
-            caption='../report/brainmask_dwi.rst', category='brainmask_dwi',\
-            subcategory=bids(**subj_wildcards,include_subject_dir=False,include_session_dir=False))
+        html = bids(root='qc',subject='{subject}',suffix='mask.html',desc='brain'),
+#        html = report(bids(root='qc',subject='{subject}',suffix='dseg.html',atlas='{atlas}', from_='{template}'),
+#                caption='../reports/segqc.rst',
+#                category='Segmentation QC',
+#                subcategory='{atlas} Atlas from {template}'),
     script: '../scripts/vis_qc_dseg.py'
-   
-"""
+
+
      
 rule get_slspec_txt:
     input:
@@ -432,54 +379,13 @@ rule split_eddy_qc_report:
     shell:
         'mkdir -p {output} && convert {input} {output}/%02d.png'
         
-#rule eddy_quad_report: #need this separate from eddy_quad, since adding to report seems to create folder too
-#    input: 
-#        out_dir = bids(root='results',suffix='eddy.qc',**subj_wildcards)
-#    output: 
-#        qc_pdf = report(bids(root='results',suffix='eddy.qc/qc.pdf',**subj_wildcards))
+
        
     #TODO: gradient correction (optional step -- only if gradient file is provided).. 
 #  gradient_unwarp.py
 #  reg_jacobian
 #  convertwarp -> change this to wb_command -convert-warpfield  to get itk transforms 
 #  applywarp -> change this to antsApplyTransforms
-
-
-
-
-"""
-rule ants_linear_b0_to_t1:
-    input: 
-        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',**subj_wildcards),
-        b0 = bids(root='results',suffix='b0.nii.gz',desc='topup',**subj_wildcards),
-    params:
-        out_prefix = bids(root='results',suffix='_',from_='dwi',to='T1w',**subj_wildcards),
-        base_opts = '-d {dim} --float 1 --verbose 1 --random-seed {random_seed}'.format(dim=config['ants']['dim'],random_seed=config['ants']['random_seed']),
-        intensity_opts = config['ants']['intensity_opts'],
-        init_translation = lambda wildcards, input: '-r [{template},{target},1]'.format(template=input.t1w,target=input.b0),
-        linear_multires = '-c [{reg_iterations},1e-6,10] -f {shrink_factors} -s {smoothing_factors}'.format(
-                                reg_iterations = config['ants']['linear']['reg_iterations'],
-                                shrink_factors = config['ants']['linear']['shrink_factors'],
-                                smoothing_factors = config['ants']['linear']['smoothing_factors']),
-        linear_metric = lambda wildcards, input: '-m MI[{template},{target},1,32,Regular,0.25]'.format( template=input.t1w,target=input.b0),
-    output:
-        out_affine = bids(root='results',suffix='_0GenericAffine.mat',from_='dwi',to='T1w',**subj_wildcards),
-        warped_b0 = bids(root='results',suffix='b0.nii.gz',space='T1w',**subj_wildcards),
-        warped_t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',space='dwi',**subj_wildcards),
-    log: bids(root='logs',suffix='ants_linear_b0_to_t1.log',**subj_wildcards)
-    threads: 16
-    resources:
-        mem_mb = 16000, # right now these are on the high-end -- could implement benchmark rules to do this at some point..
-        time = 60 # 1 hrs
-    container: config['singularity']['ants']
-    shell: 
-        'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} '
-        'antsRegistration {params.base_opts} {params.intensity_opts} '
-        '{params.init_translation} ' #initial translation
-        '-t Rigid[0.1] {params.linear_metric} {params.linear_multires} ' # rigid registration
-        '-t Affine[0.1] {params.linear_metric} {params.linear_multires} ' # affine registration
-        '-o [{params.out_prefix},{output.warped_b0},{output.warped_t1w}] &> {log}'
-"""
 
 
 

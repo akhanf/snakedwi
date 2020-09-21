@@ -40,17 +40,25 @@ resample_dwi:
 #masking options, provides customization at a per subject level.. 
 masking:
   default_method: 'bet_from-b0' #default method to use for brainmasking
+  methods: # list of methods (for QC report)
+    - 'bet_from-b0'
+    - 'bet_from-b0_frac-4'
+    - 'b0SyN_from-MNI152NLin2009cSym'
   import_path: #only required if the import_mask - not implemented yet..
-        - '/path/to/mask_to_import/sub-{subject}_mask.nii.gz'
+    - '/path/to/mask_to_import/sub-{subject}_mask.nii.gz'
   custom: #use this to set a custom method for a particular subject
-        '0015': 'bet_from-b0_frac-4'
-        #'0015': 'template_from-MNI152NLin2009cSym_reg-SyN'
+    #'0015': 'bet_from-b0_frac-4'
+    '0015': 'b0SyN_from-MNI152NLin2009cSym'
 
 template: MNI152NLin2009cSym
 
 
 template_t1w: resources/tpl-{template}/tpl-{template}_res-1_T1w.nii.gz
 template_mask: resources/tpl-{template}/tpl-{template}_res-1_desc-brain_mask.nii.gz 
+
+        
+#avg bshell images are used for registration for brainmasking dwi
+template_b0: resources/tpl-{template}/tpl-{template}_res-dwi_desc-fromhcp_b0.nii.gz
 
 template_atlas_dseg_nii: resources/tpl-{template}/tpl-{template}_res-1_atlas-{atlas}_dseg.nii.gz
 template_atlas_dseg_tsv: resources/tpl-{template}/tpl-{template}_atlas-{atlas}_dseg.tsv

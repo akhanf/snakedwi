@@ -47,40 +47,30 @@ rule bet_avg_b0_custom_frac:
     params:
         frac = '0.{frac}'
     output:
-        bids(root='results',desc='brain',method='bet_from-b0',frac='{frac}',suffix='mask.nii.gz',**subj_wildcards)
+        bids(root='results',subfolder='bet_from-b0',suffix='b0.nii.gz',desc='bet',frac='{frac}',**subj_wildcards)
     container: config['singularity']['prepdwi']
     shell:
         'bet {input} {output} -f {params.frac}'
 
-rule binarize_avg_b0:
-    input:
-        bids(root='results',subfolder='bet_from-b0',suffix='b0.nii.gz',desc='bet',frac='{frac}',**subj_wildcards),
-    output:
-        bids(root='results',subfolder='bet_from-b0',suffix='mask.nii.gz',desc='brain',frac='{frac}',**subj_wildcards),
-    container: config['singularity']['prepdwi']
-    shell:
-        'c3d {input} -binarize  -o {output}'
+
 
 rule binarize_avg_b0_custom_frac:
     input:
-        bids(root='results',subfolder='bet_from-b0',suffix='b0.nii.gz',desc='bet',**subj_wildcards),
+        bids(root='results',subfolder='bet_from-b0',suffix='b0.nii.gz',desc='bet',frac='{frac}',**subj_wildcards),
     output:
-        bids(root='results',subfolder='bet_from-b0',suffix='mask.nii.gz',desc='brain',**subj_wildcards),
+        bids(root='results',suffix='mask.nii.gz',desc='brain',method='bet_from-b0',frac='{frac}',**subj_wildcards),
     container: config['singularity']['prepdwi']
     shell:
         'c3d {input} -binarize  -o {output}'
 
-
-
-rule smooth_binarize_avg_b0:
+rule binarize_avg_b0:
     input:
-        bids(root='results',subfolder='bet_from-b0',suffix='b0.nii.gz',desc='bet',frac='{frac}',**subj_wildcards),
-    params:
-        smooth = '{smooth}' # e.g. 2mm
+        bids(root='results',subfolder='bet_from-b0',suffix='b0.nii.gz',desc='bet',**subj_wildcards),
     output:
-        bids(root='results',subfolder='bet_from-b0',suffix='mask.nii.gz',desc='brain',frac='{frac}',smooth='{smooth}',**subj_wildcards),
+        bids(root='results',suffix='mask.nii.gz',desc='brain',method='bet_from-b0',**subj_wildcards),
     container: config['singularity']['prepdwi']
     shell:
-        'c3d {input} -binarize -sdt -smooth {params.smooth} -threshold 0 inf 0 1 -o {output}'
+        'c3d {input} -binarize  -o {output}'
+
 
 
