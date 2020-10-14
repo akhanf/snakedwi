@@ -5,21 +5,22 @@ singularity:
   fsl: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif' 
 
 #get preprocessed t1w and mask (e.g. from fmriprep)
-in_t1w_preproc: '/home/akhanf/cfmm-bids/Burneo/EpLinkPhase3_Baseline/bids/sub-{subject}/anat/sub-{subject}_acq-MPRAGE_run-01_T1w.nii.gz'
+in_t1w_preproc: '/project/6050199/switt4/switt4-bids/Butler/Misophonia/bids/sub-{subject}/anat/sub-{subject}_acq-MPRAGE_run-01_T1w.nii.gz'
+#in_t1w_mask: '/project/6007967/cfmm-projects/Peters/tle3T_phase2/derivatives/fmriprep_1.5.0_outputs/fmriprep/sub-{subject}/anat/sub-{subject}_desc-brain_mask.nii.gz'
 
 
-#leave out extension, will grab nii.gz, bval, bvec, json (may want to change this to have nii, bvals, bvec as separate keys (e.g. to accomodate data where not all the same prefix, e.g. hcp)
-in_dwi_prefix: '/home/akhanf/cfmm-bids/Burneo/EpLinkPhase3_Baseline/bids/sub-{subject}/dwi/sub-{subject}_run-{run}_dwi'
+#leave out extension, will grab nii.gz, bval, bvec, json
+in_dwi_prefix: '/project/6050199/switt4/switt4-bids/Butler/Misophonia/bids/sub-{subject}/dwi/sub-{subject}_run-{run}_dwi'
 
 dwi_dict:
-  run: 
-    - '01'
-    - '02'
+ run: 
+  - '01'
+  - '02'
 
 
 subj_dict:
-  subject:   
-    - '0015'
+ subject:   
+  - '005'
 
 #can use this to override bids participants.tsv - need to implement that override
 participants_tsv: /path/to/participants_tsv
@@ -39,7 +40,7 @@ resample_dwi:
 
 #masking options, provides customization at a per subject level.. 
 masking:
-  default_method: 'bet_from-b0' #default method to use for brainmasking
+  default_method: 'b0SyN_from-MNI152NLin2009cSym' #default method to use for brainmasking
   methods: # list of methods (for QC report)
     - 'bet_from-b0'
     - 'bet_from-b0_frac-4'
