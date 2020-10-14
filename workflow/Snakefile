@@ -20,11 +20,19 @@ wildcard_constraints:
 dwi_dict = config['dwi_dict'] 
 
 
-#get dictionary for grabbing the first dwi run as an exemplar
-dwi_exemplar_dict = { k:dwi_dict[k][0] for k in dwi_dict.keys() }
+if bool(dwi_dict):
+    #get dictionary for grabbing the first dwi run as an exemplar
+    dwi_exemplar_dict = { k:dwi_dict[k][0] for k in dwi_dict.keys() }
+    #use dwi_wildcards when using the bids() function, as it contains the mappings,e.g. run='run'
+    dwi_wildcards = { key: f'{{{key}}}' for key in dwi_dict.keys()}
+else:
+    #if dwi_dict is empty, then we only have a single dwi image
+    dwi_exemplar_dict = {}
+    dwi_wildcards = {}
+    dwi_dict = {}
 
-#use dwi_wildcards when using the bids() function, as it contains the mappings,e.g. run='run'
-dwi_wildcards = { key: f'{{{key}}}' for key in dwi_dict.keys()}
+
+
 
 subj_dict = config['subj_dict']
 subj_wildcards = { key: f'{{{key}}}' for key in subj_dict.keys()}
@@ -47,6 +55,7 @@ report: '../workflow/report/workflow.rst'
 #this include is for the bids() function, and 
 #and any other global function declarations
 include: 'rules/common.smk'
+
 
 rule all:
     input: 

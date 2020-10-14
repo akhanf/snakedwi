@@ -84,9 +84,25 @@ rule concat_bzeros:
     shell: 'mrcat {input} {output} 2> {log}'
 
 
+        
+#this isn't going to work, if only one dwi then we can't run topup, need to use some other field map or fieldmap-less correction
+def get_bzero_for_topup(wildcards):
+    bzero_niis = expand(bids(root='results',suffix='b0.nii.gz',desc='degibbs',**wildcards, **dwi_wildcards),\
+                            **dwi_dict,allow_missing=True),
+    if len(bzero_niis) > 1:
+        return bids(root='results',suffix='concatb0.nii.gz',desc='degibbs',**wildcards)
+    else:
+        return bzero_niis[0]
+
+#instead, should have a downstream step that takes either topup output (if appropriate phenc repeats), or phdiff corrected (if phasediff fmap exists), or ants-corrected (if neither option exists)..
+
+# TODO: add phdiff fmap processing
+# TODO (lower priority): add fieldmap-less processing
+
 rule run_topup:
     input:
-        bzero_concat = bids(root='results',suffix='concatb0.nii.gz',desc='degibbs',**subj_wildcards),
+        #bzero_concat = get_bzero_for_topup,
+        bzero_concat = bids(root='results',suffix='concatb0.nii.gz',desc='degibbs',**subj_wildcards)
         phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',**subj_wildcards)
     params:
         out_prefix = bids(root='results',suffix='topup',**subj_wildcards),
