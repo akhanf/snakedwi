@@ -358,7 +358,7 @@ rule run_eddy:
         out_prefix = lambda wildcards, output: os.path.join(output.out_folder,'dwi'),
         topup_prefix = bids(root='results',suffix='topup',datatype='dwi',**config['subj_wildcards']),
         flags = ' '.join([f'--{key}' for (key,value) in config['eddy']['flags'].items() if value == True ] ),
-        options = ' '.join([f'--{key}={value}' for (key,value) in config['eddy']['opts'].items() if value is not None ] )
+        options = ' '.join([f'--{key}={value}' for (key,value) in config['eddy']['opts'].items() if value is not None ] ),
         container = config['singularity']['fsl']
     output:
         #eddy creates many files, so write them to a eddy subfolder instead
@@ -373,7 +373,7 @@ rule run_eddy:
         mem_mb = 32000,
     log: bids(root='logs',suffix='run_eddy.log',**config['subj_wildcards'])
     group: 'eddy'
-    shell: 'singularity exec --nv -e eddy_cuda9.1 --imain={input.dwi_concat} --mask={input.brainmask} '
+    shell: 'singularity exec --nv -e {params.container} eddy_cuda9.1 --imain={input.dwi_concat} --mask={input.brainmask} '
             ' --acqp={input.phenc_concat} --index={input.eddy_index_txt} '
             ' --bvecs={input.bvecs} --bvals={input.bvals} --topup={params.topup_prefix} '
             ' --slspec={input.eddy_slspec_txt} ' 
