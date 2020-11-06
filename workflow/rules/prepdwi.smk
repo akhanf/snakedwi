@@ -256,17 +256,6 @@ rule get_shell_avg:
         avgshell = '{dwi_prefix}_b{shell}.nii.gz'
     script:
         '../scripts/get_shell_avg.py'
-        
-#TODO: this is temporary placeholder -- replace with proper brainmasking later..
-rule bet_avg_b0_default_frac:
-    input:
-        bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',datatype='dwi',**config['subj_wildcards']),
-    output:
-        bids(root='results',suffix='mask.nii.gz',desc='brain',method='bet_from-b0',datatype='dwi',**config['subj_wildcards']),
-    container: config['singularity']['prepdwi']
-    shell:
-        'bet {input} {output} && fslmaths {output} -bin {output}'
-
 
 #have multiple brainmasking workflows -- this rule picks the method chosen in the config file
 def get_mask_for_eddy(wildcards):
