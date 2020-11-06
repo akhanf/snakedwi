@@ -2,19 +2,19 @@
 
 rule import_subj_t1:
     input:
-        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',**subj_wildcards),
-    output: bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz')
+        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
+    output: bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz')
     group: 'preproc'
     shell: 'cp {input} {output}'
 
 
 rule affine_aladin:
     input: 
-        flo = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz'),
+        flo = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz'),
         ref = config['template_t1w'],
     output: 
-        warped_subj = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz',space='{template}',desc='affine'),
-        xfm_ras = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='ras'),
+        warped_subj = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz',space='{template}',desc='affine'),
+        xfm_ras = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='ras'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     shell:
@@ -22,9 +22,9 @@ rule affine_aladin:
 
 rule convert_template_xfm_ras2itk:
     input:
-        bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='xfm.txt',from_='subject',to='{template}',desc='{desc}',type_='ras'),
+        bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='{desc}',type_='ras'),
     output:
-        bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='xfm.txt',from_='subject',to='{template}',desc='{desc}',type_='itk'),
+        bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='{desc}',type_='itk'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     shell:
@@ -33,10 +33,10 @@ rule convert_template_xfm_ras2itk:
 rule warp_brainmask_from_template_affine:
     input: 
         mask = config['template_mask'],
-        ref = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz'),
-        xfm = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk'),
+        ref = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz'),
+        xfm = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk'),
     output:
-        mask = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='affine',desc='brain'),
+        mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='affine',desc='brain'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     shell: 'antsApplyTransforms -d 3 --interpolation NearestNeighbor -i {input.mask} -o {output.mask} -r {input.ref} '
@@ -45,10 +45,10 @@ rule warp_brainmask_from_template_affine:
 rule warp_tissue_probseg_from_template_affine:
     input: 
         probseg = config['template_tissue_probseg'],
-        ref = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz'),
-        xfm = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='xfm.txt',from_='subject',to='{template}',desc='{desc}',type_='itk'),
+        ref = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz'),
+        xfm = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='{desc}',type_='itk'),
     output:
-        probseg = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='probseg.nii.gz',label='{tissue}',from_='{template}',reg='{desc}'),
+        probseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='probseg.nii.gz',label='{tissue}',from_='{template}',reg='{desc}'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     threads: 1
@@ -62,10 +62,10 @@ rule warp_tissue_probseg_from_template_affine:
 
 rule n4biasfield:
     input: 
-        t1 = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz'),
-        mask = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}'.format(template=config['template']),reg='affine',desc='brain'),
+        t1 = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz'),
+        mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}'.format(template=config['template']),reg='affine',desc='brain'),
     output:
-        t1 = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',desc='n4', suffix='T1w.nii.gz'),
+        t1 = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],desc='n4', suffix='T1w.nii.gz'),
     threads: 8
     container: config['singularity']['prepdwi']
     group: 'preproc'
@@ -79,7 +79,7 @@ rule mask_template_t1w:
         t1 = config['template_t1w'],
         mask = config['template_mask'],
     output:
-        t1 = bids(root='results',subfolder='reg_t1_to_template', prefix='tpl-{template}/tpl-{template}',desc='masked',suffix='T1w.nii.gz')
+        t1 = bids(root='work/reg_t1_to_template', prefix='tpl-{template}/tpl-{template}',desc='masked',suffix='T1w.nii.gz')
     container: config['singularity']['prepdwi']
     group: 'preproc'
     shell:
@@ -88,10 +88,10 @@ rule mask_template_t1w:
 
 rule mask_subject_t1w:
     input:
-        t1 = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',desc='n4', suffix='T1w.nii.gz'),
-        mask = bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='mask.nii.gz',from_='atropos3seg',desc='brain')
+        t1 = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],desc='n4', suffix='T1w.nii.gz'),
+        mask = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='mask.nii.gz',from_='atropos3seg',desc='brain')
     output:
-        t1 = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz',from_='atropos3seg',desc='masked'),
+        t1 = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz',from_='atropos3seg',desc='masked'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     shell:
@@ -100,11 +100,11 @@ rule mask_subject_t1w:
 
 rule ants_syn_affine_init:
     input: 
-        flo = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz',from_='atropos3seg',desc='masked'),
-        ref = bids(root='results',subfolder='reg_t1_to_template', prefix='tpl-{template}/tpl-{template}',desc='masked',suffix='T1w.nii.gz'),
-        init_xfm = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk'),
+        flo = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz',from_='atropos3seg',desc='masked'),
+        ref = bids(root='work/reg_t1_to_template', prefix='tpl-{template}/tpl-{template}',desc='masked',suffix='T1w.nii.gz'),
+        init_xfm = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk'),
     params:
-        out_prefix = bids(root='results',subfolder='reg_t1_to_template',suffix='',from_='subject',to='{template}',subject='{subject}'),
+        out_prefix = bids(root='work/reg_t1_to_template',suffix='',from_='subject',to='{template}',**config['subj_wildcards']),
         base_opts = '--write-composite-transform -d {dim} --float 1 '.format(dim=config['ants']['dim']),
         intensity_opts = config['ants']['intensity_opts'],
         init_transform = lambda wildcards, input: '-r {xfm}'.format(xfm=input.init_xfm),
@@ -122,9 +122,9 @@ rule ants_syn_affine_init:
                                 metric=config['ants']['deform']['sim_metric'],
                                 template=input.ref, target=input.flo)
     output:
-        out_composite = bids(root='results',subfolder='reg_t1_to_template',suffix='Composite.h5',from_='subject',to='{template}',subject='{subject}'),
-        out_inv_composite = bids(root='results',subfolder='reg_t1_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',subject='{subject}'),
-        warped_flo = bids(root='results',subfolder='reg_t1_to_template',suffix='T1w.nii.gz',space='{template}',desc='SyN',subject='{subject}'),
+        out_composite = bids(root='work/reg_t1_to_template',suffix='Composite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
+        out_inv_composite = bids(root='work/reg_t1_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
+        warped_flo = bids(root='work/reg_t1_to_template',suffix='T1w.nii.gz',space='{template}',desc='SyN',**config['subj_wildcards']),
     threads: 8
     resources:
         mem_mb = 16000, # right now these are on the high-end -- could implement benchmark rules to do this at some point..
@@ -146,10 +146,10 @@ rule ants_syn_affine_init:
 rule warp_dseg_from_template:
     input: 
         dseg = config['template_atlas_dseg_nii'],
-        ref = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz'),
-        inv_composite = bids(root='results',subfolder='reg_t1_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',subject='{subject}'),
+        ref = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz'),
+        inv_composite = bids(root='work/reg_t1_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
     output:
-        dseg = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}',reg='SyN'),
+        dseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}',reg='SyN'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     threads: 1
@@ -164,10 +164,10 @@ rule warp_dseg_from_template:
 rule warp_tissue_probseg_from_template:
     input: 
         probseg = config['template_tissue_probseg'],
-        ref = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz'),
-        inv_composite = bids(root='results',subfolder='reg_t1_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',subject='{subject}'),
+        ref = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz'),
+        inv_composite = bids(root='work/reg_t1_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
     output:
-        probseg = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='probseg.nii.gz',label='{tissue}',from_='{template}',reg='SyN'),
+        probseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='probseg.nii.gz',label='{tissue}',from_='{template}',reg='SyN'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     threads: 1
@@ -181,10 +181,10 @@ rule warp_tissue_probseg_from_template:
 rule warp_brainmask_from_template:
     input: 
         mask = config['template_mask'],
-        ref = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='T1w.nii.gz'),
-        inv_composite = bids(root='results',subfolder='reg_t1_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',subject='{subject}'),
+        ref = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz'),
+        inv_composite = bids(root='work/reg_t1_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
     output:
-        mask = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
+        mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     threads: 1
@@ -197,11 +197,11 @@ rule warp_brainmask_from_template:
 
 rule dilate_brainmask:
     input:
-        mask = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='{desc}',desc='brain'),
+        mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='{desc}',desc='brain'),
     params:
         dil_opt =  ' '.join([ '-dilD' for i in range(config['n_init_mask_dilate'])])
     output:
-        mask = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='{desc}',desc='braindilated'),
+        mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='{desc}',desc='braindilated'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     shell:
@@ -211,11 +211,11 @@ rule dilate_brainmask:
 #dilate labels N times to provide more of a fudge factor when assigning GM labels
 rule dilate_atlas_labels:
     input:
-        dseg = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}'),
+        dseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}'),
     params:
         dil_opt =  ' '.join([ '-dilD' for i in range(config['n_atlas_dilate'])])
     output:
-        dseg = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}',desc='dilated'),
+        dseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}',desc='dilated'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     shell:
@@ -223,12 +223,12 @@ rule dilate_atlas_labels:
 
 rule resample_mask_to_dwi:
     input:
-        mask = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
-        ref = bids(root='results',desc='degibbs',subject='{subject}',suffix='b0.nii.gz',**dwi_exemplar_dict)
+        mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
+        ref = bids(root='results',desc='topup',datatype='dwi',method='jac',**config['subj_wildcards'],suffix='b0.nii.gz'),
     params:
         interpolation = 'NearestNeighbor'
     output:
-        mask = bids(root='results',subject='{subject}',desc='brain',suffix='mask.nii.gz',method='template',from_='{template}',reg='SyN'),
+        mask = bids(root='results',**config['subj_wildcards'],desc='brain',suffix='mask.nii.gz',method='template',from_='{template}',reg='SyN',datatype='dwi'),
     container: config['singularity']['ants']
     shell: 
         'antsApplyTransforms -d 3 --input-image-type 0 --input {input.mask} --reference-image {input.ref}  --interpolation {params.interpolation} --output {output.mask} --verbose'

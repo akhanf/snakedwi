@@ -7,15 +7,15 @@ def get_k_tissue_classes(wildcards):
 #this performs Atropos with k-means as initialization
 rule tissue_seg_kmeans_init:
     input: 
-        t1 = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',desc='n4', suffix='T1w.nii.gz'),
-        mask = bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}'.format(template=config['template']),reg='affine',desc='braindilated'),
+        t1 = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],desc='n4', suffix='T1w.nii.gz'),
+        mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}'.format(template=config['template']),reg='affine',desc='braindilated'),
     params:
         k = get_k_tissue_classes,
         posterior_fmt = 'posteriors_%d.nii.gz',
         posterior_glob = 'posteriors_*.nii.gz',
     output:
-        seg = bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='dseg.nii.gz',desc='atroposKseg'),
-        posteriors = bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='probseg.nii.gz',desc='atroposKseg'),
+        seg = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='dseg.nii.gz',desc='atroposKseg'),
+        posteriors = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',desc='atroposKseg'),
     shadow: 'minimal'    
     container: config['singularity']['prepdwi']
     group: 'preproc'
@@ -26,22 +26,22 @@ rule tissue_seg_kmeans_init:
 
 rule map_channels_to_tissue:
     input:
-        tissue_priors = expand(bids(root='results',subfolder='reg_t1_to_template',subject='{subject}',suffix='probseg.nii.gz',label='{tissue}',from_='{template}'.format(template=config['template']),reg='affine'),
+        tissue_priors = expand(bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='probseg.nii.gz',label='{tissue}',from_='{template}'.format(template=config['template']),reg='affine'),
                             tissue=config['tissue_labels'],allow_missing=True),
-        seg_channels_4d = bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='probseg.nii.gz',desc='atroposKseg'),
+        seg_channels_4d = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',desc='atroposKseg'),
     output:
-        mapping_json = bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='mapping.json',desc='atropos3seg'),
-        tissue_segs = expand(bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='probseg.nii.gz',label='{tissue}',desc='atropos3seg'),
+        mapping_json = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='mapping.json',desc='atropos3seg'),
+        tissue_segs = expand(bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',label='{tissue}',desc='atropos3seg'),
                             tissue=config['tissue_labels'],allow_missing=True),
     group: 'preproc'
     script: '../scripts/map_channels_to_tissue.py'
        
 rule tissue_seg_to_4d:
     input:
-        tissue_segs = expand(bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='probseg.nii.gz',label='{tissue}',desc='atropos3seg'),
+        tissue_segs = expand(bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',label='{tissue}',desc='atropos3seg'),
                             tissue=config['tissue_labels'],allow_missing=True),
     output:
-        tissue_seg = bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='probseg.nii.gz',desc='atropos3seg')
+        tissue_seg = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',desc='atropos3seg')
     group: 'preproc'
     container: config['singularity']['prepdwi']
     shell:
@@ -49,11 +49,11 @@ rule tissue_seg_to_4d:
 
 rule brainmask_from_tissue:
     input:
-        tissue_seg = bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='probseg.nii.gz',desc='atropos3seg')
+        tissue_seg = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',desc='atropos3seg')
     params:
         threshold = 0.5
     output:
-        mask = bids(root='results',subfolder='seg_t1_brain_tissue',subject='{subject}',suffix='mask.nii.gz',from_='atropos3seg',desc='brain')
+        mask = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='mask.nii.gz',from_='atropos3seg',desc='brain')
     container: config['singularity']['prepdwi']
     group: 'preproc'
     shell:

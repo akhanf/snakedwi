@@ -1,6 +1,7 @@
 #---- snakebids boilerplate
 
 import snakebids
+from snakebids import bids
 
 configfile: 'config/snakebids.yml'
 
@@ -10,34 +11,23 @@ snakebids.generate_inputs_config(config)
 #this adds constraints to the bids naming
 wildcard_constraints:  **snakebids.get_wildcard_constraints(config)
 
-#-------------------
-#things to explain:
-# - using the bids() function to get bids names
-# - using input_path to get pybids inputs
-# - using **input_wildcards with the bids() function to include wildcards grabbed from pybids  -- introduce more than subject/session
-# - using expand() with **subj_wildcards to automatically deal with optional session-level
-# - using expand() with input_lists to specify values in target rules
-# - using expand() with input_zip_lists when not all combinations of wildcards exist
-# - using filter_list() when need to expand over subset of wildcards
-#------------------
-
 report: '../workflow/report/workflow.rst'
 
 
-#rule all:
-#    input: 
-#        eddy = expand(bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards), **subj_dict),
-#        eddy_qc = expand(bids(root='results',suffix='eddy.qc_pages',**subj_wildcards), **subj_dict),
-#        mask_qc = expand(bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),**subj_dict),
-#        dtifit = expand(bids(root='results',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),**subj_dict)
+rule all:
+    input: 
+        #eddy = expand(bids(root='results',datatype='dwi',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**config['subj_wildcards']), zip,**config['input_zip_lists']['dwi']),
+        eddy_qc = expand(bids(root='results',datatype='dwi',suffix='eddy.qc_pages',**config['subj_wildcards']), zip,**config['input_zip_lists']['dwi']),
+        mask_qc = expand(bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),zip,**config['input_zip_lists']['dwi']),
+        dtifit = expand(bids(root='results',datatype='dwi',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**config['subj_wildcards']),zip,**config['input_zip_lists']['dwi'])
 
 
 include: "rules/prepdwi.smk"
 include: "rules/reg_dwi_to_t1.smk"
 include: "rules/masking_bet_from-b0.smk"
-#include: "rules/masking_b0_to_template.smk"
-#include: "rules/reg_t1_to_template.smk"
-#include: "rules/seg_t1_brain_tissue.smk"
+include: "rules/masking_b0_to_template.smk"
+include: "rules/reg_t1_to_template.smk"
+include: "rules/seg_t1_brain_tissue.smk"
 
 
 # WIP:
