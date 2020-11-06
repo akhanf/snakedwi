@@ -33,7 +33,7 @@ report: '../workflow/report/workflow.rst'
 
 
 include: "rules/prepdwi.smk"
-#include: "rules/reg_dwi_to_t1.smk"
+include: "rules/reg_dwi_to_t1.smk"
 #include: "rules/masking_bet_from-b0.smk"
 #include: "rules/masking_b0_to_template.smk"
 #include: "rules/reg_t1_to_template.smk"

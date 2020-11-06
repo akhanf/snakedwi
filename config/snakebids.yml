@@ -10,7 +10,7 @@ debug: False
 
 # boilerplate above
 
-derivatives: False 
+derivatives: '/project/6050199/switt4/switt4-bids/Butler/Misophonia/postproc3T.v0.2/fmriprep_1.5.4/fmriprep'
 
 #mappings from analysis_level to set of target rules or files
 analysis_levels: &analysis_levels
@@ -37,13 +37,15 @@ pybids_inputs:
       - run
       - dir
 
-  T1w:
+  t1w_preproc:
     filters:
       suffix: 'T1w'
       extension: '.nii.gz'
-      scope: 'raw' #raw, derivatives (or can be pipeline name too!)
+      scope: 'derivatives' #raw, derivatives (or can be pipeline name too!)
       datatype: 'anat'
       invalid_filters: 'allow'
+      desc: 'preproc'
+      space: null
     wildcards:
       - subject
       - session

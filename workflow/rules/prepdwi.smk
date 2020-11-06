@@ -127,43 +127,8 @@ rule apply_topup_lsr:
            ' -t {params.topup_prefix} -o {params.out_prefix} && '
            ' fslmaths {params.out_prefix}.nii.gz {output.dwi_topup}'
 
-"""
-#create command for applytopup -- apply for each phenc dir
-def get_applytopup_jac_cmds (wildcards, input,output):
-    cmds = []
-    topup_prefix = bids(root='results',suffix='topup',datatype='dwi',**config['subj_wildcards']).format(**wildcards)
-    for inindex,(imain,out_nii) in enumerate(zip(input.dwi_niis,output.dwi_niis)):
-        out_prefix = bids(root='results',suffix='topup',datatype='dwi',**config['subj_wildcards']).format(**wildcards),
-        cmds.append( f'applytopup --verbose --datain={input.phenc_concat} --imain={imain} --inindex={inindex+1}' \
-               f' -t {topup_prefix} -o dwi_topup --method=jac') 
-        cmds.append(f'mv dwi_topup.nii.gz {out_nii}')
-
-    return ' && '.join(cmds)
 
 
-#for applying topup to each phenc dir individually (method=jac)
-rule apply_topup_jac:
-    input:
-        dwi_niis = lambda wildcards: expand(bids(root='results',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['input_wildcards']['dwi']), \
-                            zip,**snakebids.filter_list(config['input_zip_lists']['dwi'], wildcards))
-        phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-        topup_fieldcoef = bids(root='results',suffix='topup_fieldcoef.nii.gz',datatype='dwi',**config['subj_wildcards']),
-        topup_movpar = bids(root='results',suffix='topup_movpar.txt',datatype='dwi',**config['subj_wildcards']),
-    params:
-        #create comma-seperated list of dwi nii
-        cmds = get_applytopup_jac_cmds
-    output: 
-        # TODO: UNSURE ABOUT THIS:
-        dwi_niis = expand(bids(root='results',suffix='dwi.nii.gz',desc='topup',method='jac',**config['input_wildcards']['dwi']), **dwi_dict, allow_missing=True)
-    container: config['singularity']['prepdwi']
-    shadow: 'minimal'
-    group: 'topup'
-    shell: '{params.cmds}'
-
-
-"""
-
-#new version of this -- still need to work out way to get integer index for dwi
 rule apply_topup_jac:
     input:
         nii = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['input_wildcards']['dwi']), 
@@ -292,7 +257,7 @@ rule get_shell_avg:
     script:
         '../scripts/get_shell_avg.py'
         
-
+#TODO: this is temporary placeholder -- replace with proper brainmasking later..
 rule bet_avg_b0_default_frac:
     input:
         bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',datatype='dwi',**config['subj_wildcards']),
