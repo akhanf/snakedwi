@@ -8,6 +8,9 @@ output_dir: '/scratch/akhanf/bids_app_smk/prepdwi_smk/test_out'
 debug: False
 
 
+exclude_participant_label:
+ - PILOT
+
 # boilerplate above
 
 derivatives: '/project/6050199/switt4/switt4-bids/Butler/Misophonia/postproc3T.v0.2/fmriprep_1.5.4/fmriprep'
@@ -79,31 +82,17 @@ parse_args:
           participants can be specified with a space separated list.
     nargs: '+'
 
+  --exclude_participant_label:
+    help: The label(s) of the participant(s) that should be excluded. The label 
+          corresponds to sub-<participant_label> from the BIDS spec 
+          (so it does not include "sub-"). If this parameter is not 
+          provided all subjects should be analyzed. Multiple 
+          participants can be specified with a space separated list.
+    nargs: '+'
+
 
 #---- to update below this
 
-
-#grabbing:
-
-#get preprocessed t1w and mask (e.g. from fmriprep)
-#in_t1w_preproc: '/project/6050199/switt4/switt4-bids/Butler/Misophonia/bids/sub-{subject}/anat/sub-{subject}_acq-MPRAGE_run-01_T1w.nii.gz'
-
-
-#leave out extension, will grab nii.gz, bval, bvec, json
-#in_dwi_prefix: '/project/6050199/switt4/switt4-bids/Butler/Misophonia/bids/sub-{subject}/dwi/sub-{subject}_run-{run}_dwi'
-
-#dwi_dict:
-# run: 
-#  - '01'
-#  - '02'
-
-
-#subj_dict:
-# subject:   
-#  - '005'
-
-
-#--------- KEEP BELOW
 singularity:
   prepdwi: '/project/6050199/akhanf/singularity/bids-apps/khanlab_prepdwi_latest.sif'  #should use mrtrix3.0 container instead
   ants: '/project/6050199/akhanf/singularity/ants-v2.3.1.sif'

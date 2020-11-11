@@ -319,7 +319,7 @@ rule run_eddy:
         out_folder = directory(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards'])),
         dwi = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.nii.gz'),
         bvec = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.eddy_rotated_bvecs')
-    container: config['singularity']['fsl']
+#    container: config['singularity']['fsl']
     threads: 1
     resources:
         gpus = 1,

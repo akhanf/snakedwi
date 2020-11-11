@@ -132,7 +132,6 @@ rule rotate_bvecs_to_t1w:
         'cp -v {input.bvals} {output.bvals}'    
 
 
-print(bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']))
 #dti fitting on dwi in t1w space
 rule dtifit_resampled_t1w:
     input:
