@@ -467,19 +467,19 @@ rule split_eddy_qc_report:
 
 rule copy_inputs_for_bedpost:
     input: 
-        dwi = bids(root='results',suffix='dwi.nii.gz',desc='eddy',datatype='dwi',**config['subj_wildcards']),
-        bval = bids(root='results',suffix='dwi.bval',desc='eddy',datatype='dwi',**config['subj_wildcards']),
-        bvec = bids(root='results',suffix='dwi.bvec',desc='eddy',datatype='dwi',**config['subj_wildcards']),
-        brainmask = get_mask_for_eddy,
+        dwi = bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
+        bval = bids(root='results',suffix='dwi.bval',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
+        bvec = bids(root='results',suffix='dwi.bvec',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
+        brainmask = bids(root='results',suffix='mask.nii.gz',desc='brain',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
     output:
-        diff_dir = directory(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards'])),
-        dwi = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),'data.nii.gz'),
-        brainmask = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),'nodif_brain_mask.nii.gz'),
-        bval = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),'bvals'),
-        bvec = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),'bvecs'),
+        diff_dir = directory(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
+        dwi = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'data.nii.gz'),
+        brainmask = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'nodif_brain_mask.nii.gz'),
+        bval = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'bvals'),
+        bvec = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'bvecs'),
     group: 'subj'
     shell:
-        'mkdir -p {output.diff_dir} && '
+        'mkdir -p {output.diff_dir} && ' #could symlink instead??
         'cp {input.dwi} {output.dwi} && '
         'cp {input.brainmask} {output.brainmask} && '
         'cp {input.bval} {output.bval} && '
@@ -487,15 +487,15 @@ rule copy_inputs_for_bedpost:
         
 rule run_bedpost:
     input:
-        diff_dir = bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),
-        dwi = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),'data.nii.gz'),
-        brainmask = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),'nodif_brain_mask.nii.gz'),
-        bval = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),'bvals'),
-        bvec = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',datatype='dwi',**config['subj_wildcards']),'bvecs'),
+        diff_dir = bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
+        dwi = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'data.nii.gz'),
+        brainmask = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'nodif_brain_mask.nii.gz'),
+        bval = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'bvals'),
+        bvec = os.path.join(bids(root='results',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'bvecs'),
     params:
         container = config['singularity']['fsl_604']
     output:
-        bedpost_dir = directory(bids(root='results',desc='eddy',suffix='diffusion.bedpostX',datatype='dwi',**config['subj_wildcards'])),
+        bedpost_dir = directory(bids(root='results',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
     group: 'subj'
     threads: 8
     resources:

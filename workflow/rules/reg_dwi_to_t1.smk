@@ -146,13 +146,15 @@ rule rotate_bvecs_to_t1w:
         bvecs = bids(root='results',suffix='dwi.bvec',desc='eddy',datatype='dwi',**config['subj_wildcards']),
         xfm_fsl = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='fsl',datatype='dwi',**config['subj_wildcards']),
         bvals = bids(root='results',suffix='dwi.bval',desc='eddy',datatype='dwi',**config['subj_wildcards'])
+    params:
+        script = os.path.join(config['snakemake_dir'],'workflow/scripts/rotate_bvecs.sh')
     output:
         bvecs = bids(root='results',suffix='dwi.bvec',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
         bvals = bids(root='results',suffix='dwi.bval',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell: 
-        'workflow/scripts/rotate_bvecs.sh {input.bvecs} {input.xfm_fsl} {output.bvecs} && '
+        '{params.script} {input.bvecs} {input.xfm_fsl} {output.bvecs} && '
         'cp -v {input.bvals} {output.bvals}'    
 
 
