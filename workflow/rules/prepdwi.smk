@@ -123,7 +123,7 @@ rule run_topup:
            ' --out={params.out_prefix} --iout={output.bzero_corrected} --fout={output.fieldmap} -v 2> {log}'
 
 
-#this is for equal positive and negative blipped data - method=lsr
+#this is for equal positive and negative blipped data - method=lsr --unused currently (jac method can be applied more generally)
 rule apply_topup_lsr:
     input:
         dwi_niis = lambda wildcards: expand(bids(root='results',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['input_wildcards']['dwi']),\
@@ -326,14 +326,25 @@ rule get_slspec_txt:
     group: 'subj'
     script: '../scripts/get_slspec_txt.py'
 
-# get dwi reference for masking, registration -- either topup or degibbs b0
-def get_dwi_ref (wildcards):
-    if config['no_topup']:
-        return bids(root='results',suffix='b0.nii.gz',desc='degibbs',datatype='dwi',**config['subj_wildcards'])
-    else:
-        return bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',datatype='dwi',**config['subj_wildcards'])
-        
 
+# --- this is where the choice of susceptibility distortion correction (SDC) is made --
+# 
+# get dwi reference for masking, registration -- either topup or degibbs b0
+#  currently, if more than one dwi, we use topup, otherwise, no distortion correction (i.e. get degibbs)
+
+#  TODO: implement other fieldmap based correction, and registration-based correction here too
+
+def get_dwi_ref (wildcards):
+
+    #this gets the number of DWI scans for this subject(session)
+    filtered = snakebids.filter_list(config['input_zip_lists']['dwi'],wildcards)
+    num_scans = len(filtered['subject'])
+    
+    if num_scans > 1 and not config['no_topup']:
+        return bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',datatype='dwi',**config['subj_wildcards'])
+    else:
+        return bids(root='results',suffix='b0.nii.gz',desc='degibbs',datatype='dwi',**config['subj_wildcards'])
+        
 
 rule cp_dwi_ref:
     input: get_dwi_ref
@@ -341,80 +352,69 @@ rule cp_dwi_ref:
     group: 'subj'
     shell: 'cp {input} {output}'    
 
-         
-if config['no_topup']: 
-    rule run_eddy:
-        input:        
-            dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            brainmask = get_mask_for_eddy,
-            bvals = bids(root='results',suffix='dwi.bval',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            bvecs = bids(root='results',suffix='dwi.bvec',desc='degibbs',datatype='dwi',**config['subj_wildcards'])
-        params:
-            #set eddy output prefix to 'dwi' inside the output folder
-            out_prefix = lambda wildcards, output: os.path.join(output.out_folder,'dwi'),
-            flags = ' '.join([f'--{key}' for (key,value) in config['eddy']['flags'].items() if value == True ] ),
-            options = ' '.join([f'--{key}={value}' for (key,value) in config['eddy']['opts'].items() if value is not None ] ),
-            container = config['singularity']['fsl_603']
-        output:
-            #eddy creates many files, so write them to a eddy subfolder instead
-            out_folder = directory(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards'])),
-            dwi = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.nii.gz'),
-            bvec = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.eddy_rotated_bvecs')
-        threads: 1
-        resources:
-            gpus = 1,
-            time = 240, #6 hours (this is a conservative estimate, may be shorter)
-            mem_mb = 32000,
-        log: bids(root='logs',suffix='run_eddy.log',**config['subj_wildcards'])
-        group: 'subj'
-        shell: 'singularity exec --nv -e {params.container} eddy_cuda9.1 --imain={input.dwi_concat} --mask={input.brainmask} '
-                ' --acqp={input.phenc_concat} --index={input.eddy_index_txt} '
-                ' --bvecs={input.bvecs} --bvals={input.bvals} '
-                ' --slspec={input.eddy_slspec_txt} ' 
-                ' --out={params.out_prefix} '
-                ' {params.flags} {params.options}  &> {log}'
+
+def get_eddy_topup_input (wildcards):
+     #this gets the number of DWI scans for this subject(session)
+    filtered = snakebids.filter_list(config['input_zip_lists']['dwi'],wildcards)
+    num_scans = len(filtered['subject'])
+    
+    if num_scans > 1 and not config['no_topup']:
+        topup_inputs = { filename : bids(root='results',suffix=f'{filename}.nii.gz',datatype='dwi',**config['subj_wildcards']).format(**wildcards) for filename in ['topup_fieldcoef','topup_movpar']}
+        return topup_inputs
+    else:
+        return None
 
 
-else:
 
-    rule run_eddy:
-        input:        
-            dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            brainmask = get_mask_for_eddy,
-            bvals = bids(root='results',suffix='dwi.bval',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-            bvecs = bids(root='results',suffix='dwi.bvec',desc='degibbs',datatype='dwi',**config['subj_wildcards'])
-        params:
-            #set eddy output prefix to 'dwi' inside the output folder
-            out_prefix = lambda wildcards, output: os.path.join(output.out_folder,'dwi'),
-            topup_prefix = bids(root='results',suffix='topup',datatype='dwi',**config['subj_wildcards']),
-            flags = ' '.join([f'--{key}' for (key,value) in config['eddy']['flags'].items() if value == True ] ),
-            options = ' '.join([f'--{key}={value}' for (key,value) in config['eddy']['opts'].items() if value is not None ] ),
-            container = config['singularity']['fsl_603']
-        output:
-            #eddy creates many files, so write them to a eddy subfolder instead
-            out_folder = directory(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards'])),
-            dwi = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.nii.gz'),
-            bvec = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.eddy_rotated_bvecs')
-    #    container: config['singularity']['fsl']
-        threads: 1
-        resources:
-            gpus = 1,
-            time = 240, #6 hours (this is a conservative estimate, may be shorter)
-            mem_mb = 32000,
-        log: bids(root='logs',suffix='run_eddy.log',**config['subj_wildcards'])
-        group: 'subj'
-        shell: 'singularity exec --nv -e {params.container} eddy_cuda9.1 --imain={input.dwi_concat} --mask={input.brainmask} '
-                ' --acqp={input.phenc_concat} --index={input.eddy_index_txt} '
-                ' --bvecs={input.bvecs} --bvals={input.bvals} --topup={params.topup_prefix} '
-                ' --slspec={input.eddy_slspec_txt} ' 
-                ' --out={params.out_prefix} '
-                ' {params.flags} {params.options}  &> {log}'
+def get_eddy_topup_opt (wildcards, input):
+   
+    #this gets the number of DWI scans for this subject(session)
+    filtered = snakebids.filter_list(config['input_zip_lists']['dwi'],wildcards)
+    num_scans = len(filtered['subject'])
+    
+    if num_scans > 1 and not config['no_topup']:
+        topup_prefix = bids(root='results',suffix='topup',datatype='dwi',**config['subj_wildcards']).format(**wildcards)
+        return f'--topup={topup_prefix}'
+    else:
+        return ''
+
+   
+     
+rule run_eddy:
+    input:        
+        dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
+        phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
+        eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
+        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
+        brainmask = get_mask_for_eddy,
+        bvals = bids(root='results',suffix='dwi.bval',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
+        bvecs = bids(root='results',suffix='dwi.bvec',desc='degibbs',datatype='dwi',**config['subj_wildcards'])
+    params:
+        #set eddy output prefix to 'dwi' inside the output folder
+        out_prefix = lambda wildcards, output: os.path.join(output.out_folder,'dwi'),
+        flags = ' '.join([f'--{key}' for (key,value) in config['eddy']['flags'].items() if value == True ] ),
+        options = ' '.join([f'--{key}={value}' for (key,value) in config['eddy']['opts'].items() if value is not None ] ),
+        container = config['singularity']['fsl_603'],
+        topup_opt = get_eddy_topup_opt
+    output:
+        #eddy creates many files, so write them to a eddy subfolder instead
+        out_folder = directory(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards'])),
+        dwi = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.nii.gz'),
+        bvec = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.eddy_rotated_bvecs')
+    threads: 8 #this needs to be set in order to avoid multiple gpus from executing
+    resources:
+        gpus = 1,
+        time = 240, #6 hours (this is a conservative estimate, may be shorter)
+        mem_mb = 32000,
+    log: bids(root='logs',suffix='run_eddy.log',**config['subj_wildcards'])
+    group: 'subj'
+    shell: 'singularity exec --nv -e {params.container} eddy_cuda9.1 --imain={input.dwi_concat} --mask={input.brainmask} '
+            ' --acqp={input.phenc_concat} --index={input.eddy_index_txt} '
+            ' --bvecs={input.bvecs} --bvals={input.bvals} '
+            ' --slspec={input.eddy_slspec_txt} ' 
+            ' --out={params.out_prefix} '
+            ' {params.topup_opt} '
+            ' {params.flags} {params.options}  &> {log}'
 
 
 rule cp_eddy_outputs:
@@ -497,7 +497,7 @@ rule run_bedpost:
     output:
         bedpost_dir = directory(bids(root='results',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
     group: 'subj'
-    threads: 8
+    threads: 8 #this needs to be set in order to avoid multiple gpus from executing
     resources:
         gpus=1,
         mem_mb=16000,
