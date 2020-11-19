@@ -16,8 +16,9 @@ derivatives: False
 analysis_levels: &analysis_levels
  - participant
 
-no_topup: True
-  
+no_topup: False
+eddy_no_s2v: False
+eddy_no_quad: False
 
 targets_by_analysis_level:
   participant:
@@ -91,6 +92,18 @@ parse_args:
     help: Disables topup.
     action: 'store_true'
     default: False
+
+  --eddy_no_s2v:
+    help: Disables slice-to-volume in eddy by setting mporder=0. This option must be used
+          if your dwi json does not include SliceTiming.
+    action: 'store_true'
+    default: False
+
+  --eddy_no_quad:
+    help: Disables eddy_quad QC report
+    action: 'store_true'
+    default: False
+
 
 #---- to update below this
 
@@ -192,10 +205,13 @@ eddy:
     cnr_maps: True
     residuals: True
     data_is_shelled: True
-  opts:
+  with_s2v:
     mporder: 6
     s2v_niter: 5
     s2v_lambda: 1
     s2v_interp: trilinear
     ol_type: 'both'  #can be sw, gw, or both (use sw if no multi-band)
+  without_s2v:
+    mporder: 0
+
     

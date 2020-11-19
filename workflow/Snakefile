@@ -14,11 +14,17 @@ wildcard_constraints:  **snakebids.get_wildcard_constraints(config)
 report: '../workflow/report/workflow.rst'
 
 
+def get_eddy_quad_all():
+    if config['eddy_no_quad']:
+        return {}
+    else:
+        return {eddy_qc: expand(bids(root='results',datatype='dwi',suffix='eddy.qc_pages',**config['subj_wildcards']), zip,**config['input_zip_lists']['dwi'])}
+
 rule all:
     input: 
-        #eddy = expand(bids(root='results',datatype='dwi',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**config['subj_wildcards']), zip,**config['input_zip_lists']['dwi']),
-        eddy_qc = expand(bids(root='results',datatype='dwi',suffix='eddy.qc_pages',**config['subj_wildcards']), zip,**config['input_zip_lists']['dwi']),
-        mask_qc = expand(bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),zip,**config['input_zip_lists']['dwi']),
+        **get_eddy_quad_all(),
+        mask_qc = expand(bids(root='qc',suffix='mask.png',desc='brain', **config['subj_wildcards']),zip,**config['input_zip_lists']['dwi']),
+        reg_qc = expand(bids(root='qc',suffix='reg.png',from_='dwiref',to='T1w',**config['subj_wildcards']),zip,**config['input_zip_lists']['dwi']),
         dtifit = expand(bids(root='results',datatype='dwi',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**config['subj_wildcards']),zip,**config['input_zip_lists']['dwi']),
         bedpost = expand(bids(root='results',datatype='dwi',suffix='diffusion.bedpostX',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**config['subj_wildcards']),zip,**config['input_zip_lists']['dwi']),
 

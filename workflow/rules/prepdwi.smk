@@ -378,14 +378,35 @@ def get_eddy_topup_opt (wildcards, input):
     else:
         return ''
 
+
+def get_eddy_s2v_opts (wildcards, input):
+    options = []
+    if config['eddy_no_s2v']:
+        options += [f'--{key}={value}' for (key,value) in config['eddy']['without_s2v'].items() if value is not None ]
+    else:
+        options += [f'--{key}={value}' for (key,value) in config['eddy']['with_s2v'].items() if value is not None ]            
+    return ' '.join(options)
+
    
-     
+def get_eddy_slspec_input (wildcards):
+    if config['eddy_no_s2v']:
+        return {}
+    else:
+        return {'eddy_slspec_txt': bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards'])}
+
+def get_eddy_slspec_opt (wildcards, input):
+    if config['eddy_no_s2v']:
+        return  ''
+    else:
+        return f'--slspec={input.eddy_slspec_txt}'
+
+    
 rule run_eddy:
     input:        
+        unpack(get_eddy_slspec_input),
         dwi_concat = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         brainmask = get_mask_for_eddy,
         bvals = bids(root='results',suffix='dwi.bval',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         bvecs = bids(root='results',suffix='dwi.bvec',desc='degibbs',datatype='dwi',**config['subj_wildcards'])
@@ -393,9 +414,10 @@ rule run_eddy:
         #set eddy output prefix to 'dwi' inside the output folder
         out_prefix = lambda wildcards, output: os.path.join(output.out_folder,'dwi'),
         flags = ' '.join([f'--{key}' for (key,value) in config['eddy']['flags'].items() if value == True ] ),
-        options = ' '.join([f'--{key}={value}' for (key,value) in config['eddy']['opts'].items() if value is not None ] ),
         container = config['singularity']['fsl_603'],
-        topup_opt = get_eddy_topup_opt
+        topup_opt = get_eddy_topup_opt,
+        s2v_opts = get_eddy_s2v_opts,
+        slspec_opt = get_eddy_slspec_opt,
     output:
         #eddy creates many files, so write them to a eddy subfolder instead
         out_folder = directory(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards'])),
@@ -408,13 +430,15 @@ rule run_eddy:
         mem_mb = 32000,
     log: bids(root='logs',suffix='run_eddy.log',**config['subj_wildcards'])
     group: 'subj'
-    shell: 'singularity exec --nv -e {params.container} eddy_cuda9.1 --imain={input.dwi_concat} --mask={input.brainmask} '
+    shell: 'singularity exec --nv -e {params.container} eddy_cuda9.1 '
+            ' --imain={input.dwi_concat} --mask={input.brainmask} '
             ' --acqp={input.phenc_concat} --index={input.eddy_index_txt} '
             ' --bvecs={input.bvecs} --bvals={input.bvals} '
-            ' --slspec={input.eddy_slspec_txt} ' 
             ' --out={params.out_prefix} '
+            ' {params.s2v_opts} '
+            ' {params.slspec_opt} '
             ' {params.topup_opt} '
-            ' {params.flags} {params.options}  &> {log}'
+            ' {params.flags}  &> {log}'
 
 
 rule cp_eddy_outputs:
@@ -432,27 +456,27 @@ rule cp_eddy_outputs:
 
 rule eddy_quad:
     input:
+        unpack(get_eddy_slspec_input),
         phenc_concat = bids(root='results',suffix='phenc.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         eddy_index_txt = bids(root='results',suffix='dwi.eddy_index.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-        eddy_slspec_txt = bids(root='results',suffix='dwi.eddy_slspec.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         brainmask = get_mask_for_eddy,
         bvals = bids(root='results',suffix='dwi.bval',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         bvecs = bids(root='results',suffix='dwi.bvec',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
 #        fieldmap = bids(root='results',suffix='fmap.nii.gz',desc='topup',datatype='dwi',**config['subj_wildcards']),
-        eddy_dir = bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards'])
+        eddy_dir = bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),
     params: 
         eddy_prefix = lambda wildcards, input: os.path.join(input.eddy_dir,'dwi'),
+        slspec_opt = get_eddy_slspec_opt,
     output:
         out_dir = directory(bids(root='results',suffix='eddy.qc',datatype='dwi',**config['subj_wildcards'])),
         eddy_qc_pdf = bids(root='results',suffix='eddy.qc/qc.pdf',datatype='dwi',**config['subj_wildcards'])
-    
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell: 
         'rmdir {output.out_dir} && '
         'eddy_quad {params.eddy_prefix} --eddyIdx={input.eddy_index_txt} --eddyParams={input.phenc_concat} '
         ' --mask={input.brainmask} --bvals={input.bvals} --bvecs={input.bvecs} --output-dir={output.out_dir} '
-        '--slspec={input.eddy_slspec_txt} --verbose'
+        ' {params.slspec_opt} --verbose'
         #' --field={input.fieldmap} ' #this seems to break it..
 
 rule split_eddy_qc_report:

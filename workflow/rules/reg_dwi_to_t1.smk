@@ -30,6 +30,20 @@ rule reg_aladin_b0_to_t1:
     shell:
         'reg_aladin -rigOnly -flo {input.avgb0} -ref {input.t1w} -res {output.warped_avgb0} -aff {output.xfm_ras}'
 
+
+rule qc_reg_dwi_t1:
+    input:
+        ref = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        flo =  bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
+    output:
+        png = report(bids(root='qc',suffix='reg.png',**config['subj_wildcards'],from_='dwiref', to='T1w'),
+                caption='../reports/reg_dwi_t1.rst',
+                category='B0 T1w registration'),
+        html = bids(root='qc',subject='{subject}',suffix='reg.html',from_='dwiref', to='T1w'),
+    group: 'subj'
+    script: '../scripts/vis_regqc.py'
+
+
 rule convert_xfm_ras2itk:
     input:
         xfm_ras = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',datatype='dwi',**config['subj_wildcards']),
