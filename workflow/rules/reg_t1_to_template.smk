@@ -1,22 +1,15 @@
 
 
-rule import_subj_t1:
-    input:
-        t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
-    output: bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz')
-    group: 'preproc'
-    shell: 'cp {input} {output}'
 
-
-rule affine_aladin:
+rule affine_to_template:
     input: 
-        flo = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz'),
+        flo = bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
         ref = config['template_t1w'],
     output: 
         warped_subj = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz',space='{template}',desc='affine'),
         xfm_ras = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='ras'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         'reg_aladin -flo {input.flo} -ref {input.ref} -res {output.warped_subj} -aff {output.xfm_ras}'
 
@@ -26,7 +19,7 @@ rule convert_template_xfm_ras2itk:
     output:
         bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='{desc}',type_='itk'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         'c3d_affine_tool {input}  -oitk {output}'
 
@@ -38,7 +31,7 @@ rule warp_brainmask_from_template_affine:
     output:
         mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='affine',desc='brain'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell: 'antsApplyTransforms -d 3 --interpolation NearestNeighbor -i {input.mask} -o {output.mask} -r {input.ref} '
             ' -t [{input.xfm},1] ' #use inverse xfm (going from template to subject)
 
@@ -50,7 +43,7 @@ rule warp_tissue_probseg_from_template_affine:
     output:
         probseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='probseg.nii.gz',label='{tissue}',from_='{template}',reg='{desc}'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     threads: 1
     resources:
         mem_mb = 16000
@@ -68,7 +61,7 @@ rule n4biasfield:
         t1 = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],desc='n4', suffix='T1w.nii.gz'),
     threads: 8
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} '
         'N4BiasFieldCorrection -d 3 -i {input.t1} -x {input.mask} -o {output}'
@@ -81,7 +74,7 @@ rule mask_template_t1w:
     output:
         t1 = bids(root='work/reg_t1_to_template', prefix='tpl-{template}/tpl-{template}',desc='masked',suffix='T1w.nii.gz')
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         'fslmaths {input.t1} -mas {input.mask} {output}'
 
@@ -93,7 +86,7 @@ rule mask_subject_t1w:
     output:
         t1 = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='T1w.nii.gz',from_='atropos3seg',desc='masked'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         'fslmaths {input.t1} -mas {input.mask} {output}'
 
@@ -130,7 +123,7 @@ rule ants_syn_affine_init:
         mem_mb = 16000, # right now these are on the high-end -- could implement benchmark rules to do this at some point..
         time = 60 # 1 hrs
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell: 
         'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} '
         'antsRegistration {params.base_opts} {params.intensity_opts} '
@@ -151,7 +144,7 @@ rule warp_dseg_from_template:
     output:
         dseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}',reg='SyN'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     threads: 1
     resources:
         mem_mb = 16000
@@ -169,7 +162,7 @@ rule warp_tissue_probseg_from_template:
     output:
         probseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='probseg.nii.gz',label='{tissue}',from_='{template}',reg='SyN'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     threads: 1
     resources:
         mem_mb = 16000
@@ -186,7 +179,7 @@ rule warp_brainmask_from_template:
     output:
         mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     threads: 1
     resources:
         mem_mb = 16000
@@ -203,7 +196,7 @@ rule dilate_brainmask:
     output:
         mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='{desc}',desc='braindilated'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         'fslmaths {input} {params.dil_opt} {output}'
 
@@ -217,7 +210,7 @@ rule dilate_atlas_labels:
     output:
         dseg = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}',desc='dilated'),
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         'fslmaths {input} {params.dil_opt} {output}'
 
@@ -230,5 +223,6 @@ rule resample_mask_to_dwi:
     output:
         mask = bids(root='results',**config['subj_wildcards'],desc='brain',suffix='mask.nii.gz',method='template',from_='{template}',reg='SyN',datatype='dwi'),
     container: config['singularity']['ants']
+    group: 'subj'
     shell: 
         'antsApplyTransforms -d 3 --input-image-type 0 --input {input.mask} --reference-image {input.ref}  --interpolation {params.interpolation} --output {output.mask} --verbose'

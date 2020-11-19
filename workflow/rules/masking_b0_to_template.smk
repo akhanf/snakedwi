@@ -2,7 +2,7 @@
 #this performs registration from subject b0 to template b0, without using any existing mask
 rule ants_b0_to_template:
     input:  
-        flo = bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',datatype='dwi',**config['subj_wildcards']),
+        flo = bids(root='results',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
         ref = config['template_b0'],
         init_xfm = bids(root='work/reg_t1_to_template',suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk',**config['subj_wildcards']),
     params:
@@ -48,7 +48,7 @@ rule ants_b0_to_template:
 rule warp_brainmask_from_template_reg_b0:
     input: 
         mask = config['template_mask'],
-        ref = bids(root='results',suffix='b0.nii.gz',desc='topup',method='jac',datatype='dwi',**config['subj_wildcards']),
+        ref = bids(root='results',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
         inv_composite = bids(root='work/reg_b0_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',subject='{subject}'),
     output:
         mask = bids(root='work/reg_b0_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
