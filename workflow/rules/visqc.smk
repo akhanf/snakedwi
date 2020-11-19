@@ -13,7 +13,7 @@ rule qc_reg:
 #                caption='../reports/regqc.rst',
 #                category='Registration QC',
 #                subcategory='{desc} {template}'),
-    group: 'preproc'
+    group: 'subj'
     script: '../scripts/vis_regqc.py'
 
 
@@ -26,7 +26,7 @@ rule qc_probseg:
                 caption='../reports/segqc.rst',
                 category='Segmentation QC',
                 subcategory='3-class Tissue Segmentation'),
-    group: 'preproc'
+    group: 'subj'
     script: '../scripts/vis_qc_probseg.py'
 
 rule qc_dseg:
@@ -43,7 +43,7 @@ rule qc_dseg:
 #                caption='../reports/segqc.rst',
 #                category='Segmentation QC',
 #                subcategory='{atlas} Atlas from {template}'),
-    group: 'preproc'
+    group: 'subj'
     script: '../scripts/vis_qc_dseg.py'
 
 

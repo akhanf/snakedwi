@@ -18,7 +18,7 @@ rule tissue_seg_kmeans_init:
         posteriors = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',desc='atroposKseg'),
     shadow: 'minimal'    
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         'Atropos -d 3 -a {input.t1} -i KMeans[{params.k}] -x {input.mask} -o [{output.seg},{params.posterior_fmt}] && '
         'fslmerge -t {output.posteriors} {params.posterior_glob} ' #merge posteriors into a 4d file (intermediate files will be removed b/c shadow)
@@ -33,7 +33,7 @@ rule map_channels_to_tissue:
         mapping_json = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='mapping.json',desc='atropos3seg'),
         tissue_segs = expand(bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',label='{tissue}',desc='atropos3seg'),
                             tissue=config['tissue_labels'],allow_missing=True),
-    group: 'preproc'
+    group: 'subj'
     script: '../scripts/map_channels_to_tissue.py'
        
 rule tissue_seg_to_4d:
@@ -42,7 +42,7 @@ rule tissue_seg_to_4d:
                             tissue=config['tissue_labels'],allow_missing=True),
     output:
         tissue_seg = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='probseg.nii.gz',desc='atropos3seg')
-    group: 'preproc'
+    group: 'subj'
     container: config['singularity']['prepdwi']
     shell:
         'fslmerge -t {output} {input}'
@@ -55,7 +55,7 @@ rule brainmask_from_tissue:
     output:
         mask = bids(root='work/seg_t1_brain_tissue',**config['subj_wildcards'],suffix='mask.nii.gz',from_='atropos3seg',desc='brain')
     container: config['singularity']['prepdwi']
-    group: 'preproc'
+    group: 'subj'
     shell:
         #max over tissue probs, threshold, binarize, fill holes
        'fslmaths {input} -Tmax -thr {params.threshold} -bin -fillh {output}'     
