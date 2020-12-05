@@ -1,67 +1,42 @@
-from os.path import join, exists
-import pandas as pd
-from bids import BIDSLayout
-from snakemake.utils import validate
+#---- snakebids boilerplate
 
-configfile: 'config/config.yml'
-validate(config, "schemas/config.schema.yml")
+import snakebids
+from snakebids import bids
 
+configfile: 'config/snakebids.yml'
 
+#writes inputs_config.yml and updates config dict
+snakebids.generate_inputs_config(config)
 
-
-
-#bids-naming for subject and template (only alphanumeric characters)
-wildcard_constraints:
-    subject="[a-zA-Z0-9]+",
-    session="[a-zA-Z0-9]+",
-
-
-#use dwi_dict when you want to expand over all the dwi images for a subject
-dwi_dict = config['dwi_dict'] 
-
-
-#get dictionary for grabbing the first dwi run as an exemplar
-dwi_exemplar_dict = { k:dwi_dict[k][0] for k in dwi_dict.keys() }
-
-#use dwi_wildcards when using the bids() function, as it contains the mappings,e.g. run='run'
-dwi_wildcards = { key: f'{{{key}}}' for key in dwi_dict.keys()}
-
-subj_dict = config['subj_dict']
-subj_wildcards = { key: f'{{{key}}}' for key in subj_dict.keys()}
-
-#load participants.tsv file, and strip off sub- from participant_id column
-if exists(config['participants_tsv']):
-    df = pd.read_table(config['participants_tsv'])
-    validate(df, 'schemas/participants.schema.yml')
-
-    subjects = df.participant_id.to_list() 
-    subjects = [ s.strip('sub-') for s in subjects ]
-    
-    #replace subjects with participants_tsv subjects:
-    subj_dict['subject'] = subjects
-
-
+#this adds constraints to the bids naming
+wildcard_constraints:  **snakebids.get_wildcard_constraints(config)
 
 report: '../workflow/report/workflow.rst'
 
-#this include is for the bids() function, and 
-#and any other global function declarations
-include: 'rules/common.smk'
+
+def get_eddy_quad_all():
+    if config['eddy_no_quad']:
+        return {}
+    else:
+        return {'eddy_qc': expand(bids(root='results',datatype='dwi',suffix='eddy.qc_pages',**config['subj_wildcards']), zip,**config['input_zip_lists']['dwi'])}
 
 rule all:
     input: 
-        eddy = expand(bids(root='results',suffix='dwi.nii.gz',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards), **subj_dict),
-        eddy_qc = expand(bids(root='results',suffix='eddy.qc_pages',**subj_wildcards), **subj_dict),
-        mask_qc = expand(bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),**subj_dict),
-        dtifit = expand(bids(root='results',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**subj_wildcards),**subj_dict)
+        **get_eddy_quad_all(),
+        mask_qc = expand(bids(root='qc',suffix='mask.png',desc='brain', **config['subj_wildcards']),zip,**config['input_zip_lists']['dwi']),
+        reg_qc = expand(bids(root='qc',suffix='reg.png',from_='dwiref',to='T1w',**config['subj_wildcards']),zip,**config['input_zip_lists']['dwi']),
+        dtifit = expand(bids(root='results',datatype='dwi',suffix='dtifit',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**config['subj_wildcards']),zip,**config['input_zip_lists']['dwi']),
+        bedpost = expand(bids(root='results',datatype='dwi',suffix='diffusion.bedpostX',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],**config['subj_wildcards']),zip,**config['input_zip_lists']['dwi']),
 
 
 include: "rules/prepdwi.smk"
 include: "rules/reg_dwi_to_t1.smk"
 include: "rules/masking_bet_from-b0.smk"
-#include: "rules/mask_multishell.smk"
 include: "rules/masking_b0_to_template.smk"
-#include: "rules/templateflow.smk"
 include: "rules/reg_t1_to_template.smk"
 include: "rules/seg_t1_brain_tissue.smk"
 
+
+# WIP:
+#include: "rules/mask_multishell.smk"
+#include: "rules/templateflow.smk"
