@@ -423,7 +423,7 @@ rule run_eddy:
         out_folder = directory(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards'])),
         dwi = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.nii.gz'),
         bvec = os.path.join(bids(root='results',suffix='eddy',datatype='dwi',**config['subj_wildcards']),'dwi.eddy_rotated_bvecs')
-    threads: 8 #this needs to be set in order to avoid multiple gpus from executing
+    threads: 16 #this needs to be set in order to avoid multiple gpus from executing
     resources:
         gpus = 1,
         time = 240, #6 hours (this is a conservative estimate, may be shorter)
