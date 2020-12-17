@@ -1,29 +1,40 @@
 import setuptools
+import json
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
+with open('snakedwi/pipeline_description.json', 'r') as fh:
+    pipeline = json.load(fh)
+    name = pipeline['GeneratedBy'][0]['Name']
+    description = pipeline['Name']
+    version = pipeline['GeneratedBy'][0]['Version']
+    url = pipeline['GeneratedBy'][0]['CodeURL']
+    author = pipeline['GeneratedBy'][0]['Author']
+    author_email = pipeline['GeneratedBy'][0]['AuthorEmail']
+ 
 setuptools.setup(
-    name="snakedwi", 
-    version="0.1.0",
-    author="Ali Khan",
-    author_email="alik@robarts.ca",
-    description="Snakemake BIDS app for dwi pre-processing",
+    name=name,
+    version=version,
+    author=author,
+    author_email=author_email,
+    description=description,
     long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/akhanf/prepdwi_smk",
+    long_description_content_type="text/x-rst",
+    url=url,
     packages=setuptools.find_packages(),
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     entry_points={'console_scripts': [
-        'snakedwi=run:main'
+        'snakedwi=snakedwi.run:main'
     ]},
     install_requires=[
-        "snakebids",
-        "snakemake==5.28.0",
+        "snakebids>=0.2.0",
+        "snakemake>=5.28.0",
         "pandas",
         "nibabel",
         "numpy"

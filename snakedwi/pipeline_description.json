@@ -1,0 +1,15 @@
+{
+    "Name": "snakedwi - BIDS app and snakemake workflow for dwi pre-processing",
+    "BIDSVersion": "1.4.0",
+    "DatasetType": "derivative",
+    "GeneratedBy": [
+        {
+            "Name": "snakedwi",
+            "Version": "0.1.0",
+            "CodeURL": "http://github.com/org/name",
+            "Author": "Author name here",
+            "AuthorEmail": "Author email"
+ 
+        }
+    ]
+}

@@ -37,7 +37,7 @@ pybids_inputs:
       - session
       - acquisition
       - run
-      - dir
+      - direction
 
   T1w:
     filters:
