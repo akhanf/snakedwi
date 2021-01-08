@@ -148,7 +148,6 @@ rule apply_topup_lsr:
            ' fslmaths {params.out_prefix}.nii.gz {output.dwi_topup}'
 
 
-
 rule apply_topup_jac:
     input:
         nii = bids(root='results',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['input_wildcards']['dwi']), 
@@ -157,6 +156,8 @@ rule apply_topup_jac:
         topup_fieldcoef = bids(root='results',suffix='topup_fieldcoef.nii.gz',datatype='dwi',**config['subj_wildcards']),
         topup_movpar = bids(root='results',suffix='topup_movpar.txt',datatype='dwi',**config['subj_wildcards']),
     params:
+        inindex = lambda wildcards: snakebids.get_filtered_ziplist_index(
+                        config['input_zip_lists']['dwi'],wildcards,config['subj_wildcards']) +1,# adjust from 0- to 1-indexed
         topup_prefix = bids(root='results',suffix='topup',datatype='dwi',**config['subj_wildcards']),
     output: 
         nii = bids(root='results',suffix='dwi.nii.gz',desc='topup',method='jac',datatype='dwi',**config['input_wildcards']['dwi']), 
@@ -164,8 +165,7 @@ rule apply_topup_jac:
     shadow: 'minimal'
     group: 'subj'
     shell: 
-        'line=`cat {input.phenc_scan}` && inindex=`grep -n "$line" {input.phenc_concat} | cut -f1 -d:` && '
-        ' applytopup --verbose --datain={input.phenc_concat} --imain={input.nii} --inindex=$inindex ' 
+        ' applytopup --verbose --datain={input.phenc_concat} --imain={input.nii} --inindex={params.inindex} ' 
         ' -t {params.topup_prefix} -o dwi_topup --method=jac && mv dwi_topup.nii.gz {output.nii}'
 
 
@@ -310,7 +310,7 @@ rule qc_brainmask_for_eddy:
 
         html = bids(root='qc',suffix='mask.html',desc='brain',**config['subj_wildcards']),
 #        html = report(bids(root='qc',subject='{subject}',suffix='dseg.html',atlas='{atlas}', from_='{template}'),
-#                caption='../reports/segqc.rst',
+#                caption='../report/segqc.rst',
 #                category='Segmentation QC',
 #                subcategory='{atlas} Atlas from {template}'),
     group: 'subj'
@@ -426,7 +426,7 @@ rule run_eddy:
     threads: 16 #this needs to be set in order to avoid multiple gpus from executing
     resources:
         gpus = 1,
-        time = 240, #6 hours (this is a conservative estimate, may be shorter)
+        time = 360, #6 hours (this is a conservative estimate, may be shorter)
         mem_mb = 32000,
     log: bids(root='logs',suffix='run_eddy.log',**config['subj_wildcards'])
     group: 'subj'
@@ -525,7 +525,7 @@ rule run_bedpost:
     resources:
         gpus=1,
         mem_mb=16000,
-        time=120,
+        time=360,
     shell: 
         'singularity exec -e --nv {params.container} bedpostx_gpu {input.diff_dir} && '
         'rm -rf {output.bedpost_dir}/logs && '  #remove the logs to reduce # of files  
