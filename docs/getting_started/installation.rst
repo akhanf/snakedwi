@@ -52,8 +52,19 @@ Here are some instructions to get your python environment set-up on graham to ru
 
 #. Follow the steps above to install from github repository
 
-Running jobs on graham
-----------------------
+Install job submission helpers
+------------------------------
+
+Snakemake can submit jobs with SLURM, but you need to set-up a Snakemake profile to enable this. The Khan lab has a
+snakemake profile that is configured for graham but is customizable upon install, please see `cc-slurm <https://github.com/khanlab/cc-slurm>`_ for more info.
+
+If you don't need Snakemake to parallelize jobs across different nodes, you can make use of the simple job submission wrappers in `neuroglia-helpers <https://github.com/khanlab/neuroglia-helpers>`_, e.g. ``regularSubmit`` or ``regularInteractive`` wrappers.
+
+These are used in the instructions below.
+
+Running jobs on Compute Canada
+------------------------------
+
 In an interactive job (for testing)::
 
     regularInteractive -n 8
@@ -74,4 +85,3 @@ Scaling up to even more subjects (uses group-components to bundle multiple subje
 
     snakedwi bids_dir out_dir participant  --profile cc-slurm --group-components subj=10
 
-Note that this requires `neuroglia-helpers <https://github.com/khanlab/neuroglia-helpers>`_ for regularSubmit or regularInteractive wrappers, and the `cc-slurm <https://github.com/khanlab/cc-slurm>`_ snakemake profile for graham cluster execution with slurm.
