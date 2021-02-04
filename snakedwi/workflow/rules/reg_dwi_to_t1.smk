@@ -37,7 +37,7 @@ rule qc_reg_dwi_t1:
         flo =  bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
     output:
         png = report(bids(root='qc',suffix='reg.png',**config['subj_wildcards'],from_='dwiref', to='T1w'),
-                caption='../reports/reg_dwi_t1.rst',
+                caption='../report/reg_dwi_t1.rst',
                 category='B0 T1w registration'),
         html = bids(root='qc',subject='{subject}',suffix='reg.html',from_='dwiref', to='T1w'),
     group: 'subj'

@@ -1,8 +1,5 @@
-# --- from denoise-fmri
-search_terms: {}
- 
-bids_dir: '/project/6050199/akhanf/ext-bids/cam-can/bids/combined'
-output_dir: '/scratch/akhanf/camcan_prepdwi_smk/out'
+bids_dir: '/path/to/bids/dir'
+output_dir: '/path/to/output/dir'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
@@ -37,7 +34,7 @@ pybids_inputs:
       - session
       - acquisition
       - run
-      - dir
+      - direction
 
   T1w:
     filters:
