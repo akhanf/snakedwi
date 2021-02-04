@@ -11,7 +11,7 @@ setuptools.setup(
     description="Snakemake BIDS app for dwi pre-processing",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/akhanf/prepdwi_smk",
+    url="https://github.com/akhanf/snakedwi",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -22,7 +22,7 @@ setuptools.setup(
         'snakedwi=run:main'
     ]},
     install_requires=[
-        "snakebids",
+        "snakebids==0.2.1",
         "snakemake==5.28.0",
         "pandas",
         "nibabel",
