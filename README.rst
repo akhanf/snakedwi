@@ -1,5 +1,4 @@
-Snakedwi
-========
+snakedwi
+============
 
-Documentation under construction!
-
+BIDS app and snakemake workflow for dwi pre-processing

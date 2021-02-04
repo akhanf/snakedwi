@@ -1,56 +1,33 @@
 Installation
 ============
 
-Template snakebids BIDS App 
+snakedwi
 
 
-Requirements
-------------
+Install from github:
 
-Docker (Mac/Windows/Linux) or Singularity (Linux)
-
-Docker:
-^^^^^^^
-
-Pull the container:
-
-.. code-block::
-
-   docker pull khanlab/app_name:latest
-
-do a dry run, printing the command at each step:
-
-.. code-block::
-
-   docker run -it --rm -v PATH_TO_BIDS_DIR:/bids:ro -v PATH_TO_OUTPUT_DIR:/output khanlab/app_name:latest /bids /output participant -np 
-
-run it with maximum number of cores:
-
-.. code-block::
-
-   docker run -it --rm -v PATH_TO_BIDS_DIR:/bids:ro -v PATH_TO_OUTPUT_DIR:/output khanlab/app_name:latest /bids /output participant -p --cores all
+```
+pip install -e http://github.com/akhanf/snakedwi
+```
 
 
-Singularity:
-^^^^^^^^^^^^
+Running the app
+===============
 
-Pull the container:
+Do a dry-run first (`-n`) and simply print (`-p`) what would be run:
 
-.. code-block::
+```
+snakedwi /path/to/bids/dir /path/to/output/dir participant -np
+```
 
-   singularity pull khanlab_app_name_latest.sif docker://khanlab/app_name:latest
+Run the app, using all cores:
 
-do a dry run, printing the command at each step:
+```
+snakedwi /path/to/bids/dir /path/to/output/dir participant --cores all
+```
 
-.. code-block::
+If any workflow rules require containers, then run with the `--use-singularity`` option.
 
-   singularity run -e khanlab_app_name_latest.sif khanlab/app_name:latest PATH_TO_BIDS_DIR PATH_TO_OUTPUT_DIR participant -np 
-
-run it with maximum number of cores:
-
-.. code-block::
-
-   singularity run -e khanlab_app_name_latest.sif khanlab/app_name:latest PATH_TO_BIDS_DIR PATH_TO_OUTPUT_DIR participant  -p --cores all
 
 
 

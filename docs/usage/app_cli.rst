@@ -2,8 +2,8 @@ Command line interface
 --------------------
 
 .. argparse::
-   :filename: ../app_name/run.py
+   :filename: ../snakedwi/run.py
    :func: get_parser
-   :prog: hippunfold
+   :prog: snakedwi
 
 

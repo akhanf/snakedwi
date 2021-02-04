@@ -34,7 +34,7 @@ setuptools.setup(
     ]},
     install_requires=[
         "snakebids==0.2.1",
-        "snakemake==5.28.0",
+        "snakemake",
         "pandas",
         "nibabel",
         "numpy",
