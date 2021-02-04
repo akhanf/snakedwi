@@ -6,9 +6,9 @@
         {
             "Name": "snakedwi",
             "Version": "0.1.0",
-            "CodeURL": "http://github.com/org/name",
-            "Author": "Author name here",
-            "AuthorEmail": "Author email"
+            "CodeURL": "http://github.com/akhanf/snakedwi",
+            "Author": "Ali R. Khan",
+            "AuthorEmail": "alik@robarts.ca"
  
         }
     ]
