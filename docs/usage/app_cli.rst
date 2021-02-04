@@ -1,5 +1,5 @@
 Command line interface
---------------------
+----------------------
 
 .. argparse::
    :filename: ../snakedwi/run.py
