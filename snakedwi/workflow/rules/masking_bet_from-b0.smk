@@ -8,7 +8,7 @@ rule import_avg_b0:
     input:  
         bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
     output:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
     group: 'subj'
     shell:
         'cp {input} {output}'
@@ -16,9 +16,9 @@ rule import_avg_b0:
 #n4
 rule n4_avg_b0:
     input:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
     output:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='n4',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='n4',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -28,9 +28,9 @@ rule n4_avg_b0:
 #rescale intensities, clip off first/last 5% of intensities, then rescale to 0-2000 
 rule rescale_avg_b0:
     input:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='n4',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='n4',datatype='dwi',**config['subj_wildcards']),
     output:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='rescale',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='rescale',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -38,9 +38,9 @@ rule rescale_avg_b0:
 
 rule bet_avg_b0_default_frac:
     input:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='rescale',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='rescale',datatype='dwi',**config['subj_wildcards']),
     output:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='bet',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='bet',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -49,11 +49,11 @@ rule bet_avg_b0_default_frac:
 
 rule bet_avg_b0_custom_frac:
     input:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='rescale',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='rescale',datatype='dwi',**config['subj_wildcards']),
     params:
         frac = '0.{frac}'
     output:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='bet',frac='{frac}',datatype='dwi',**config['subj_wildcards'])
+        bids(root='work',suffix='b0.nii.gz',desc='bet',frac='{frac}',datatype='dwi',**config['subj_wildcards'])
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -63,7 +63,7 @@ rule bet_avg_b0_custom_frac:
 
 rule binarize_avg_b0_custom_frac:
     input:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='bet',frac='{frac}',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='bet',frac='{frac}',datatype='dwi',**config['subj_wildcards']),
     output:
         bids(root='work',suffix='mask.nii.gz',desc='brain',method='bet_from-b0',frac='{frac}',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
@@ -73,7 +73,7 @@ rule binarize_avg_b0_custom_frac:
 
 rule binarize_avg_b0:
     input:
-        bids(root='work/bet_from-b0',suffix='b0.nii.gz',desc='bet',datatype='dwi',**config['subj_wildcards']),
+        bids(root='work',suffix='b0.nii.gz',desc='bet',datatype='dwi',**config['subj_wildcards']),
     output:
         bids(root='work',suffix='mask.nii.gz',desc='brain',method='bet_from-b0',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
