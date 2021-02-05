@@ -217,11 +217,11 @@ rule dilate_atlas_labels:
 rule resample_mask_to_dwi:
     input:
         mask = bids(root='work/reg_t1_to_template',**config['subj_wildcards'],suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
-        ref = bids(root='results',desc='topup',datatype='dwi',method='jac',**config['subj_wildcards'],suffix='b0.nii.gz'),
+        ref = bids(root='work',desc='topup',datatype='dwi',method='jac',**config['subj_wildcards'],suffix='b0.nii.gz'),
     params:
         interpolation = 'NearestNeighbor'
     output:
-        mask = bids(root='results',**config['subj_wildcards'],desc='brain',suffix='mask.nii.gz',method='template',from_='{template}',reg='SyN',datatype='dwi'),
+        mask = bids(root='work',**config['subj_wildcards'],desc='brain',suffix='mask.nii.gz',method='template',from_='{template}',reg='SyN',datatype='dwi'),
     container: config['singularity']['ants']
     group: 'subj'
     shell: 
