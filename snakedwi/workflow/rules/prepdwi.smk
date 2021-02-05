@@ -284,24 +284,24 @@ rule get_shell_avg:
     script:
         '../scripts/get_shell_avg.py'
 
-#have multiple brainmasking workflows -- this rule picks the method chosen in the config file
-def get_mask_for_eddy(wildcards):
-
-    #first get name of method
-    if wildcards.subject in config['masking']['custom']:
-        method = config['masking']['custom'][wildcards.subject]
-    else:
-        method = config['masking']['default_method']
-
-    #then get bids name of file 
+def get_mask_for_eddy():
+    if config['masking_method'] == 'b0_BET':
+        method = 'bet_from-b0'
+    elif config['masking_method'] == 'b0_SyN':
+        method = f"b0SyN_from-{config['template']}"
+    
+    #then get bids name of file
     return bids(root='work',suffix='mask.nii.gz',desc='brain',method=method,datatype='dwi',**config['subj_wildcards'])
 
 
+
+
+#have multiple brainmasking workflows -- this rule picks the method chosen in the config file
 #generate qc snapshot for brain  mask 
 rule qc_brainmask_for_eddy:
     input:
         img = bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
-        seg = get_mask_for_eddy
+        seg = get_mask_for_eddy(),
     output:
 #        png = bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),
         png = report(bids(root='qc',suffix='mask.png',desc='brain',**config['subj_wildcards']),
@@ -400,14 +400,16 @@ def get_eddy_slspec_opt (wildcards, input):
     else:
         return f'--slspec={input.eddy_slspec_txt}'
 
-    
+   
+
+ 
 rule run_eddy:
     input:        
         unpack(get_eddy_slspec_input),
         dwi_concat = bids(root='work',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         phenc_concat = bids(root='work',suffix='phenc.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         eddy_index_txt = bids(root='work',suffix='dwi.eddy_index.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-        brainmask = get_mask_for_eddy,
+        brainmask = get_mask_for_eddy(),
         bvals = bids(root='work',suffix='dwi.bval',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         bvecs = bids(root='work',suffix='dwi.bvec',desc='degibbs',datatype='dwi',**config['subj_wildcards'])
     params:
@@ -459,7 +461,7 @@ rule eddy_quad:
         unpack(get_eddy_slspec_input),
         phenc_concat = bids(root='work',suffix='phenc.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         eddy_index_txt = bids(root='work',suffix='dwi.eddy_index.txt',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
-        brainmask = get_mask_for_eddy,
+        brainmask = get_mask_for_eddy(),
         bvals = bids(root='work',suffix='dwi.bval',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
         bvecs = bids(root='work',suffix='dwi.bvec',desc='degibbs',datatype='dwi',**config['subj_wildcards']),
 #        fieldmap = bids(root='work',suffix='fmap.nii.gz',desc='topup',datatype='dwi',**config['subj_wildcards']),
