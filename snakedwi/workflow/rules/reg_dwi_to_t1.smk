@@ -1,13 +1,13 @@
 #just grab the first T1w for now:
 rule import_t1:
     input: lambda wildcards: expand(config['input_path']['T1w'],zip,**snakebids.filter_list(config['input_zip_lists']['T1w'],wildcards))[0]
-    output: bids(root='results',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz')
+    output: bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz')
     group: 'subj'
     shell: 'cp {input} {output}'
 
 rule n4_t1:
     input: 
-        t1 = bids(root='results',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz'),
+        t1 = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz'),
     output:
         t1 = bids(root='results',datatype='anat',**config['subj_wildcards'],desc='preproc', suffix='T1w.nii.gz'),
     threads: 8
@@ -21,10 +21,10 @@ rule n4_t1:
 rule reg_aladin_b0_to_t1:
     input: 
         t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
-        avgb0 =  bids(root='results',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        avgb0 =  bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
     output: 
-        warped_avgb0 = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
-        xfm_ras = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',datatype='dwi',**config['subj_wildcards']),
+        warped_avgb0 = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        xfm_ras = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -33,7 +33,7 @@ rule reg_aladin_b0_to_t1:
 
 rule qc_reg_dwi_t1:
     input:
-        ref = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        ref = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
         flo =  bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
     output:
         png = report(bids(root='qc',suffix='reg.png',**config['subj_wildcards'],from_='dwiref', to='T1w'),
@@ -46,9 +46,9 @@ rule qc_reg_dwi_t1:
 
 rule convert_xfm_ras2itk:
     input:
-        xfm_ras = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',datatype='dwi',**config['subj_wildcards']),
+        xfm_ras = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',datatype='dwi',**config['subj_wildcards']),
     output:
-        xfm_itk = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',datatype='dwi',**config['subj_wildcards']),
+        xfm_itk = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -58,10 +58,10 @@ rule convert_xfm_ras2itk:
 rule convert_xfm_ras2fsl:
     input:
         t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
-        avgb0 =  bids(root='results',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
-        xfm_ras = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',datatype='dwi',**config['subj_wildcards']),
+        avgb0 =  bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        xfm_ras = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',datatype='dwi',**config['subj_wildcards']),
     output:
-        xfm_fsl = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='fsl',datatype='dwi',**config['subj_wildcards']),
+        xfm_fsl = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='fsl',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -70,9 +70,9 @@ rule convert_xfm_ras2fsl:
 #tight crop around b0 after rotating into T1w space
 rule create_cropped_ref:
     input:
-        warped_avgb0 = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        warped_avgb0 = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
     output:
-        cropped_avgb0 = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',datatype='dwi',**config['subj_wildcards']),
+        cropped_avgb0 = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -90,19 +90,19 @@ rule write_nii_resolution_to_txt:
 #rules for creating reference image for each resampling scheme -- only the rules that are required will be run..
 rule create_cropped_ref_t1_resolution:
     input:
-        cropped_avgb0 = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',datatype='dwi',**config['subj_wildcards']),
+        cropped_avgb0 = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',datatype='dwi',**config['subj_wildcards']),
     output:
-        avgb0_crop_resample = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res='T1w',datatype='dwi',**config['subj_wildcards']),
+        avgb0_crop_resample = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res='T1w',datatype='dwi',**config['subj_wildcards']),
     group: 'subj'
     shell:
         'cp {input} {output}'
 
 rule create_cropped_ref_dwi_resolution:
     input:
-        cropped = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',datatype='dwi',**config['subj_wildcards']),
-        res_txt_orig = bids(root='results',suffix='b0.resolution_mm.txt',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        cropped = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',datatype='dwi',**config['subj_wildcards']),
+        res_txt_orig = bids(root='work',suffix='b0.resolution_mm.txt',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
     output:
-        resampled = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res='orig',datatype='dwi',**config['subj_wildcards']),
+        resampled = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res='orig',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -111,11 +111,11 @@ rule create_cropped_ref_dwi_resolution:
 
 rule create_cropped_ref_custom_resolution:
     input:
-        cropped = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',datatype='dwi',**config['subj_wildcards']),
+        cropped = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',datatype='dwi',**config['subj_wildcards']),
     params:
         resolution = 'x'.join([str(vox) for vox in config['resample_dwi']['resample_mm']]) + 'mm'
     output:
-        resampled = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res='custom',datatype='dwi',**config['subj_wildcards']),
+        resampled = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res='custom',datatype='dwi',**config['subj_wildcards']),
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
@@ -123,9 +123,9 @@ rule create_cropped_ref_custom_resolution:
 
 rule resample_dwi_to_t1w:
     input:
-        ref = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
+        ref = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
         dwi = bids(root='results',suffix='dwi.nii.gz',desc='eddy',datatype='dwi',**config['subj_wildcards']),
-        xfm_itk = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',datatype='dwi',**config['subj_wildcards']),
+        xfm_itk = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',datatype='dwi',**config['subj_wildcards']),
     params:
         interpolation = 'Linear'
     output:
@@ -139,9 +139,9 @@ rule resample_dwi_to_t1w:
    
 rule resample_brainmask_to_t1w:
     input:
-        ref = bids(root='results',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
-        brainmask = get_mask_for_eddy,
-        xfm_itk = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',datatype='dwi',**config['subj_wildcards']),
+        ref = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
+        brainmask = get_mask_for_eddy(),
+        xfm_itk = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',datatype='dwi',**config['subj_wildcards']),
     params:
         interpolation = 'NearestNeighbor'
     output:
@@ -158,7 +158,7 @@ rule resample_brainmask_to_t1w:
 rule rotate_bvecs_to_t1w:
     input:
         bvecs = bids(root='results',suffix='dwi.bvec',desc='eddy',datatype='dwi',**config['subj_wildcards']),
-        xfm_fsl = bids(root='results',suffix='xfm.txt',from_='dwi',to='T1w',type_='fsl',datatype='dwi',**config['subj_wildcards']),
+        xfm_fsl = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='fsl',datatype='dwi',**config['subj_wildcards']),
         bvals = bids(root='results',suffix='dwi.bval',desc='eddy',datatype='dwi',**config['subj_wildcards'])
     params:
         script = os.path.join(config['snakemake_dir'],'workflow/scripts/rotate_bvecs.sh')

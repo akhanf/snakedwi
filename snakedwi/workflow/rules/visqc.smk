@@ -2,7 +2,7 @@
 rule qc_reg:
     input:
         ref = config['template_t1w'],
-        flo = bids(root='results',subject='{subject}',suffix='T1w.nii.gz',space='{template}',desc='{desc}'),
+        flo = bids(root='work',subject='{subject}',suffix='T1w.nii.gz',space='{template}',desc='{desc}'),
     output:
         png = report(bids(root='qc',subject='{subject}',suffix='regqc.png',from_='subject', to='{template}',desc='{desc}'),
                 caption='../report/regqc.rst',
@@ -19,8 +19,8 @@ rule qc_reg:
 
 rule qc_probseg:
     input:
-        img = bids(root='results',subject='{subject}',desc='n4', suffix='T1w.nii.gz'),
-        seg4d = bids(root='results',subject='{subject}',suffix='probseg.nii.gz',desc='atropos3seg'),
+        img = bids(root='work',subject='{subject}',desc='n4', suffix='T1w.nii.gz'),
+        seg4d = bids(root='work',subject='{subject}',suffix='probseg.nii.gz',desc='atropos3seg'),
     output:
         png = report(bids(root='qc',subject='{subject}',suffix='probseg.png',desc='atropos3seg'),
                 caption='../report/segqc.rst',
@@ -31,8 +31,8 @@ rule qc_probseg:
 
 rule qc_dseg:
     input:
-        img = bids(root='results',subject='{subject}',desc='n4', suffix='T1w.nii.gz'),
-        seg = bids(root='results',subject='{subject}',suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}',reg='SyN'),
+        img = bids(root='work',subject='{subject}',desc='n4', suffix='T1w.nii.gz'),
+        seg = bids(root='work',subject='{subject}',suffix='dseg.nii.gz',atlas='{atlas}',from_='{template}',reg='SyN'),
     output:
         png = report(bids(root='qc',subject='{subject}',suffix='dseg.png',atlas='{atlas}', from_='{template}'),
                 caption='../report/segqc.rst',

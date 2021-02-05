@@ -2,11 +2,11 @@
 #this performs registration from subject b0 to template b0, without using any existing mask
 rule ants_b0_to_template:
     input:  
-        flo = bids(root='results',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
-        ref = config['template_b0'],
-        init_xfm = bids(root='work/reg_t1_to_template',suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk',**config['subj_wildcards']),
+        flo = bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        ref = os.path.join(config['snakemake_dir'],config['template_b0']),
+        init_xfm = bids(root='work',datatype='anat',suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk',**config['subj_wildcards']),
     params:
-        out_prefix = bids(root='work/reg_b0_to_template',suffix='',from_='subject',to='{template}',subject='{subject}'),
+        out_prefix = bids(root='work',datatype='dwi',suffix='',from_='subject',to='{template}',subject='{subject}'),
         base_opts = '--write-composite-transform -d {dim} '.format(dim=config['ants']['dim']),
         intensity_opts = config['ants']['intensity_opts'],
         init_transform = lambda wildcards, input: '-r {xfm}'.format(xfm=input.init_xfm),
@@ -26,9 +26,9 @@ rule ants_b0_to_template:
                                 template=input.ref, target=input.flo)
 
     output:
-        out_composite = bids(root='work/reg_b0_to_template',suffix='Composite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
-        out_inv_composite = bids(root='work/reg_b0_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
-        warped_flo = bids(root='work/reg_b0_to_template',suffix='b0.nii.gz',space='{template}',desc='SyN',**config['subj_wildcards']),
+        out_composite = bids(root='work',datatype='dwi',suffix='Composite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
+        out_inv_composite = bids(root='work',datatype='dwi',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
+        warped_flo = bids(root='work',datatype='dwi',suffix='b0.nii.gz',space='{template}',desc='SyN',**config['subj_wildcards']),
     threads: 8
     resources:
         mem_mb = 16000, # right now these are on the high-end -- could implement benchmark rules to do this at some point..
@@ -47,11 +47,11 @@ rule ants_b0_to_template:
 #now, we apply the transform to template mask to get what should be an accurate registration-based b0 mask
 rule warp_brainmask_from_template_reg_b0:
     input: 
-        mask = config['template_mask'],
-        ref = bids(root='results',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
-        inv_composite = bids(root='work/reg_b0_to_template',suffix='InverseComposite.h5',from_='subject',to='{template}',subject='{subject}'),
+        mask = os.path.join(config['snakemake_dir'],config['template_mask']),
+        ref = bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+        inv_composite = bids(root='work',datatype='dwi',suffix='InverseComposite.h5',from_='subject',to='{template}',subject='{subject}'),
     output:
-        mask = bids(root='work/reg_b0_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
+        mask = bids(root='work',datatype='dwi',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
     container: config['singularity']['prepdwi']
     group: 'preproc'
     threads: 1
@@ -65,9 +65,9 @@ rule warp_brainmask_from_template_reg_b0:
 #copy to the main folder
 rule cp_brainmask_reg_b0:
     input:
-        mask = bids(root='work/reg_b0_to_template',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
+        mask = bids(root='work',datatype='dwi',subject='{subject}',suffix='mask.nii.gz',from_='{template}',reg='SyN',desc='brain'),
     output:
-        mask = bids(root='results',method='b0SyN',subject='{subject}',suffix='mask.nii.gz',from_='{template}',desc='brain',datatype='dwi'),
+        mask = bids(root='work',method='b0SyN',subject='{subject}',suffix='mask.nii.gz',from_='{template}',desc='brain',datatype='dwi'),
     shell:
         'cp -v {input} {output}'
 
