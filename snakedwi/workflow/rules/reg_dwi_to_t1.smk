@@ -140,7 +140,7 @@ rule resample_dwi_to_t1w:
 rule resample_brainmask_to_t1w:
     input:
         ref = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',proc='crop',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
-        brainmask = get_mask_for_eddy,
+        brainmask = get_mask_for_eddy(),
         xfm_itk = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='itk',datatype='dwi',**config['subj_wildcards']),
     params:
         interpolation = 'NearestNeighbor'
