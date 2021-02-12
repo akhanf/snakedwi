@@ -4,7 +4,8 @@ Installation
 
 Install from github::
 
-    pip install -e http://github.com/akhanf/snakedwi
+    git clone http://github.com/akhanf/snakedwi
+    pip install -e snakedwi
 
 
 Running the app
