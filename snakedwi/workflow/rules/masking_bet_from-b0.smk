@@ -46,7 +46,7 @@ rule bet_avg_b0:
     container: config['singularity']['prepdwi']
     group: 'subj'
     shell:
-        'bet {input} -f {params.bet_frac} {output}'
+        'bet {input} {output} -f {params.bet_frac}'
 
 
 rule binarize_avg_b0:
