@@ -44,6 +44,9 @@ else:
     min_nshells = np.min(nshells)
     possible_shells = np.where(nshells == min_nshells)[0]
     chosen_shells = shells[possible_shells[-1]]
+    
+    #force first shell to be zero
+    chosen_shells[0] = 0
 
     #round to nearest 100
     chosen_shells = np.around(chosen_shells,-2).astype('int')
