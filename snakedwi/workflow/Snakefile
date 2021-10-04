@@ -1,4 +1,4 @@
-#---- snakebids boilerplate
+#---- begin snakebids boilerplate ----------------------------------------------
 
 import snakebids
 from snakebids import bids
@@ -6,13 +6,33 @@ from snakebids import bids
 configfile: 'config/snakebids.yml'
 
 #writes inputs_config.yml and updates config dict
-snakebids.generate_inputs_config(config)
+config.update(
+    snakebids.generate_inputs(
+        bids_dir=config["bids_dir"],
+        pybids_inputs=config["pybids_inputs"],
+        derivatives=config["derivatives"],
+        participant_label=config["participant_label"],
+        exclude_participant_label=config["exclude_participant_label"]
+    )
+)
+
+
 
 #this adds constraints to the bids naming
-wildcard_constraints:  **snakebids.get_wildcard_constraints(config)
+wildcard_constraints:  **snakebids.get_wildcard_constraints(\
+    config["pybids_inputs"]\
+)
+
+#---- end snakebids boilerplate ------------------------------------------------
 
 report: '../workflow/report/workflow.rst'
 
+
+subj_wildcards = config['subj_wildcards']
+input_zip_lists = config['input_zip_lists']
+
+print(subj_wildcards)
+print(input_zip_lists)
 
 def get_eddy_quad_all():
     if config['eddy_no_quad']:
