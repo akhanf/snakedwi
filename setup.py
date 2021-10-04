@@ -33,7 +33,7 @@ setuptools.setup(
         'snakedwi=snakedwi.run:main'
     ]},
     install_requires=[
-        "snakebids==0.2.1",
+        "snakebids>=0.3.14",
         "snakemake",
         "pandas",
         "nibabel",
