@@ -16,6 +16,7 @@ analysis_levels: &analysis_levels
 no_topup: False
 eddy_no_s2v: False
 eddy_no_quad: False
+no_bedpost: False
 
 targets_by_analysis_level:
   participant:
@@ -90,6 +91,12 @@ parse_args:
     action: 'store_true'
     default: False
 
+  --no_bedpost:
+    help: 'Disable bedpost  (default: %(default)s)'
+    action: 'store_true'
+    default: False
+
+   
   --eddy_no_s2v:
     help: 'Disables slice-to-volume in eddy by setting mporder=0. This option must be used
           if your dwi json does not include SliceTiming (default: %(default)s)'
