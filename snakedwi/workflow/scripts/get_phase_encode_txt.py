@@ -36,6 +36,10 @@ if (len(json_dwi['PhaseEncodingDirection']) == 2):
     if json_dwi['PhaseEncodingDirection'][1] == '-':
         vec[ np.where(vec>0)] = -1
 
+if not 'EffectiveEchoSpacing' in json_dwi:
+    print('EffectiveEchoSpacing not defined in JSON, using default value of 0.0001')
+    json_dwi['EffectiveEchoSpacing'] = 0.0001 #some default value
+
 #create the phenc_line row
 phenc_line = np.hstack([ vec, np.array(json_dwi['EffectiveEchoSpacing'] * numPhaseEncodes) ])
 
