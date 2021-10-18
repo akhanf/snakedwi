@@ -120,6 +120,12 @@ parse_args:
     help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
     default: 0.5
 
+  --slspec_txt:
+    help: 'Path to custom slspec txt file for use with eddy. Must use this if SliceTiming does not exist in the JSON (default: %(default)s)'
+    default: False
+    type: Path
+
+
 #---- to update below this
 
 singularity:
