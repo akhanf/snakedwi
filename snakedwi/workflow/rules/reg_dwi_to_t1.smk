@@ -39,7 +39,7 @@ rule qc_reg_dwi_t1:
         png = report(bids(root='qc',suffix='reg.png',**config['subj_wildcards'],from_='dwiref', to='T1w'),
                 caption='../report/reg_dwi_t1.rst',
                 category='B0 T1w registration'),
-        html = bids(root='qc',subject='{subject}',suffix='reg.html',from_='dwiref', to='T1w'),
+        html = bids(root='qc',suffix='reg.html',from_='dwiref', to='T1w', **config['subj_wildcards']),
     group: 'subj'
     script: '../scripts/vis_regqc.py'
 
