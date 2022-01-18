@@ -18,18 +18,23 @@ rule n4_t1:
         'N4BiasFieldCorrection -d 3 -i {input.t1} -o {output}'
 
 
-rule reg_aladin_b0_to_t1:
+rule reg_dwi_to_t1:
     input: 
         t1w = bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
         avgb0 =  bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
+    params:
+        general_opts = '-d 3',
+        rigid_opts = '-m NMI -a -dof 6 -ia-identity',
     output: 
         warped_avgb0 = bids(root='work',suffix='avgb0.nii.gz',space='T1w',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
         xfm_ras = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='ras',datatype='dwi',**config['subj_wildcards']),
-    container: config['singularity']['prepdwi']
+    container: config['singularity']['autotop']
     group: 'subj'
+    log: bids(root='logs',suffix='reg_b0_to_t1.txt',datatype='dwi',**config['subj_wildcards'])
+    threads: 8
     shell:
-        'reg_aladin -rigOnly -flo {input.avgb0} -ref {input.t1w} -res {output.warped_avgb0} -aff {output.xfm_ras}'
-
+        'greedy -threads {threads} {params.general_opts} {params.rigid_opts}  -i {input.t1w} {input.avgb0} -o {output.xfm_ras}  &> {log}  && '
+        'greedy -threads {threads} {params.general_opts} -rf {input.t1w} -rm {input.avgb0} {output.warped_avgb0}  -r {output.xfm_ras} &>> {log}'
 
 rule qc_reg_dwi_t1:
     input:

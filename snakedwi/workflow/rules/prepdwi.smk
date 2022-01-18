@@ -521,7 +521,7 @@ rule run_bedpost:
     params:
         container = config['singularity']['fsl_604']
     output:
-        bedpost_dir = directory(bids(root='results',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
+        bedpost_dir = directory(bids(root='work',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
     group: 'subj'
     threads: 8 #this needs to be set in order to avoid multiple gpus from executing
     resources:
@@ -534,6 +534,13 @@ rule run_bedpost:
         'rm -rf {input.diff_dir}' # remove the input dir (copy of files) 
 
 
+rule cp_bedpost_to_results:
+    input:
+        bedpost_dir = directory(bids(root='work',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
+    output:
+        bedpost_dir = directory(bids(root='results',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
+    group: 'subj'
+    shell: 'cp -Rv {input} {output}'
        
     #TODO: gradient correction (optional step -- only if gradient file is provided).. 
 #  gradient_unwarp.py
