@@ -127,6 +127,7 @@ singularity:
   ants: '/project/6050199/akhanf/singularity/ants-v2.3.1.sif'
   fsl_603: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif' 
   fsl_604: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif'  #eddy seems to fail with 6.0.4
+  autotop: '/project/6050199/akhanf/singularity/bids-apps/khanlab_autotop_deps_v0.4.1.sif'
 
 
 
