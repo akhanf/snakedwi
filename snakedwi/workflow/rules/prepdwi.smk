@@ -156,11 +156,9 @@ rule apply_topup_jac:
         topup_fieldcoef = bids(root='work',suffix='topup_fieldcoef.nii.gz',datatype='dwi',**config['subj_wildcards']),
         topup_movpar = bids(root='work',suffix='topup_movpar.txt',datatype='dwi',**config['subj_wildcards']),
     params:
-#        inindex = lambda wildcards: snakebids.get_filtered_ziplist_index(
-#                        config['input_zip_lists']['dwi'],wildcards,config['subj_wildcards']) +1,# adjust from 0- to 1-indexed
         inindex = lambda wildcards: snakebids.filter_list(config['input_zip_lists']['dwi'],
                                                             wildcards,
-                                                            return_indices_only=True),
+                                                            return_indices_only=True)[0]+1, #get the index of the image, but adjust from 0- to 1-indexed
         topup_prefix = bids(root='work',suffix='topup',datatype='dwi',**config['subj_wildcards']),
     output: 
         nii = bids(root='work',suffix='dwi.nii.gz',desc='topup',method='jac',datatype='dwi',**config['input_wildcards']['dwi']), 
