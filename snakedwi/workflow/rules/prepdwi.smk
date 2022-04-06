@@ -401,8 +401,12 @@ def get_eddy_slspec_opt (wildcards, input):
     else:
         return f'--slspec={input.eddy_slspec_txt}'
 
-   
-
+def get_eddy_cmd(wildcards):
+    if config.get("use_eddy_container",False):
+        return f"singularity exec --nv -e {config['singularity']['fsl_603']} eddy_cuda9.1"
+    else:
+        return 'eddy_openmp'
+ 
  
 rule run_eddy:
     input:        
@@ -421,6 +425,7 @@ rule run_eddy:
         topup_opt = get_eddy_topup_opt,
         s2v_opts = get_eddy_s2v_opts,
         slspec_opt = get_eddy_slspec_opt,
+        eddy_cmd = get_eddy_cmd,
     output:
         #eddy creates many files, so write them to a eddy subfolder instead
         out_folder = directory(bids(root='work',suffix='eddy',datatype='dwi',**config['subj_wildcards'])),
@@ -433,7 +438,7 @@ rule run_eddy:
         mem_mb = 32000,
     log: bids(root='logs',suffix='run_eddy.log',**config['subj_wildcards'])
     group: 'subj'
-    shell: 'singularity exec --nv -e {params.container} eddy_cuda9.1 '
+    shell: '{params.eddy_cmd} '
             ' --imain={input.dwi_concat} --mask={input.brainmask} '
             ' --acqp={input.phenc_concat} --index={input.eddy_index_txt} '
             ' --bvecs={input.bvecs} --bvals={input.bvals} '
@@ -477,9 +482,9 @@ rule eddy_quad:
     group: 'subj'
     shell: 
         'rmdir {output.out_dir} && '
-        'eddy_quad {params.eddy_prefix} --eddyIdx={input.eddy_index_txt} --eddyParams={input.phenc_concat} '
-        ' --mask={input.brainmask} --bvals={input.bvals} --bvecs={input.bvecs} --output-dir={output.out_dir} '
-        ' {params.slspec_opt} --verbose'
+        'eddy_quad {params.eddy_prefix} -idx {input.eddy_index_txt} -par {input.phenc_concat} '
+        ' -m {input.brainmask} -b {input.bvals} -g {input.bvecs} -o {output.out_dir} '
+        ' {params.slspec_opt} -v'
         #' --field={input.fieldmap} ' #this seems to break it..
 
 rule split_eddy_qc_report:
@@ -488,8 +493,7 @@ rule split_eddy_qc_report:
     output:
         report(directory(bids(root='work',suffix='eddy.qc_pages',datatype='dwi',**config['subj_wildcards'])),patterns=['{pagenum}.png'],caption="../report/eddy_qc.rst", category="eddy_qc",subcategory=bids(**config['subj_wildcards'],include_subject_dir=False,include_session_dir=False))
     group: 'subj'
-    shell:
-        'mkdir -p {output} && convert {input} {output}/%02d.png'
+    script: '../scripts/split_pdf.py'
         
 
 rule copy_inputs_for_bedpost:
@@ -511,6 +515,18 @@ rule copy_inputs_for_bedpost:
         'cp {input.brainmask} {output.brainmask} && '
         'cp {input.bval} {output.bval} && '
         'cp {input.bvec} {output.bvec} '
+
+def get_bedpost_cmd(wildcards):
+    if config.get("use_bedpost_container",False):
+        return f"singularity exec --nv -e {config['singularity']['fsl_604']} bedpostx_gpu"
+    else:
+        return os.path.join(workflow.basedir,f'scripts/bedpostx-parallel')
+
+def get_bedpost_parallel_opt(wildcards,threads):
+    if config.get("use_bedpost_container",False):
+        return ""
+    else:
+        return f'-P {threads}'
         
 rule run_bedpost:
     input:
@@ -520,17 +536,18 @@ rule run_bedpost:
         bval = os.path.join(bids(root='work',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'bvals'),
         bvec = os.path.join(bids(root='work',desc='eddy',suffix='diffusion',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),'bvecs'),
     params:
-        container = config['singularity']['fsl_604']
+        bedpost_cmd = get_bedpost_cmd,
+        parallel_opt = get_bedpost_parallel_opt,
     output:
         bedpost_dir = directory(bids(root='work',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
     group: 'subj'
-    threads: 8 #this needs to be set in order to avoid multiple gpus from executing
+    threads: 32 #this needs to be set in order to avoid multiple gpus from executing
     resources:
         gpus=1,
         mem_mb=16000,
         time=360,
     shell: 
-        'singularity exec -e --nv {params.container} bedpostx_gpu {input.diff_dir} && '
+        '{params.bedpost_cmd} {input.diff_dir} {params.parallel_opt} && '
         'rm -rf {output.bedpost_dir}/logs && '  #remove the logs to reduce # of files  
         'rm -rf {input.diff_dir}' # remove the input dir (copy of files) 
 

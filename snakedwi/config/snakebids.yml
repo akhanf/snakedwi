@@ -98,7 +98,7 @@ parse_args:
 
    
   --eddy_no_s2v:
-    help: 'Disables slice-to-volume in eddy by setting mporder=0. This option must be used
+    help: 'Disables slice-to-volume in eddy. This option must be used
           if your dwi json does not include SliceTiming (default: %(default)s)'
     action: 'store_true'
     default: False
@@ -230,6 +230,6 @@ eddy:
     s2v_interp: trilinear
     ol_type: 'both'  #can be sw, gw, or both (use sw if no multi-band)
   without_s2v:
-    mporder: 0
+    ol_type: 'sw'  #can be sw, gw, or both (use sw if no multi-band)
 
     
