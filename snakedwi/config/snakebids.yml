@@ -120,6 +120,17 @@ parse_args:
     help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
     default: 0.5
 
+  --use_gpu_eddy_container:
+    help: 'Use GPU-based eddy container'
+    action: 'store_true'
+    default: False
+
+
+  --use_gpu_bedpost_container:
+    help: 'Use GPU-based bedpost container'
+    action: 'store_true'
+    default: False
+
 #---- to update below this
 
 singularity:
