@@ -148,6 +148,22 @@ rule apply_topup_lsr:
            ' fslmaths {params.out_prefix}.nii.gz {output.dwi_topup}'
 
 
+def get_applytopup_inindex(wildcards):
+
+    #need to get index of the scan from the subject scans
+    # so first filter the ziplist to get the subject(+session)
+    subj_filter = {'subject': wildcards.subject}
+    if 'session' in config['subj_wildcards'].keys():
+        subj_filter['session'] = wildcards.session
+
+    zip_list_subj = snakebids.filter_list(config['input_zip_lists']['dwi'],subj_filter)
+
+
+    #now filter the subj ziplist using all wildcards to get the index of the scan
+    indices = snakebids.filter_list(zip_list_subj,wildcards,return_indices_only=True)
+    return indices[0] + 1 #get first index, but adjust to start at 1 instead of 0
+
+   
 rule apply_topup_jac:
     input:
         nii = bids(root='work',suffix='dwi.nii.gz',desc='degibbs',datatype='dwi',**config['input_wildcards']['dwi']), 
@@ -156,9 +172,7 @@ rule apply_topup_jac:
         topup_fieldcoef = bids(root='work',suffix='topup_fieldcoef.nii.gz',datatype='dwi',**config['subj_wildcards']),
         topup_movpar = bids(root='work',suffix='topup_movpar.txt',datatype='dwi',**config['subj_wildcards']),
     params:
-        inindex = lambda wildcards: snakebids.filter_list(config['input_zip_lists']['dwi'],
-                                                            wildcards,
-                                                            return_indices_only=True)[0]+1, #get the index of the image, but adjust from 0- to 1-indexed
+        inindex = get_applytopup_inindex,
         topup_prefix = bids(root='work',suffix='topup',datatype='dwi',**config['subj_wildcards']),
     output: 
         nii = bids(root='work',suffix='dwi.nii.gz',desc='topup',method='jac',datatype='dwi',**config['input_wildcards']['dwi']), 
