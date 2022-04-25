@@ -729,44 +729,63 @@ rule qc_brainmask_for_eddy:
         html=bids(
             root="qc", suffix="mask.html", desc="brain", **config["subj_wildcards"]
         ),
-
-
-#        html = report(bids(root='qc',subject='{subject}',suffix='dseg.html',atlas='{atlas}', from_='{template}'),
-#                caption='../report/segqc.rst',
-#                category='Segmentation QC',
-#                subcategory='{atlas} Atlas from {template}'),
-group: "subj"
-script: "../scripts/vis_qc_dseg.py"
-
-
-rule get_slspec_txt:
-    input:
-        dwi_jsons=lambda wildcards: expand(
-            bids(
-                root="work",
-                suffix="dwi.json",
-                desc="degibbs",
-                datatype="dwi",
-                **config["input_wildcards"]["dwi"]
-            ),
-            zip,
-            **snakebids.filter_list(config["input_zip_lists"]["dwi"], wildcards)
-        ),
-    output:
-        eddy_slspec_txt=bids(
-            root="work",
-            suffix="dwi.eddy_slspec.txt",
-            desc="degibbs",
-            datatype="dwi",
-            **config["subj_wildcards"]
-        ),
     group:
         "subj"
     script:
-        "../scripts/get_slspec_txt.py"
+        "../scripts/vis_qc_dseg.py"
 
 
+# if the --slspec_txt option is not used, use the SliceTiming json, otherwise just get from the file supplied at command-line
+if not config["slspec_txt"]:
+
+    rule get_slspec_txt:
+        input:
+            dwi_jsons=lambda wildcards: expand(
+                bids(
+                    root="work",
+                    suffix="dwi.json",
+                    desc="degibbs",
+                    datatype="dwi",
+                    **config["input_wildcards"]["dwi"]
+                ),
+                zip,
+                **snakebids.filter_list(config["input_zip_lists"]["dwi"], wildcards)
+            ),
+        output:
+            eddy_slspec_txt=bids(
+                root="work",
+                suffix="dwi.eddy_slspec.txt",
+                desc="degibbs",
+                datatype="dwi",
+                **config["subj_wildcards"]
+            ),
+        group:
+            "subj"
+        script:
+            "../scripts/get_slspec_txt.py"
+
+
+else:
+
+    rule get_slspec_txt:
+        input:
+            config["slspec_txt"],
+        output:
+            eddy_slspec_txt=bids(
+                root="work",
+                suffix="dwi.eddy_slspec.txt",
+                desc="degibbs",
+                datatype="dwi",
+                **config["subj_wildcards"]
+            ),
+        group:
+            "subj"
+        shell:
+            "cp {input} {output}"
 # --- this is where the choice of susceptibility distortion correction (SDC) is made --
+
+
+
 #
 # get dwi reference for masking, registration -- either topup or degibbs b0
 #  currently, if more than one dwi, we use topup, otherwise, no distortion correction (i.e. get degibbs)
