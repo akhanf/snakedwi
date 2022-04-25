@@ -22,6 +22,10 @@ pillow = "8.4.0"
 
 
 [tool.poetry.dev-dependencies]
+snakefmt = "^0.6.0"
+poethepoet = "^0.10.0"
+black = ">=22.1.0,<23.0.0"
+isort = "^5.10.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -30,3 +34,12 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 snakedwi = "snakedwi.run:main"
+
+
+[tool.poe.tasks]
+quality_check = { shell = "isort hippunfold/*.py -c && black hippunfold --check && snakefmt hippunfold --check" }
+quality_fix = { shell = "isort hippunfold/*.py && black hippunfold  && snakefmt hippunfold" }
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
