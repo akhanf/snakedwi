@@ -30,8 +30,6 @@ report: '../workflow/report/workflow.rst'
 subj_wildcards = config['subj_wildcards']
 input_zip_lists = config['input_zip_lists']
 
-print(subj_wildcards)
-print(input_zip_lists)
 
 def get_eddy_quad_all():
     if config['eddy_no_quad']:

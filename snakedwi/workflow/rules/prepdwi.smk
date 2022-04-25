@@ -568,7 +568,7 @@ rule run_bedpost:
 
 rule cp_bedpost_to_results:
     input:
-        bedpost_dir = directory(bids(root='work',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
+        bedpost_dir = bids(root='work',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
     output:
         bedpost_dir = directory(bids(root='results',desc='eddy',suffix='diffusion.bedpostX',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])),
     group: 'subj'

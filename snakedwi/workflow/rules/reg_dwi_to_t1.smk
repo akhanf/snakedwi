@@ -166,7 +166,7 @@ rule rotate_bvecs_to_t1w:
         xfm_fsl = bids(root='work',suffix='xfm.txt',from_='dwi',to='T1w',type_='fsl',datatype='dwi',**config['subj_wildcards']),
         bvals = bids(root='results',suffix='dwi.bval',desc='eddy',datatype='dwi',**config['subj_wildcards'])
     params:
-        script = os.path.join(config['snakemake_dir'],'workflow/scripts/rotate_bvecs.sh')
+        script = workflow.source_path('../scripts/rotate_bvecs.sh')
     output:
         bvecs = bids(root='results',suffix='dwi.bvec',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards']),
         bvals = bids(root='results',suffix='dwi.bval',desc='eddy',space='T1w',res=config['resample_dwi']['resample_scheme'],datatype='dwi',**config['subj_wildcards'])

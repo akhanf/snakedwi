@@ -3,7 +3,7 @@
 rule ants_b0_to_template:
     input:  
         flo = bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
-        ref = os.path.join(config['snakemake_dir'],config['template_b0']),
+        ref = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_b0'])).format(**wildcards),
         init_xfm = bids(root='work',datatype='anat',suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk',**config['subj_wildcards']),
     params:
         out_prefix = bids(root='work',datatype='dwi',suffix='',from_='subject',to='{template}',subject='{subject}'),
@@ -47,7 +47,7 @@ rule ants_b0_to_template:
 #now, we apply the transform to template mask to get what should be an accurate registration-based b0 mask
 rule warp_brainmask_from_template_reg_b0:
     input: 
-        mask = os.path.join(config['snakemake_dir'],config['template_mask']),
+        mask = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_mask'])).format(**wildcards),
         ref = bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards']),
         inv_composite = bids(root='work',datatype='dwi',suffix='InverseComposite.h5',from_='subject',to='{template}',subject='{subject}'),
     output:

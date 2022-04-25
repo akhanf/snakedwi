@@ -4,7 +4,7 @@
 rule affine_to_template:
     input: 
         flo = bids(root='results',suffix='T1w.nii.gz',desc='preproc',datatype='anat',**config['subj_wildcards']),
-        ref = os.path.join(config['snakemake_dir'],config['template_t1w']),
+        ref = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_t1w'])).format(**wildcards),
     output: 
         warped_subj = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz',space='{template}',desc='affine'),
         xfm_ras = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='ras'),
@@ -25,7 +25,7 @@ rule convert_template_xfm_ras2itk:
 
 rule warp_brainmask_from_template_affine:
     input: 
-        mask = os.path.join(config['snakemake_dir'],config['template_mask']),
+        mask = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_mask'])).format(**wildcards),
         ref = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz'),
         xfm = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='affine',type_='itk'),
     output:
@@ -37,7 +37,7 @@ rule warp_brainmask_from_template_affine:
 
 rule warp_tissue_probseg_from_template_affine:
     input: 
-        probseg = os.path.join(config['snakemake_dir'],config['template_tissue_probseg']),
+        probseg = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_tissue_probseg'])).format(**wildcards),
         ref = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz'),
         xfm = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='xfm.txt',from_='subject',to='{template}',desc='{desc}',type_='itk'),
     output:
@@ -69,8 +69,8 @@ rule n4biasfield:
 
 rule mask_template_t1w:
     input:
-        t1 = os.path.join(config['snakemake_dir'],config['template_t1w']),
-        mask = os.path.join(config['snakemake_dir'],config['template_mask']),
+        t1 = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_t1w'])).format(**wildcards),
+        mask = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_mask'])).format(**wildcards),
     output:
         t1 = bids(root='work',datatype='anat', prefix='tpl-{template}/tpl-{template}',desc='masked',suffix='T1w.nii.gz')
     container: config['singularity']['prepdwi']
@@ -138,7 +138,7 @@ rule ants_syn_affine_init:
 
 rule warp_dseg_from_template:
     input: 
-        dseg = os.path.join(config['snakemake_dir'],config['template_atlas_dseg_nii']),
+        dseg = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_atlas_dseg'])).format(**wildcards),
         ref = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz'),
         inv_composite = bids(root='work',datatype='anat',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
     output:
@@ -156,7 +156,7 @@ rule warp_dseg_from_template:
 
 rule warp_tissue_probseg_from_template:
     input: 
-        probseg = os.path.join(config['snakemake_dir'],config['template_tissue_probseg']),
+        probseg = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_tissue_probseg'])).format(**wildcards),
         ref = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz'),
         inv_composite = bids(root='work',datatype='anat',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
     output:
@@ -173,7 +173,7 @@ rule warp_tissue_probseg_from_template:
 
 rule warp_brainmask_from_template:
     input: 
-        mask = os.path.join(config['snakemake_dir'],config['template_mask']),
+        mask = lambda wildcards: workflow.source_path(os.path.join('..','..',config['template_mask'])).format(**wildcards),
         ref = bids(root='work',datatype='anat',**config['subj_wildcards'],suffix='T1w.nii.gz'),
         inv_composite = bids(root='work',datatype='anat',suffix='InverseComposite.h5',from_='subject',to='{template}',**config['subj_wildcards']),
     output:
