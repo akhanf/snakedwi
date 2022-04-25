@@ -1,5 +1,5 @@
-bids_dir: '/path/to/bids/dir'
-output_dir: '/path/to/output/dir'
+bids_dir: 'test_data/bids_AP_PA'
+output_dir: 'test_output'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
@@ -98,7 +98,7 @@ parse_args:
 
    
   --eddy_no_s2v:
-    help: 'Disables slice-to-volume in eddy by setting mporder=0. This option must be used
+    help: 'Disables slice-to-volume in eddy. This option must be used
           if your dwi json does not include SliceTiming (default: %(default)s)'
     action: 'store_true'
     default: False
@@ -119,6 +119,17 @@ parse_args:
   --b0_bet_frac:
     help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
     default: 0.5
+
+  --use_gpu_eddy_container:
+    help: 'Use GPU-based eddy container'
+    action: 'store_true'
+    default: False
+
+
+  --use_gpu_bedpost_container:
+    help: 'Use GPU-based bedpost container'
+    action: 'store_true'
+    default: False
 
 #---- to update below this
 
@@ -230,6 +241,12 @@ eddy:
     s2v_interp: trilinear
     ol_type: 'both'  #can be sw, gw, or both (use sw if no multi-band)
   without_s2v:
-    mporder: 0
+    ol_type: 'sw'  #can be sw, gw, or both (use sw if no multi-band)
 
-    
+
+#for test data
+participant_label: 
+exclude_participant_label:
+masking_method: b0_BET
+b0_bet_frac: 0.5
+
