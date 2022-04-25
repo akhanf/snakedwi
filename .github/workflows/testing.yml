@@ -1,0 +1,118 @@
+name: Tests
+
+on:
+  push:
+
+jobs:
+  
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.8
+          restore-keys: ${{ runner.os }}-pip-3.8
+      - name: Install non-python dependencies
+        run: |
+          sudo apt-get install -y graphviz-dev
+      #----------------------------------------------
+      #  -----  install & configure poetry  -----
+      #----------------------------------------------
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      #----------------------------------------------
+      #       load cached venv if cache exists
+      #----------------------------------------------
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}-3.8
+      #----------------------------------------------
+      # install dependencies if cache does not exist
+      #----------------------------------------------
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      #----------------------------------------------
+      # install your root project, if required
+      #----------------------------------------------
+      - name: Install library
+        run: poetry install --no-interaction
+
+      #----------------------------------------------
+      #       run python style checks
+      #----------------------------------------------
+      - name: isort
+        run: poetry run isort snakedwi/*.py -c
+      - name: Black
+        run: poetry run black snakedwi --check
+      - name: snakefmt
+        run: poetry run snakefmt snakedwi --check    
+ 
+  test:
+
+    runs-on: ubuntu-latest
+    needs: [ 'quality'  ]
+    strategy:
+      matrix:
+        python-version: ['3.8']
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}
+        restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}
+    - name: Install non-python dependencies
+      run: |
+        sudo apt-get install -y graphviz-dev
+    #----------------------------------------------
+    #  -----  install & configure poetry  -----
+    #----------------------------------------------
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    #----------------------------------------------
+    #       load cached venv if cache exists
+    #----------------------------------------------
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v2
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}-${{ matrix.python-version }}
+    #----------------------------------------------
+    # install dependencies if cache does not exist
+    #----------------------------------------------
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+    #----------------------------------------------
+    # install your root project, if required
+    #----------------------------------------------
+    - name: Install library
+      run: poetry install --no-interaction
+    - name: Test single T2w bids
+      run: |
+        poetry run snakedwi snakedwi/test_data/bids_AP_PA test_out participant -np
+
+
+
