@@ -54,8 +54,12 @@ jobs:
       #----------------------------------------------
       #       run python style checks
       #----------------------------------------------
+      - name: isort
+        run: poetry run isort snakedwi/*.py -c
+      - name: Black
+        run: poetry run black snakedwi --check
       - name: snakefmt
-        run: poetry run snakefmt snakedwi --check
+        run: poetry run snakefmt snakedwi --check    
  
   test:
 
