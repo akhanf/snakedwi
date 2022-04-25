@@ -29,13 +29,11 @@ jobs:
     - name: Test workflow
       uses: akhanf/snakebids-github-action@685b32697746727406f625f04420945eaa1e7b82
       with:
-        directory: snakedwi/test_data
-        snakefile: snakedwi/workflow/Snakefile
+        directory: snakedwi
         args: "--dry-run"
 
     - name: Test report
       uses: akhanf/snakebids-github-action@685b32697746727406f625f04420945eaa1e7b82
       with:
-        directory: .test
-        snakefile: snakedwi/workflow/Snakefile
+        directory: snakedwi
         args: "--report report.zip"
