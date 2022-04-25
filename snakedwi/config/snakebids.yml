@@ -1,5 +1,5 @@
-bids_dir: '/path/to/bids/dir'
-output_dir: '/path/to/output/dir'
+bids_dir: 'test_data/bids_AP_PA'
+output_dir: 'test_output'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
@@ -243,4 +243,10 @@ eddy:
   without_s2v:
     ol_type: 'sw'  #can be sw, gw, or both (use sw if no multi-band)
 
-    
+
+#for test data
+participant_label: 
+exclude_participant_label:
+masking_method: b0_BET
+b0_bet_frac: 0.5
+
