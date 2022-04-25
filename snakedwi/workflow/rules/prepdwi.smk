@@ -785,6 +785,7 @@ else:
 # --- this is where the choice of susceptibility distortion correction (SDC) is made --
 
 
+
 #
 # get dwi reference for masking, registration -- either topup or degibbs b0
 #  currently, if more than one dwi, we use topup, otherwise, no distortion correction (i.e. get degibbs)
