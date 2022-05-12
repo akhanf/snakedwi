@@ -1,5 +1,5 @@
-bids_dir: 'test_data/bids_AP_PA'
-output_dir: 'test_output'
+bids_dir: 'test_data/bids_multishell_downsampled'
+output_dir: 'test_output/snakedwi_multishell_downsampled'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
@@ -256,4 +256,4 @@ exclude_participant_label:
 masking_method: b0_BET
 b0_bet_frac: 0.5
 slspec_txt: False
-
+eddy_no_s2v: True
