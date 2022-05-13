@@ -48,7 +48,7 @@ rule dwidenoise:
             ".json",
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["mrtrix"]
     log:
         bids(root="logs", suffix="denoise.log", **input_wildcards["dwi"]),
     group:
@@ -94,7 +94,7 @@ rule mrdegibbs:
             ".json",
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["mrtrix"]
     log:
         bids(root="logs", suffix="degibbs.log", **input_wildcards["dwi"]),
     group:
@@ -202,7 +202,7 @@ rule concat_bzeros:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["mrtrix"]
     log:
         bids(root="logs", suffix="concat_bzeros.log", **subj_wildcards),
     group:
@@ -256,7 +256,7 @@ rule run_topup:
             root="work", suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     log:
         bids(root="logs", suffix="topup.log", **subj_wildcards),
     group:
@@ -315,7 +315,7 @@ rule apply_topup_lsr:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shadow:
         "minimal"
     group:
@@ -386,7 +386,7 @@ rule apply_topup_jac:
             **input_wildcards["dwi"]
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shadow:
         "minimal"
     group:
@@ -472,7 +472,7 @@ rule concat_dwi_topup_jac:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["mrtrix"]
     group:
         "subj"
     shell:
@@ -530,7 +530,7 @@ rule concat_degibbs_dwi:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["mrtrix"]
     log:
         bids(root="logs", suffix="concat_degibbs_dwi.log", **subj_wildcards),
     group:
@@ -1073,7 +1073,7 @@ rule eddy_quad:
             root="work", suffix="eddy.qc/qc.pdf", datatype="dwi", **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:

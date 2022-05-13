@@ -21,7 +21,7 @@ checkpoint split_shell_avgs:
             )
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "mkdir -p {output}; fslsplit {input} {params.out_prefix}"
 
@@ -45,7 +45,7 @@ rule n4_shell_avg:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     shell:
         "N4BiasFieldCorrection -i {input} -o {output}"
 
@@ -57,7 +57,7 @@ rule rescale_shell_avg:
     output:
         rescale_nii="{infile}_rescale.{shell}.nii.gz",
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     shell:
         "c3d -verbose {input} -clip 5% 95% -stretch 0% 99% 0 2000 -o {output}"
 
@@ -71,7 +71,7 @@ rule bet_shell_avg:
     output:
         bet_nii="{infile}_bet.{shell}.nii.gz",
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "bet {input} {output} -f {params.frac}"
 
@@ -85,7 +85,7 @@ rule smooth_binarize_shell_avg:
     output:
         mask_nii="{infile}_binarize.{shell}.nii.gz",
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     shell:
         "c3d {input} -binarize -sdt -smooth {params.smoothing} -threshold {params.sdt_thresh} inf 0 1 -o {output}"
 
@@ -116,7 +116,7 @@ rule n4_shell_avg_withb0mask:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     shell:
         "N4BiasFieldCorrection -i {input.avg_nii} -o {output} -x {input.mask_nii} --convergence [200x200x200x200] "
 
@@ -178,7 +178,7 @@ rule tissue_seg_kmeans_init:
     container:
         config["singularity"]["prepdwi"]
     shell:
-        #merge posteriors into a 4d file (intermediate files will be removed b/c shadow)
+        #merge posteriors into a 4d file (intermediate files will be removed b/c shadow) - TODO: update this so just requires ants
         "Atropos -d 3  {params.intensity_images} -i KMeans[{params.k}] -x {input.mask} -o [{output.seg},{params.posterior_fmt}] && "
         "fslmerge -t {output.posteriors} {params.posterior_glob} "
 
@@ -202,7 +202,7 @@ rule extract_posterior_bgnd:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "fslroi {input} {output} 0 1"
 
@@ -233,7 +233,7 @@ rule refine_mask_with_tissue_prob:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "fslmaths {input.mask} -sub {input.posterior_bgnd} {output.mask}"
 
@@ -259,6 +259,6 @@ rule smooth_threshold_refined_mask:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     shell:
         "c3d {input.mask} -smooth {params.smooth} -threshold 0.5 Inf 1 0 -o {output.mask}"

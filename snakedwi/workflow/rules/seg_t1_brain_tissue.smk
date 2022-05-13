@@ -120,7 +120,7 @@ rule tissue_seg_to_4d:
     group:
         "subj"
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "fslmerge -t {output} {input}"
 
@@ -144,7 +144,7 @@ rule brainmask_from_tissue:
             desc="brain"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:

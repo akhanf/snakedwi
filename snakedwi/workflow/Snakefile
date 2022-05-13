@@ -11,10 +11,10 @@ include: "rules/masking_b0_to_template.smk"
 include: "rules/reg_t1_to_template.smk"
 include: "rules/seg_t1_brain_tissue.smk"
 
-
 # WIP:
 # include: "rules/mask_multishell.smk"
 # include: "rules/templateflow.smk"
+
 rule all:
     input:
         **get_eddy_quad_all(),

@@ -33,7 +33,7 @@ rule affine_to_template:
             type_="ras"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["niftyreg"]
     group:
         "subj"
     shell:
@@ -64,7 +64,7 @@ rule convert_template_xfm_ras2itk:
             type_="itk"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     group:
         "subj"
     shell:
@@ -98,7 +98,7 @@ rule warp_brainmask_from_template_affine:
             desc="brain"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     group:
         "subj"
     shell:
@@ -133,7 +133,7 @@ rule warp_tissue_probseg_from_template_affine:
             reg="{desc}"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     group:
         "subj"
     threads: 1
@@ -167,7 +167,7 @@ rule n4biasfield:
         ),
     threads: 8
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     group:
         "subj"
     shell:
@@ -192,7 +192,7 @@ rule mask_template_t1w:
             suffix="T1w.nii.gz",
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
@@ -225,7 +225,7 @@ rule mask_subject_t1w:
             desc="masked"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
@@ -324,7 +324,7 @@ rule ants_syn_affine_init:
         mem_mb=16000,  # right now these are on the high-end -- could implement benchmark rules to do this at some point..
         time=60,  # 1 hrs
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     group:
         "subj"
     shell:
@@ -360,7 +360,7 @@ rule warp_dseg_from_template:
             reg="SyN"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     group:
         "subj"
     threads: 1
@@ -398,7 +398,7 @@ rule warp_tissue_probseg_from_template:
             reg="SyN"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     group:
         "subj"
     threads: 1
@@ -436,7 +436,7 @@ rule warp_brainmask_from_template:
             desc="brain"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     group:
         "subj"
     threads: 1
@@ -473,7 +473,7 @@ rule dilate_brainmask:
             desc="braindilated"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
@@ -504,7 +504,7 @@ rule dilate_atlas_labels:
             desc="dilated"
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
