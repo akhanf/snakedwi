@@ -178,9 +178,9 @@ rule tissue_seg_kmeans_init:
     container:
         config["singularity"]["prepdwi"]
     shell:
+        #merge posteriors into a 4d file (intermediate files will be removed b/c shadow)
         "Atropos -d 3  {params.intensity_images} -i KMeans[{params.k}] -x {input.mask} -o [{output.seg},{params.posterior_fmt}] && "
         "fslmerge -t {output.posteriors} {params.posterior_glob} "
-        #merge posteriors into a 4d file (intermediate files will be removed b/c shadow)
 
 
 # get class 0 from tissue seg - corresponds to lowest intensity

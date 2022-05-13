@@ -9,7 +9,7 @@ rule import_avg_b0:
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     output:
         bids(
@@ -17,7 +17,7 @@ rule import_avg_b0:
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     group:
         "subj"
@@ -33,7 +33,7 @@ rule n4_avg_b0:
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     output:
         bids(
@@ -41,7 +41,7 @@ rule n4_avg_b0:
             suffix="b0.nii.gz",
             desc="n4",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     container:
         config["singularity"]["prepdwi"]
@@ -59,7 +59,7 @@ rule rescale_avg_b0:
             suffix="b0.nii.gz",
             desc="n4",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     output:
         bids(
@@ -67,7 +67,7 @@ rule rescale_avg_b0:
             suffix="b0.nii.gz",
             desc="rescale",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     container:
         config["singularity"]["prepdwi"]
@@ -84,7 +84,7 @@ rule bet_avg_b0:
             suffix="b0.nii.gz",
             desc="rescale",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     params:
         bet_frac=config["b0_bet_frac"],
@@ -94,7 +94,7 @@ rule bet_avg_b0:
             suffix="b0.nii.gz",
             desc="bet",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     container:
         config["singularity"]["prepdwi"]
@@ -111,7 +111,7 @@ rule binarize_avg_b0:
             suffix="b0.nii.gz",
             desc="bet",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     output:
         bids(
@@ -120,7 +120,7 @@ rule binarize_avg_b0:
             desc="brain",
             method="bet_from-b0",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     container:
         config["singularity"]["prepdwi"]

@@ -6,7 +6,7 @@ rule ants_b0_to_template:
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
         ref=lambda wildcards: workflow.source_path(
             os.path.join("..", "..", config["template_b0"])
@@ -19,7 +19,7 @@ rule ants_b0_to_template:
             to="{template}",
             desc="affine",
             type_="itk",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     params:
         out_prefix=bids(
@@ -63,7 +63,7 @@ rule ants_b0_to_template:
             suffix="Composite.h5",
             from_="subject",
             to="{template}",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
         out_inv_composite=bids(
             root="work",
@@ -71,7 +71,7 @@ rule ants_b0_to_template:
             suffix="InverseComposite.h5",
             from_="subject",
             to="{template}",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
         warped_flo=bids(
             root="work",
@@ -79,7 +79,7 @@ rule ants_b0_to_template:
             suffix="b0.nii.gz",
             space="{template}",
             desc="SyN",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     threads: 8
     resources:
@@ -96,9 +96,6 @@ rule ants_b0_to_template:
         "-t Affine[0.1] {params.linear_metric} {params.linear_multires} "
         "{params.deform_model} {params.deform_metric} {params.deform_multires} "
         "-o [{params.out_prefix},{output.warped_flo}]"
-        #initial xfm  
-        # affine registration
-        # deformable registration
 
 
 # now, we apply the transform to template mask to get what should be an accurate registration-based b0 mask
@@ -112,7 +109,7 @@ rule warp_brainmask_from_template_reg_b0:
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
         inv_composite=bids(
             root="work",
@@ -140,10 +137,10 @@ rule warp_brainmask_from_template_reg_b0:
     resources:
         mem_mb=16000,
     shell:
+        #use inverse xfm (going from template to subject)
         "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} "
         "antsApplyTransforms -d 3 --interpolation NearestNeighbor -i {input.mask} -o {output.mask} -r {input.ref} "
         " -t {input.inv_composite} "
-        #use inverse xfm (going from template to subject)
 
 
 # copy to the main folder
