@@ -915,19 +915,6 @@ reference = "f205ab2"
 resolved_reference = "f205ab279223e9f5bb87ba170fe29d8324bc7484"
 
 [[package]]
-name = "snakeboost"
-version = "0.2.0"
-description = "Utility functions to turbocharge your snakemake workflows. Virtualenvs, tarfiles, and more."
-category = "main"
-optional = false
-python-versions = ">=3.7,<3.11"
-
-[package.dependencies]
-attrs = ">=21.2.0,<22.0.0"
-colorama = ">=0.4.4,<0.5.0"
-Pygments = ">=2.10.0,<3.0.0"
-
-[[package]]
 name = "snakefmt"
 version = "0.6.0"
 description = "The uncompromising Snakemake code formatter"
@@ -1145,7 +1132,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.11"
-content-hash = "cffcdac663225d1cbb8dc45ab62fe18bfdaf25c9085d8d572f53a90d456b5e08"
+content-hash = "a7efa09e678c3f48704804fe3da4f3fe722e66f37fd14f760b5ff5ed73ead18a"
 
 [metadata.files]
 appdirs = [
@@ -1744,10 +1731,6 @@ smmap = [
     {file = "smmap-5.0.0.tar.gz", hash = "sha256:c840e62059cd3be204b0c9c9f74be2c09d5648eddd4580d9314c3ecde0b30936"},
 ]
 snakebids = []
-snakeboost = [
-    {file = "snakeboost-0.2.0-py3-none-any.whl", hash = "sha256:5a40763fb94bc62822e39ead8a95e79c13628d660fa682dc1a15ef9cfeadf1c3"},
-    {file = "snakeboost-0.2.0.tar.gz", hash = "sha256:3a3c5bb6fd4f955d572d0d7c1c8285723af30d9b80bb687904805ce8179a92a5"},
-]
 snakefmt = [
     {file = "snakefmt-0.6.0-py3-none-any.whl", hash = "sha256:289a66ad8f944e420b5e252a2ebf1441e01121f5007044cd1b39a75026f10d83"},
     {file = "snakefmt-0.6.0.tar.gz", hash = "sha256:b52a8c43b9cc81b017eedf81d5536128b472facb0a244f131573d0b7536b2661"},
