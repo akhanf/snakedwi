@@ -142,12 +142,12 @@ parse_args:
 singularity:
   prepdwi: 'docker://khanlab/prepdwi:latest' #/project/6050199/akhanf/singularity/bids-apps/khanlab_prepdwi_latest.sif'  #should use mrtrix3.0 container instead
   #  ants: '/project/6050199/akhanf/singularity/ants-v2.3.1.sif'
-  #fsl_603: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif' 
-  #  fsl_604: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif'  #eddy seems to fail with 6.0.4
-  fsl_604: 'docker://brainlife/fsl:6.0.4-patched2'
+  fsl_603: 'docker://brainlife/fsl:6.0.3' #'/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif'
+  fsl_604: 'docker://brainlife/fsl:6.0.4-patched2' #'/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif'  #eddy seems to fail with 6.0.4
+    #autotop is a placeholder here, replace with smaller containers for particular tools (e.g. greedy)
   autotop: 'docker://khanlab/autotop_deps:v0.4.1' #/project/6050199/akhanf/singularity/bids-apps/khanlab_autotop_deps_v0.4.1.sif'
-  ants: 'docker://khanlab/autotop_deps:v0.4.1' #/project/6050199/akhanf/singularity/bids-apps/khanlab_autotop_deps_v0.4.1.sif'
-  python: 'docker://akhanf/pythondeps:latest'   #/localscratch/pythondeps/pythondeps-test_latest.sif'
+  ants: 'docker://kaczmarj/ants:2.3.4'  #/project/6050199/akhanf/singularity/bids-apps/khanlab_autotop_deps_v0.4.1.sif'
+  python: 'docker://akhanf/pythondeps-test:latest'   #/localscratch/pythondeps/pythondeps-test_latest.sif'
 
 
 

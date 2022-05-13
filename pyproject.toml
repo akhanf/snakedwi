@@ -9,6 +9,7 @@ license = "MIT"
 python = "^3.8,<3.11"
 snakebids = "^0.5.1"
 snakemake = "^7.0.0"
+Pygments = "^2.12.0" #required for report-generation only
 
 [tool.poetry.dev-dependencies]
 snakefmt = "^0.6.0"
