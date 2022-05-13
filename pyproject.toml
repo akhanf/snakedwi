@@ -7,19 +7,8 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.11"
-snakebids = "^0.5.0"
-snakemake = "<7.0.0"
-pandas = "^1.4.2"
-nibabel = "^3.2.2"
-numpy = "^1.22.3"
-matplotlib = "^3.5.1"
-nilearn = "^0.9.0"
-PyPDF2 = "^1.26.0"
-networkx = "^2.7.1"
-pygraphviz = "^1.9"
-Pygments = "^2.11.2"
-pillow = "9.0.1"
-
+snakebids = "^0.5.1"
+snakemake = "^7.0.0"
 
 [tool.poetry.dev-dependencies]
 snakefmt = "^0.6.0"

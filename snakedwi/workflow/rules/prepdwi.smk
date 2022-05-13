@@ -147,6 +147,7 @@ rule get_phase_encode_txt:
         ),
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/get_phase_encode_txt.py"
 
@@ -529,6 +530,7 @@ rule get_eddy_index_txt:
         ),
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/get_eddy_index_txt.py"
 
@@ -587,6 +589,7 @@ rule concat_runs_bvec:
         ),
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/concat_bv.py"
 
@@ -614,6 +617,7 @@ rule concat_runs_bval:
         ),
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/concat_bv.py"
 
@@ -656,6 +660,7 @@ rule get_shells_from_bvals:
         "{dwi_prefix}.shells.json",
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/get_shells_from_bvals.py"
 
@@ -669,6 +674,7 @@ rule get_shell_avgs:
         avgshells="{dwi_prefix}.avgshells.nii.gz",
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/get_shell_avgs.py"
 
@@ -684,6 +690,7 @@ rule get_shell_avg:
         avgshell="{dwi_prefix}_b{shell}.nii.gz",
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/get_shell_avg.py"
 
@@ -731,6 +738,7 @@ rule qc_brainmask_for_eddy:
         ),
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/vis_qc_dseg.py"
 
@@ -761,6 +769,7 @@ if not config["slspec_txt"]:
             ),
         group:
             "subj"
+        container: config['singularity']['python']
         script:
             "../scripts/get_slspec_txt.py"
 
@@ -1147,6 +1156,7 @@ rule split_eddy_qc_report:
         ),
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/split_pdf.py"
 

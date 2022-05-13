@@ -137,6 +137,7 @@ rule qc_reg_dwi_t1:
         ),
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/vis_regqc.py"
 
@@ -250,6 +251,7 @@ rule write_nii_resolution_to_txt:
         "{prefix}.resolution_mm.txt",
     group:
         "subj"
+    container: config['singularity']['python']
     script:
         "../scripts/write_nii_resolution_to_txt.py"
 
