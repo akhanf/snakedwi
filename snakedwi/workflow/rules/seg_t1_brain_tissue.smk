@@ -9,13 +9,15 @@ def get_k_tissue_classes(wildcards):
 rule tissue_seg_kmeans_init:
     input:
         t1=bids(
-            root="work/reg_t1_to_template",
+            root=work,
+            datatype="reg_t1_to_template",
             **subj_wildcards,
             desc="n4",
             suffix="T1w.nii.gz"
         ),
         mask=bids(
-            root="work/reg_t1_to_template",
+            root=work,
+            datatype="reg_t1_to_template",
             **subj_wildcards,
             suffix="mask.nii.gz",
             from_="{template}".format(template=config["template"]),
@@ -28,13 +30,15 @@ rule tissue_seg_kmeans_init:
         posterior_glob="posteriors_*.nii.gz",
     output:
         seg=bids(
-            root="work/seg_t1_brain_tissue",
+            root=work,
+            datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="dseg.nii.gz",
             desc="atroposKseg"
         ),
         posteriors=bids(
-            root="work/seg_t1_brain_tissue",
+            root=work,
+            datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="probseg.nii.gz",
             desc="atroposKseg"
@@ -66,21 +70,24 @@ rule map_channels_to_tissue:
             allow_missing=True,
         ),
         seg_channels_4d=bids(
-            root="work/seg_t1_brain_tissue",
+            root=work,
+            datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="probseg.nii.gz",
             desc="atroposKseg"
         ),
     output:
         mapping_json=bids(
-            root="work/seg_t1_brain_tissue",
+            root=work,
+            datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="mapping.json",
             desc="atropos3seg"
         ),
         tissue_segs=expand(
             bids(
-                root="work/seg_t1_brain_tissue",
+                root=work,
+                datatype="seg_t1_brain_tissue",
                 **subj_wildcards,
                 suffix="probseg.nii.gz",
                 label="{tissue}",
@@ -101,7 +108,8 @@ rule tissue_seg_to_4d:
     input:
         tissue_segs=expand(
             bids(
-                root="work/seg_t1_brain_tissue",
+                root=work,
+                datatype="seg_t1_brain_tissue",
                 **subj_wildcards,
                 suffix="probseg.nii.gz",
                 label="{tissue}",
@@ -112,7 +120,8 @@ rule tissue_seg_to_4d:
         ),
     output:
         tissue_seg=bids(
-            root="work/seg_t1_brain_tissue",
+            root=work,
+            datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="probseg.nii.gz",
             desc="atropos3seg"
@@ -128,7 +137,8 @@ rule tissue_seg_to_4d:
 rule brainmask_from_tissue:
     input:
         tissue_seg=bids(
-            root="work/seg_t1_brain_tissue",
+            root=work,
+            datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="probseg.nii.gz",
             desc="atropos3seg"
@@ -137,7 +147,8 @@ rule brainmask_from_tissue:
         threshold=0.5,
     output:
         mask=bids(
-            root="work/seg_t1_brain_tissue",
+            root=work,
+            datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="mask.nii.gz",
             from_="atropos3seg",

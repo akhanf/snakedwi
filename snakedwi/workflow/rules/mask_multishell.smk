@@ -2,7 +2,7 @@
 checkpoint split_shell_avgs:
     input:
         avg_4d=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells.nii.gz",
@@ -13,7 +13,7 @@ checkpoint split_shell_avgs:
     output:
         nii_dir=directory(
             bids(
-                root="work",
+                root=work,
                 desc="topup",
                 method="jac",
                 suffix="dwi.avgshells",
@@ -30,7 +30,7 @@ checkpoint split_shell_avgs:
 rule n4_shell_avg:
     input:
         avg_nii=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi.{shell}.nii.gz",
@@ -38,7 +38,7 @@ rule n4_shell_avg:
         ),
     output:
         n4_nii=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi_n4.{shell}.nii.gz",
@@ -94,14 +94,14 @@ rule smooth_binarize_shell_avg:
 rule n4_shell_avg_withb0mask:
     input:
         avg_nii=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi.{shell}.nii.gz",
             **subj_wildcards
         ),
         mask_nii=bids(
-            root="work",
+            root=work,
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
@@ -109,7 +109,7 @@ rule n4_shell_avg_withb0mask:
         ),
     output:
         n4_nii=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi_n4withb0mask.{shell}.nii.gz",
@@ -126,7 +126,7 @@ def get_diffweighted_shells_for_tissue_seg(wildcards):
     return sorted(
         expand(
             bids(
-                root="work",
+                root=work,
                 desc="topup",
                 method="jac",
                 suffix="dwi.avgshells/dwi_n4_rescale.{shell}.nii.gz",
@@ -145,7 +145,7 @@ rule tissue_seg_kmeans_init:
     input:
         shells=get_diffweighted_shells_for_tissue_seg,
         mask=bids(
-            root="work",
+            root=work,
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
@@ -160,14 +160,14 @@ rule tissue_seg_kmeans_init:
         posterior_glob="posteriors_*.nii.gz",
     output:
         seg=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_dseg.nii.gz",
             **subj_wildcards
         ),
         posteriors=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz",
@@ -187,7 +187,7 @@ rule tissue_seg_kmeans_init:
 rule extract_posterior_bgnd:
     input:
         posterior_4d=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz",
@@ -195,7 +195,7 @@ rule extract_posterior_bgnd:
         ),
     output:
         posterior_bgnd=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz",
@@ -211,14 +211,14 @@ rule extract_posterior_bgnd:
 rule refine_mask_with_tissue_prob:
     input:
         mask=bids(
-            root="work",
+            root=work,
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
             **subj_wildcards
         ),
         posterior_bgnd=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz",
@@ -226,7 +226,7 @@ rule refine_mask_with_tissue_prob:
         ),
     output:
         mask=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz",
@@ -242,7 +242,7 @@ rule refine_mask_with_tissue_prob:
 rule smooth_threshold_refined_mask:
     input:
         mask=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz",
@@ -252,7 +252,7 @@ rule smooth_threshold_refined_mask:
         smooth="{smooth}",
     output:
         mask=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_smooth-{smooth}_mask.nii.gz",

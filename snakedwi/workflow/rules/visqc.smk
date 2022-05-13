@@ -3,7 +3,7 @@ rule qc_reg:
     input:
         ref=config["template_t1w"],
         flo=bids(
-            root="work",
+            root=work,
             subject="{subject}",
             suffix="T1w.nii.gz",
             space="{template}",
@@ -41,9 +41,9 @@ rule qc_reg:
 
 rule qc_probseg:
     input:
-        img=bids(root="work", subject="{subject}", desc="n4", suffix="T1w.nii.gz"),
+        img=bids(root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"),
         seg4d=bids(
-            root="work",
+            root=work,
             subject="{subject}",
             suffix="probseg.nii.gz",
             desc="atropos3seg",
@@ -70,9 +70,9 @@ rule qc_probseg:
 
 rule qc_dseg:
     input:
-        img=bids(root="work", subject="{subject}", desc="n4", suffix="T1w.nii.gz"),
+        img=bids(root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"),
         seg=bids(
-            root="work",
+            root=work,
             subject="{subject}",
             suffix="dseg.nii.gz",
             atlas="{atlas}",

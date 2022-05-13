@@ -11,7 +11,7 @@ rule import_dwi:
         ],
     output:
         nii=multiext(
-            bids(root="work", suffix="dwi", datatype="dwi", **input_wildcards["dwi"]),
+            bids(root=work, suffix="dwi", datatype="dwi", **input_wildcards["dwi"]),
             ".nii.gz",
             ".bval",
             ".bvec",
@@ -27,7 +27,7 @@ rule import_dwi:
 rule dwidenoise:
     input:
         multiext(
-            bids(root="work", suffix="dwi", datatype="dwi", **input_wildcards["dwi"]),
+            bids(root=work, suffix="dwi", datatype="dwi", **input_wildcards["dwi"]),
             ".nii.gz",
             ".bvec",
             ".bval",
@@ -36,7 +36,7 @@ rule dwidenoise:
     output:
         multiext(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi",
                 desc="denoise",
                 datatype="dwi",
@@ -68,10 +68,10 @@ def get_degibbs_inputs(wildcards):
     in_dwi_bval = re.sub(".nii.gz", ".bval", input_path["dwi"].format(**wildcards))
     bvals = np.loadtxt(in_dwi_bval)
     if bvals.size < 30:
-        prefix = bids(root="work", suffix="dwi", datatype="dwi", **wildcards)
+        prefix = bids(root=work, suffix="dwi", datatype="dwi", **wildcards)
     else:
         prefix = bids(
-            root="work", suffix="dwi", datatype="dwi", desc="denoise", **wildcards
+            root=work, suffix="dwi", datatype="dwi", desc="denoise", **wildcards
         )
     return multiext(prefix, ".nii.gz", ".bvec", ".bval", ".json")
 
@@ -82,7 +82,7 @@ rule mrdegibbs:
     output:
         multiext(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi",
                 datatype="dwi",
                 desc="degibbs",
@@ -110,14 +110,14 @@ rule mrdegibbs:
 rule get_phase_encode_txt:
     input:
         bzero_nii=bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             datatype="dwi",
             desc="degibbs",
             **input_wildcards["dwi"]
         ),
         json=bids(
-            root="work",
+            root=work,
             suffix="dwi.json",
             datatype="dwi",
             desc="degibbs",
@@ -125,7 +125,7 @@ rule get_phase_encode_txt:
         ),
     output:
         phenc_txt=bids(
-            root="work",
+            root=work,
             suffix="phenc.txt",
             datatype="dwi",
             desc="degibbs",
@@ -143,7 +143,7 @@ rule concat_phase_encode_txt:
     input:
         phenc_txts=lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="phenc.txt",
                 datatype="dwi",
                 desc="degibbs",
@@ -154,7 +154,7 @@ rule concat_phase_encode_txt:
         ),
     output:
         phenc_concat=bids(
-            root="work",
+            root=work,
             suffix="phenc.txt",
             datatype="dwi",
             desc="degibbs",
@@ -182,7 +182,7 @@ rule concat_bzeros:
     input:
         bzero_niis=lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="b0.nii.gz",
                 datatype="dwi",
                 desc="degibbs",
@@ -195,7 +195,7 @@ rule concat_bzeros:
         cmd=get_concat_or_cp_cmd,
     output:
         bzero_concat=bids(
-            root="work",
+            root=work,
             suffix="concatb0.nii.gz",
             datatype="dwi",
             desc="degibbs",
@@ -215,45 +215,45 @@ rule concat_bzeros:
 rule run_topup:
     input:
         bzero_concat=bids(
-            root="work",
+            root=work,
             suffix="concatb0.nii.gz",
             datatype="dwi",
             desc="degibbs",
             **subj_wildcards
         ),
         phenc_concat=bids(
-            root="work",
+            root=work,
             suffix="phenc.txt",
             datatype="dwi",
             desc="degibbs",
             **subj_wildcards
         ),
     params:
-        out_prefix=bids(root="work", suffix="topup", datatype="dwi", **subj_wildcards),
+        out_prefix=bids(root=work, suffix="topup", datatype="dwi", **subj_wildcards),
         config="b02b0.cnf",  #this config sets the multi-res schedule and other params..
     output:
         bzero_corrected=bids(
-            root="work",
+            root=work,
             suffix="concatb0.nii.gz",
             desc="topup",
             datatype="dwi",
             **subj_wildcards
         ),
         fieldmap=bids(
-            root="work",
+            root=work,
             suffix="fmap.nii.gz",
             desc="topup",
             datatype="dwi",
             **subj_wildcards
         ),
         topup_fieldcoef=bids(
-            root="work",
+            root=work,
             suffix="topup_fieldcoef.nii.gz",
             datatype="dwi",
             **subj_wildcards
         ),
         topup_movpar=bids(
-            root="work", suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
+            root=work, suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
         ),
     container:
         config["singularity"]["fsl"]
@@ -271,7 +271,7 @@ rule apply_topup_lsr:
     input:
         dwi_niis=lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi.nii.gz",
                 desc="degibbs",
                 datatype="dwi",
@@ -281,20 +281,20 @@ rule apply_topup_lsr:
             **filter_list(input_zip_lists["dwi"], wildcards)
         ),
         phenc_concat=bids(
-            root="work",
+            root=work,
             suffix="phenc.txt",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
         ),
         topup_fieldcoef=bids(
-            root="work",
+            root=work,
             suffix="topup_fieldcoef.nii.gz",
             datatype="dwi",
             **subj_wildcards
         ),
         topup_movpar=bids(
-            root="work", suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
+            root=work, suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
         ),
     params:
         #create comma-seperated list of dwi nii
@@ -303,11 +303,11 @@ rule apply_topup_lsr:
         inindex=lambda wildcards, input: ",".join(
             [str(i) for i in range(1, len(input.dwi_niis) + 1)]
         ),
-        topup_prefix=bids(root="work", suffix="topup", datatype="dwi", **subj_wildcards),
+        topup_prefix=bids(root=work, suffix="topup", datatype="dwi", **subj_wildcards),
         out_prefix="dwi_topup",
     output:
         dwi_topup=bids(
-            root="work",
+            root=work,
             suffix="dwi.nii.gz",
             desc="topup",
             method="lsr",
@@ -344,41 +344,41 @@ def get_applytopup_inindex(wildcards):
 rule apply_topup_jac:
     input:
         nii=bids(
-            root="work",
+            root=work,
             suffix="dwi.nii.gz",
             desc="degibbs",
             datatype="dwi",
             **input_wildcards["dwi"]
         ),
         phenc_scan=bids(
-            root="work",
+            root=work,
             suffix="phenc.txt",
             datatype="dwi",
             desc="degibbs",
             **input_wildcards["dwi"]
         ),
         phenc_concat=bids(
-            root="work",
+            root=work,
             suffix="phenc.txt",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
         ),
         topup_fieldcoef=bids(
-            root="work",
+            root=work,
             suffix="topup_fieldcoef.nii.gz",
             datatype="dwi",
             **subj_wildcards
         ),
         topup_movpar=bids(
-            root="work", suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
+            root=work, suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
         ),
     params:
         inindex=get_applytopup_inindex,
-        topup_prefix=bids(root="work", suffix="topup", datatype="dwi", **subj_wildcards),
+        topup_prefix=bids(root=work, suffix="topup", datatype="dwi", **subj_wildcards),
     output:
         nii=bids(
-            root="work",
+            root=work,
             suffix="dwi.nii.gz",
             desc="topup",
             method="jac",
@@ -417,7 +417,7 @@ rule cp_sidecars_topup_jac:
     input:
         multiext(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi",
                 desc="degibbs",
                 datatype="dwi",
@@ -430,7 +430,7 @@ rule cp_sidecars_topup_jac:
     output:
         multiext(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi",
                 desc="topup",
                 method="jac",
@@ -452,7 +452,7 @@ rule concat_dwi_topup_jac:
     input:
         dwi_niis=lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi.nii.gz",
                 desc="topup",
                 method="jac",
@@ -464,7 +464,7 @@ rule concat_dwi_topup_jac:
         ),
     output:
         dwi_concat=bids(
-            root="work",
+            root=work,
             suffix="dwi.nii.gz",
             desc="topup",
             method="jac",
@@ -483,7 +483,7 @@ rule get_eddy_index_txt:
     input:
         dwi_niis=lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi.nii.gz",
                 desc="degibbs",
                 datatype="dwi",
@@ -494,7 +494,7 @@ rule get_eddy_index_txt:
         ),
     output:
         eddy_index_txt=bids(
-            root="work",
+            root=work,
             suffix="dwi.eddy_index.txt",
             desc="degibbs",
             datatype="dwi",
@@ -512,7 +512,7 @@ rule concat_degibbs_dwi:
     input:
         dwi_niis=lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi.nii.gz",
                 desc="degibbs",
                 datatype="dwi",
@@ -523,7 +523,7 @@ rule concat_degibbs_dwi:
         ),
     output:
         dwi_concat=bids(
-            root="work",
+            root=work,
             suffix="dwi.nii.gz",
             desc="degibbs",
             datatype="dwi",
@@ -543,7 +543,7 @@ rule concat_runs_bvec:
     input:
         lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi.bvec",
                 desc="{{desc}}",
                 datatype="dwi",
@@ -554,7 +554,7 @@ rule concat_runs_bvec:
         ),
     output:
         bids(
-            root="work",
+            root=work,
             suffix="dwi.bvec",
             desc="{desc}",
             datatype="dwi",
@@ -572,7 +572,7 @@ rule concat_runs_bval:
     input:
         lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi.bval",
                 desc="{{desc}}",
                 datatype="dwi",
@@ -583,7 +583,7 @@ rule concat_runs_bval:
         ),
     output:
         bids(
-            root="work",
+            root=work,
             suffix="dwi.bval",
             desc="{desc}",
             datatype="dwi",
@@ -602,7 +602,7 @@ rule concat_runs_json:
     input:
         lambda wildcards: expand(
             bids(
-                root="work",
+                root=work,
                 suffix="dwi.json",
                 desc="{{desc}}",
                 datatype="dwi",
@@ -613,7 +613,7 @@ rule concat_runs_json:
         ),
     output:
         bids(
-            root="work",
+            root=work,
             suffix="dwi.json",
             desc="{desc}",
             datatype="dwi",
@@ -681,7 +681,7 @@ def get_mask_for_eddy():
 
     # then get bids name of file
     return bids(
-        root="work",
+        root=work,
         suffix="mask.nii.gz",
         desc="brain",
         method=method,
@@ -695,7 +695,7 @@ def get_mask_for_eddy():
 rule qc_brainmask_for_eddy:
     input:
         img=bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
@@ -725,7 +725,7 @@ if not config["slspec_txt"]:
         input:
             dwi_jsons=lambda wildcards: expand(
                 bids(
-                    root="work",
+                    root=work,
                     suffix="dwi.json",
                     desc="degibbs",
                     datatype="dwi",
@@ -736,7 +736,7 @@ if not config["slspec_txt"]:
             ),
         output:
             eddy_slspec_txt=bids(
-                root="work",
+                root=work,
                 suffix="dwi.eddy_slspec.txt",
                 desc="degibbs",
                 datatype="dwi",
@@ -757,7 +757,7 @@ else:
             config["slspec_txt"],
         output:
             eddy_slspec_txt=bids(
-                root="work",
+                root=work,
                 suffix="dwi.eddy_slspec.txt",
                 desc="degibbs",
                 datatype="dwi",
@@ -786,7 +786,7 @@ def get_dwi_ref(wildcards):
 
     if num_scans > 1 and not config["no_topup"]:
         return bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="topup",
             method="jac",
@@ -795,7 +795,7 @@ def get_dwi_ref(wildcards):
         )
     else:
         return bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="degibbs",
             datatype="dwi",
@@ -808,7 +808,7 @@ rule cp_dwi_ref:
         get_dwi_ref,
     output:
         bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
@@ -828,7 +828,7 @@ def get_eddy_topup_input(wildcards):
     if num_scans > 1 and not config["no_topup"]:
         topup_inputs = {
             filename: bids(
-                root="work",
+                root=work,
                 suffix=f"{filename}.nii.gz",
                 datatype="dwi",
                 **subj_wildcards,
@@ -848,7 +848,7 @@ def get_eddy_topup_opt(wildcards, input):
 
     if num_scans > 1 and not config["no_topup"]:
         topup_prefix = bids(
-            root="work", suffix="topup", datatype="dwi", **subj_wildcards
+            root=work, suffix="topup", datatype="dwi", **subj_wildcards
         ).format(**wildcards)
         return f"--topup={topup_prefix}"
     else:
@@ -878,7 +878,7 @@ def get_eddy_slspec_input(wildcards):
     else:
         return {
             "eddy_slspec_txt": bids(
-                root="work",
+                root=work,
                 suffix="dwi.eddy_slspec.txt",
                 desc="degibbs",
                 datatype="dwi",
@@ -907,21 +907,21 @@ rule run_eddy:
     input:
         unpack(get_eddy_slspec_input),
         dwi_concat=bids(
-            root="work",
+            root=work,
             suffix="dwi.nii.gz",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
         ),
         phenc_concat=bids(
-            root="work",
+            root=work,
             suffix="phenc.txt",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
         ),
         eddy_index_txt=bids(
-            root="work",
+            root=work,
             suffix="dwi.eddy_index.txt",
             desc="degibbs",
             datatype="dwi",
@@ -929,14 +929,14 @@ rule run_eddy:
         ),
         brainmask=get_mask_for_eddy(),
         bvals=bids(
-            root="work",
+            root=work,
             suffix="dwi.bval",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
         ),
         bvecs=bids(
-            root="work",
+            root=work,
             suffix="dwi.bvec",
             desc="degibbs",
             datatype="dwi",
@@ -960,14 +960,14 @@ rule run_eddy:
     output:
         #eddy creates many files, so write them to a eddy subfolder instead
         out_folder=directory(
-            bids(root="work", suffix="eddy", datatype="dwi", **subj_wildcards)
+            bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards)
         ),
         dwi=os.path.join(
-            bids(root="work", suffix="eddy", datatype="dwi", **subj_wildcards),
+            bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
             "dwi.nii.gz",
         ),
         bvec=os.path.join(
-            bids(root="work", suffix="eddy", datatype="dwi", **subj_wildcards),
+            bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
             "dwi.eddy_rotated_bvecs",
         ),
     threads: 16  #this needs to be set in order to avoid multiple gpus from executing
@@ -995,15 +995,15 @@ rule cp_eddy_outputs:
     input:
         #get nii.gz, bvec, and bval from eddy output
         dwi=os.path.join(
-            bids(root="work", suffix="eddy", datatype="dwi", **subj_wildcards),
+            bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
             "dwi.nii.gz",
         ),
         bvec=os.path.join(
-            bids(root="work", suffix="eddy", datatype="dwi", **subj_wildcards),
+            bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
             "dwi.eddy_rotated_bvecs",
         ),
         bval=bids(
-            root="work",
+            root=work,
             suffix="dwi.bval",
             desc="degibbs",
             datatype="dwi",
@@ -1012,11 +1012,7 @@ rule cp_eddy_outputs:
     output:
         multiext(
             bids(
-                root="results",
-                suffix="dwi",
-                desc="eddy",
-                datatype="dwi",
-                **subj_wildcards
+                root=root, suffix="dwi", desc="eddy", datatype="dwi", **subj_wildcards
             ),
             ".nii.gz",
             ".bvec",
@@ -1033,14 +1029,14 @@ rule eddy_quad:
     input:
         unpack(get_eddy_slspec_input),
         phenc_concat=bids(
-            root="work",
+            root=work,
             suffix="phenc.txt",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
         ),
         eddy_index_txt=bids(
-            root="work",
+            root=work,
             suffix="dwi.eddy_index.txt",
             desc="degibbs",
             datatype="dwi",
@@ -1048,29 +1044,29 @@ rule eddy_quad:
         ),
         brainmask=get_mask_for_eddy(),
         bvals=bids(
-            root="work",
+            root=work,
             suffix="dwi.bval",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
         ),
         bvecs=bids(
-            root="work",
+            root=work,
             suffix="dwi.bvec",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
         ),
-        eddy_dir=bids(root="work", suffix="eddy", datatype="dwi", **subj_wildcards),
+        eddy_dir=bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
     params:
         eddy_prefix=lambda wildcards, input: os.path.join(input.eddy_dir, "dwi"),
         slspec_opt=get_eddy_slspec_opt,
     output:
         out_dir=directory(
-            bids(root="work", suffix="eddy.qc", datatype="dwi", **subj_wildcards)
+            bids(root=work, suffix="eddy.qc", datatype="dwi", **subj_wildcards)
         ),
         eddy_qc_pdf=bids(
-            root="work", suffix="eddy.qc/qc.pdf", datatype="dwi", **subj_wildcards
+            root=work, suffix="eddy.qc/qc.pdf", datatype="dwi", **subj_wildcards
         ),
     container:
         config["singularity"]["fsl"]
@@ -1086,16 +1082,13 @@ rule eddy_quad:
 rule split_eddy_qc_report:
     input:
         eddy_qc_pdf=bids(
-            root="work", suffix="eddy.qc/qc.pdf", datatype="dwi", **subj_wildcards
+            root=work, suffix="eddy.qc/qc.pdf", datatype="dwi", **subj_wildcards
         ),
     output:
         report(
             directory(
                 bids(
-                    root="work",
-                    suffix="eddy.qc_pages",
-                    datatype="dwi",
-                    **subj_wildcards
+                    root=work, suffix="eddy.qc_pages", datatype="dwi", **subj_wildcards
                 )
             ),
             patterns=["{pagenum}.png"],
@@ -1116,7 +1109,7 @@ rule split_eddy_qc_report:
 rule copy_inputs_for_bedpost:
     input:
         dwi=bids(
-            root="results",
+            root=root,
             suffix="dwi.nii.gz",
             desc="eddy",
             space="T1w",
@@ -1125,7 +1118,7 @@ rule copy_inputs_for_bedpost:
             **subj_wildcards
         ),
         bval=bids(
-            root="results",
+            root=root,
             suffix="dwi.bval",
             desc="eddy",
             space="T1w",
@@ -1134,7 +1127,7 @@ rule copy_inputs_for_bedpost:
             **subj_wildcards
         ),
         bvec=bids(
-            root="results",
+            root=root,
             suffix="dwi.bvec",
             desc="eddy",
             space="T1w",
@@ -1143,7 +1136,7 @@ rule copy_inputs_for_bedpost:
             **subj_wildcards
         ),
         brainmask=bids(
-            root="results",
+            root=root,
             suffix="mask.nii.gz",
             desc="brain",
             space="T1w",
@@ -1155,7 +1148,7 @@ rule copy_inputs_for_bedpost:
         diff_dir=temp(
             directory(
                 bids(
-                    root="work",
+                    root=work,
                     desc="eddy",
                     suffix="diffusion",
                     space="T1w",
@@ -1167,7 +1160,7 @@ rule copy_inputs_for_bedpost:
         ),
         dwi=os.path.join(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion",
                 space="T1w",
@@ -1179,7 +1172,7 @@ rule copy_inputs_for_bedpost:
         ),
         brainmask=os.path.join(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion",
                 space="T1w",
@@ -1191,7 +1184,7 @@ rule copy_inputs_for_bedpost:
         ),
         bval=os.path.join(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion",
                 space="T1w",
@@ -1203,7 +1196,7 @@ rule copy_inputs_for_bedpost:
         ),
         bvec=os.path.join(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion",
                 space="T1w",
@@ -1242,7 +1235,7 @@ def get_bedpost_parallel_opt(wildcards, threads):
 rule run_bedpost:
     input:
         diff_dir=bids(
-            root="work",
+            root=work,
             desc="eddy",
             suffix="diffusion",
             space="T1w",
@@ -1252,7 +1245,7 @@ rule run_bedpost:
         ),
         dwi=os.path.join(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion",
                 space="T1w",
@@ -1264,7 +1257,7 @@ rule run_bedpost:
         ),
         brainmask=os.path.join(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion",
                 space="T1w",
@@ -1276,7 +1269,7 @@ rule run_bedpost:
         ),
         bval=os.path.join(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion",
                 space="T1w",
@@ -1288,7 +1281,7 @@ rule run_bedpost:
         ),
         bvec=os.path.join(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion",
                 space="T1w",
@@ -1304,7 +1297,7 @@ rule run_bedpost:
     output:
         bedpost_dir=directory(
             bids(
-                root="work",
+                root=work,
                 desc="eddy",
                 suffix="diffusion.bedpostX",
                 space="T1w",
@@ -1330,7 +1323,7 @@ rule run_bedpost:
 rule cp_bedpost_to_results:
     input:
         bedpost_dir=bids(
-            root="work",
+            root=work,
             desc="eddy",
             suffix="diffusion.bedpostX",
             space="T1w",
@@ -1341,7 +1334,7 @@ rule cp_bedpost_to_results:
     output:
         bedpost_dir=directory(
             bids(
-                root="results",
+                root=root,
                 desc="eddy",
                 suffix="diffusion.bedpostX",
                 space="T1w",

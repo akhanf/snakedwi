@@ -15,3 +15,7 @@
 __pycache__
 .snakemake
 report.html
+snakedwi/logs
+snakedwi/qc
+snakedwi/results
+snakedwi/work

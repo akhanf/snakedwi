@@ -5,10 +5,7 @@ def get_eddy_quad_all():
         return {
             "eddy_qc": expand(
                 bids(
-                    root="work",
-                    datatype="dwi",
-                    suffix="eddy.qc_pages",
-                    **subj_wildcards
+                    root=work, datatype="dwi", suffix="eddy.qc_pages", **subj_wildcards
                 ),
                 zip,
                 **input_zip_lists["dwi"]
@@ -23,7 +20,7 @@ def get_bedpost_all():
         return {
             "bedpost": expand(
                 bids(
-                    root="results",
+                    root=root,
                     datatype="dwi",
                     suffix="diffusion.bedpostX",
                     desc="eddy",

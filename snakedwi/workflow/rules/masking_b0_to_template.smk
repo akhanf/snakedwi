@@ -2,7 +2,7 @@
 rule ants_b0_to_template:
     input:
         flo=bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
@@ -12,7 +12,7 @@ rule ants_b0_to_template:
             os.path.join("..", "..", config["template_b0"])
         ).format(**wildcards),
         init_xfm=bids(
-            root="work",
+            root=work,
             datatype="anat",
             suffix="xfm.txt",
             from_="subject",
@@ -23,7 +23,7 @@ rule ants_b0_to_template:
         ),
     params:
         out_prefix=bids(
-            root="work",
+            root=work,
             datatype="dwi",
             suffix="",
             from_="subject",
@@ -58,7 +58,7 @@ rule ants_b0_to_template:
         ),
     output:
         out_composite=bids(
-            root="work",
+            root=work,
             datatype="dwi",
             suffix="Composite.h5",
             from_="subject",
@@ -66,7 +66,7 @@ rule ants_b0_to_template:
             **subj_wildcards
         ),
         out_inv_composite=bids(
-            root="work",
+            root=work,
             datatype="dwi",
             suffix="InverseComposite.h5",
             from_="subject",
@@ -74,7 +74,7 @@ rule ants_b0_to_template:
             **subj_wildcards
         ),
         warped_flo=bids(
-            root="work",
+            root=work,
             datatype="dwi",
             suffix="b0.nii.gz",
             space="{template}",
@@ -105,14 +105,14 @@ rule warp_brainmask_from_template_reg_b0:
             os.path.join("..", "..", config["template_mask"])
         ).format(**wildcards),
         ref=bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
             **subj_wildcards
         ),
         inv_composite=bids(
-            root="work",
+            root=work,
             datatype="dwi",
             suffix="InverseComposite.h5",
             from_="subject",
@@ -121,7 +121,7 @@ rule warp_brainmask_from_template_reg_b0:
         ),
     output:
         mask=bids(
-            root="work",
+            root=work,
             datatype="dwi",
             subject="{subject}",
             suffix="mask.nii.gz",
@@ -147,7 +147,7 @@ rule warp_brainmask_from_template_reg_b0:
 rule cp_brainmask_reg_b0:
     input:
         mask=bids(
-            root="work",
+            root=work,
             datatype="dwi",
             subject="{subject}",
             suffix="mask.nii.gz",
@@ -157,7 +157,7 @@ rule cp_brainmask_reg_b0:
         ),
     output:
         mask=bids(
-            root="work",
+            root=work,
             method="b0SyN",
             subject="{subject}",
             suffix="mask.nii.gz",

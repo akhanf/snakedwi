@@ -23,7 +23,7 @@ wildcard_constraints:
 # ---- end snakebids boilerplate ------------------------------------------------
 
 
-report: "../workflow/report/workflow.rst"
+report: "../report/workflow.rst"
 
 
 input_wildcards = inputs.input_wildcards
@@ -33,7 +33,6 @@ input_path = inputs.input_path
 
 root = os.path.join(config["root"], "snakedwi")
 work = os.path.join(config["root"], "work")
-
 # setup pipenvs - all my python rules use the script: directive, so will be some work to use snakeboost for this..
 # dwi_env = PipEnv(
 #            root=Path('work'),

@@ -5,7 +5,7 @@ rule import_t1:
             input_path["T1w"], zip, **filter_list(input_zip_lists["T1w"], wildcards)
         )[0],
     output:
-        bids(root="work", datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
     group:
         "subj"
     shell:
@@ -14,10 +14,10 @@ rule import_t1:
 
 rule n4_t1:
     input:
-        t1=bids(root="work", datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
     output:
         t1=bids(
-            root="results",
+            root=root,
             datatype="anat",
             **subj_wildcards,
             desc="preproc",
@@ -36,14 +36,14 @@ rule n4_t1:
 rule reg_dwi_to_t1:
     input:
         t1w=bids(
-            root="results",
+            root=root,
             suffix="T1w.nii.gz",
             desc="preproc",
             datatype="anat",
             **subj_wildcards
         ),
         avgb0=bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
@@ -54,7 +54,7 @@ rule reg_dwi_to_t1:
         rigid_opts="-m NMI -a -dof 6 -ia-identity",
     output:
         warped_avgb0=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -62,7 +62,7 @@ rule reg_dwi_to_t1:
             **subj_wildcards
         ),
         xfm_ras=bids(
-            root="work",
+            root=work,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
@@ -85,7 +85,7 @@ rule reg_dwi_to_t1:
 rule qc_reg_dwi_t1:
     input:
         ref=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -93,7 +93,7 @@ rule qc_reg_dwi_t1:
             **subj_wildcards
         ),
         flo=bids(
-            root="results",
+            root=root,
             suffix="T1w.nii.gz",
             desc="preproc",
             datatype="anat",
@@ -121,7 +121,7 @@ rule qc_reg_dwi_t1:
 rule convert_xfm_ras2itk:
     input:
         xfm_ras=bids(
-            root="work",
+            root=work,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
@@ -131,7 +131,7 @@ rule convert_xfm_ras2itk:
         ),
     output:
         xfm_itk=bids(
-            root="work",
+            root=work,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
@@ -150,21 +150,21 @@ rule convert_xfm_ras2itk:
 rule convert_xfm_ras2fsl:
     input:
         t1w=bids(
-            root="results",
+            root=root,
             suffix="T1w.nii.gz",
             desc="preproc",
             datatype="anat",
             **subj_wildcards
         ),
         avgb0=bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
             **subj_wildcards
         ),
         xfm_ras=bids(
-            root="work",
+            root=work,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
@@ -174,7 +174,7 @@ rule convert_xfm_ras2fsl:
         ),
     output:
         xfm_fsl=bids(
-            root="work",
+            root=work,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
@@ -194,7 +194,7 @@ rule convert_xfm_ras2fsl:
 rule create_cropped_ref:
     input:
         warped_avgb0=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -203,7 +203,7 @@ rule create_cropped_ref:
         ),
     output:
         cropped_avgb0=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -237,7 +237,7 @@ rule write_nii_resolution_to_txt:
 rule create_cropped_ref_t1_resolution:
     input:
         cropped_avgb0=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -247,7 +247,7 @@ rule create_cropped_ref_t1_resolution:
         ),
     output:
         avgb0_crop_resample=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -265,7 +265,7 @@ rule create_cropped_ref_t1_resolution:
 rule create_cropped_ref_dwi_resolution:
     input:
         cropped=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -274,7 +274,7 @@ rule create_cropped_ref_dwi_resolution:
             **subj_wildcards
         ),
         res_txt_orig=bids(
-            root="work",
+            root=work,
             suffix="b0.resolution_mm.txt",
             desc="dwiref",
             datatype="dwi",
@@ -282,7 +282,7 @@ rule create_cropped_ref_dwi_resolution:
         ),
     output:
         resampled=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -302,7 +302,7 @@ rule create_cropped_ref_dwi_resolution:
 rule create_cropped_ref_custom_resolution:
     input:
         cropped=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -317,7 +317,7 @@ rule create_cropped_ref_custom_resolution:
         + "mm",
     output:
         resampled=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -337,7 +337,7 @@ rule create_cropped_ref_custom_resolution:
 rule resample_dwi_to_t1w:
     input:
         ref=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -347,14 +347,14 @@ rule resample_dwi_to_t1w:
             **subj_wildcards
         ),
         dwi=bids(
-            root="results",
+            root=root,
             suffix="dwi.nii.gz",
             desc="eddy",
             datatype="dwi",
             **subj_wildcards
         ),
         xfm_itk=bids(
-            root="work",
+            root=work,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
@@ -366,7 +366,7 @@ rule resample_dwi_to_t1w:
         interpolation="Linear",
     output:
         dwi=bids(
-            root="results",
+            root=root,
             suffix="dwi.nii.gz",
             desc="eddy",
             space="T1w",
@@ -387,7 +387,7 @@ rule resample_dwi_to_t1w:
 rule resample_brainmask_to_t1w:
     input:
         ref=bids(
-            root="work",
+            root=work,
             suffix="avgb0.nii.gz",
             space="T1w",
             desc="dwiref",
@@ -398,7 +398,7 @@ rule resample_brainmask_to_t1w:
         ),
         brainmask=get_mask_for_eddy(),
         xfm_itk=bids(
-            root="work",
+            root=work,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
@@ -410,7 +410,7 @@ rule resample_brainmask_to_t1w:
         interpolation="NearestNeighbor",
     output:
         brainmask=bids(
-            root="results",
+            root=root,
             suffix="mask.nii.gz",
             desc="brain",
             space="T1w",
@@ -431,14 +431,10 @@ rule resample_brainmask_to_t1w:
 rule rotate_bvecs_to_t1w:
     input:
         bvecs=bids(
-            root="results",
-            suffix="dwi.bvec",
-            desc="eddy",
-            datatype="dwi",
-            **subj_wildcards
+            root=root, suffix="dwi.bvec", desc="eddy", datatype="dwi", **subj_wildcards
         ),
         xfm_fsl=bids(
-            root="work",
+            root=work,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
@@ -447,17 +443,13 @@ rule rotate_bvecs_to_t1w:
             **subj_wildcards
         ),
         bvals=bids(
-            root="results",
-            suffix="dwi.bval",
-            desc="eddy",
-            datatype="dwi",
-            **subj_wildcards
+            root=root, suffix="dwi.bval", desc="eddy", datatype="dwi", **subj_wildcards
         ),
     params:
         script=workflow.source_path("../scripts/rotate_bvecs.sh"),
     output:
         bvecs=bids(
-            root="results",
+            root=root,
             suffix="dwi.bvec",
             desc="eddy",
             space="T1w",
@@ -466,7 +458,7 @@ rule rotate_bvecs_to_t1w:
             **subj_wildcards
         ),
         bvals=bids(
-            root="results",
+            root=root,
             suffix="dwi.bval",
             desc="eddy",
             space="T1w",
@@ -488,7 +480,7 @@ rule rotate_bvecs_to_t1w:
 rule dtifit_resampled_t1w:
     input:
         dwi=bids(
-            root="results",
+            root=root,
             suffix="dwi.nii.gz",
             desc="eddy",
             space="T1w",
@@ -497,7 +489,7 @@ rule dtifit_resampled_t1w:
             **subj_wildcards
         ),
         bvals=bids(
-            root="results",
+            root=root,
             suffix="dwi.bval",
             desc="eddy",
             space="T1w",
@@ -506,7 +498,7 @@ rule dtifit_resampled_t1w:
             **subj_wildcards
         ),
         bvecs=bids(
-            root="results",
+            root=root,
             suffix="dwi.bvec",
             desc="eddy",
             space="T1w",
@@ -515,7 +507,7 @@ rule dtifit_resampled_t1w:
             **subj_wildcards
         ),
         brainmask=bids(
-            root="results",
+            root=root,
             suffix="mask.nii.gz",
             desc="brain",
             space="T1w",
@@ -528,7 +520,7 @@ rule dtifit_resampled_t1w:
     output:
         out_folder=directory(
             bids(
-                root="results",
+                root=root,
                 suffix="dtifit",
                 desc="eddy",
                 space="T1w",
@@ -540,7 +532,7 @@ rule dtifit_resampled_t1w:
         out_fa=os.path.join(
             directory(
                 bids(
-                    root="results",
+                    root=root,
                     suffix="dtifit",
                     desc="eddy",
                     space="T1w",
