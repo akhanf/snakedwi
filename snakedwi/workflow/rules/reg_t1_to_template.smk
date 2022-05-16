@@ -3,13 +3,7 @@
 
 rule affine_to_template:
     input:
-        flo=bids(
-            root=root,
-            suffix="T1w.nii.gz",
-            desc="preproc",
-            datatype="anat",
-            **subj_wildcards
-        ),
+        flo=rules.n4_t1.output.t1,
         ref=lambda wildcards: workflow.source_path(
             os.path.join("..", "..", config["template_t1w"])
         ).format(**wildcards),

@@ -1,3 +1,80 @@
+rule find_gradcorrect_warp:
+    input:
+        data=rules.cp_dwi_ref.output,
+        grad_coeff=config["grad_correct_coeffs"],
+    output:
+        data=bids(
+            root=work,
+            desc="unwarped",
+            suffix="dwi.nii.gz",
+            **subj_wildcards,
+        ),
+        warp=bids(
+            root=work,
+            datatype="dwi",
+            desc="gradCorrect",
+            suffix="warp.nii.gz",
+            **subj_wildcards,
+        )
+    log: f"logs/find_gradcorrect_warp/{'.'.join(subj_wildcards.values())}.log"
+    benchmark: f"benchmarks/find_gradcorrect_warp/{'.'.join(subj_wildcards.values())}.tsv"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    params:
+        fov=0.2,
+        numpoints=120,
+    shell:
+        "gradient_unwarp.py {input.data} {output.data} siemens"
+        "-g {input.grad_coeff} -n --fovmin -{params.fov} --fovmax {params.fov} "
+        "--numpoints {params.numpoints} --verbose &&"
+
+        "mv {output.data}/../fullWarp_abs.nii.gz {output.warp}"
+
+rule get_jacobian_determinant:
+    input:
+        ref=rules.find_gradcorrect_warp.output.data,
+        warp=rules.find_gradcorrect_warp.output.warp,
+    output:
+        detjac=bids(
+            root=root,
+            datatype="dwi",
+            desc="gradCorrect",
+            suffix="detjac.nii.gz",
+            **subj_wildcards,
+        )
+    log: f"logs/get_jacobian_determinant/{'.'.join(subj_wildcards.values())}.log"
+    benchmark: f"benchmarks/get_jacobian_determinant/{'.'.join(subj_wildcards.values())}.tsv"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    shell:
+        "reg_jacobian -ref {input.ref} -def {input.warp} -jac {output.detjac}"
+
+rule convert_gradcorrect_to_itk:
+    input:
+        rules.find_gradcorrect_warp.output.warp
+    output:
+        bids(
+            root=work,
+            datatype="dwi",
+            desc="gradCorrect",
+            suffix="warp.itk",
+            **subj_wildcards,
+        )
+    log: f"logs/convert_gradcorrect_to_itk/{'.'.join(subj_wildcards.values())}.log"
+    benchmark: f"benchmarks/convert_gradcorrect_to_itk/{'.'.join(subj_wildcards.values())}.tsv"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    params:
+    shell:
+        "wb_command -convert-warpfield -from-world {input} -to-itk {output}"
+
+
 # just grab the first T1w for now:
 rule import_t1:
     input:
@@ -17,10 +94,10 @@ rule n4_t1:
         t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
     output:
         t1=bids(
-            root=root,
+            root=work,
             datatype="anat",
             **subj_wildcards,
-            desc="preproc",
+            desc="n4",
             suffix="T1w.nii.gz"
         ),
     threads: 8
@@ -35,13 +112,7 @@ rule n4_t1:
 
 rule reg_dwi_to_t1:
     input:
-        t1w=bids(
-            root=root,
-            suffix="T1w.nii.gz",
-            desc="preproc",
-            datatype="anat",
-            **subj_wildcards
-        ),
+        t1w=rules.n4_t1.output.t1,
         avgb0=bids(
             root=work,
             suffix="b0.nii.gz",
@@ -92,13 +163,7 @@ rule qc_reg_dwi_t1:
             datatype="dwi",
             **subj_wildcards
         ),
-        flo=bids(
-            root=root,
-            suffix="T1w.nii.gz",
-            desc="preproc",
-            datatype="anat",
-            **subj_wildcards
-        ),
+        flo=rules.n4_t1.output.t1,
     output:
         png=report(
             bids(
@@ -149,13 +214,7 @@ rule convert_xfm_ras2itk:
 
 rule convert_xfm_ras2fsl:
     input:
-        t1w=bids(
-            root=root,
-            suffix="T1w.nii.gz",
-            desc="preproc",
-            datatype="anat",
-            **subj_wildcards
-        ),
+        t1w=rules.n4_t1.output.t1,
         avgb0=bids(
             root=work,
             suffix="b0.nii.gz",
@@ -362,6 +421,7 @@ rule resample_dwi_to_t1w:
             datatype="dwi",
             **subj_wildcards
         ),
+        gradcorrect_warp=rules.convert_gradcorrect_to_itk.output,
     params:
         interpolation="Linear",
     output:
@@ -381,7 +441,10 @@ rule resample_dwi_to_t1w:
     group:
         "subj"
     shell:
-        "antsApplyTransforms -d 3 --input-image-type 3 --input {input.dwi} --reference-image {input.ref} --transform {input.xfm_itk} --interpolation {params.interpolation} --output {output.dwi} --verbose "
+        "antsApplyTransforms -d 3 --input-image-type 3 "
+        "--input {input.dwi} --reference-image {input.ref} "
+        "--transform {input.xfm_itk} --transform {input.gradcorrect_warp}"
+        "--interpolation {params.interpolation} --output {output.dwi} --verbose "
 
 
 rule resample_brainmask_to_t1w:
@@ -406,6 +469,7 @@ rule resample_brainmask_to_t1w:
             datatype="dwi",
             **subj_wildcards
         ),
+        gradcorrect_warp=rules.convert_gradcorrect_to_itk.output
     params:
         interpolation="NearestNeighbor",
     output:
@@ -425,7 +489,10 @@ rule resample_brainmask_to_t1w:
     group:
         "subj"
     shell:
-        "antsApplyTransforms -d 3 --input-image-type 0 --input {input.brainmask} --reference-image {input.ref} --transform {input.xfm_itk} --interpolation {params.interpolation} --output {output.brainmask} --verbose"
+        "antsApplyTransforms -d 3 --input-image-type 0 "
+        "--input {input.brainmask} --reference-image {input.ref} "
+        "--transform {input.xfm_itk} --transform {input.gradcorrect_warp}"
+        "--interpolation {params.interpolation} --output {output.brainmask} --verbose"
 
 
 rule rotate_bvecs_to_t1w:
@@ -475,6 +542,32 @@ rule rotate_bvecs_to_t1w:
         "{params.script} {input.bvecs} {input.xfm_fsl} {output.bvecs} && "
         "cp -v {input.bvals} {output.bvals}"
 
+rule gradcorrect_t1w:
+    input:
+        data=rules.n4_t1.output.t1,
+        grad_coeff=config["grad_correct_coeffs"],
+    output:
+        bids(
+            root=root,
+            **subj_wildcards,
+            desc="preproc",
+            suffix="T1w.nii.gz",
+        ),
+    log: f"logs/find_gradcorrect_warp/{'.'.join(subj_wildcards.values())}.log"
+    benchmark: f"benchmarks/find_gradcorrect_warp/{'.'.join(subj_wildcards.values())}.tsv"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    params:
+        fov=0.2,
+        numpoints=120,
+    shell:
+        "gradient_unwarp.py {input.data} {output} siemens"
+        "-g {input.grad_coeff} -n --fovmin -{params.fov} --fovmax {params.fov} "
+        "--numpoints {params.numpoints} --verbose &&"
+
+        "rm {output}/../fullWarp_abs.nii.gz"
 
 # dti fitting on dwi in t1w space
 rule dtifit_resampled_t1w:

@@ -26,6 +26,11 @@ rule all:
             zip,
             **input_zip_lists["dwi"]
         ),
+        t1_preproc=expand(
+            rules.gradcorrect_t1w.output,
+            zip,
+            **input_zip_lists["dwi"]
+        ),
         reg_qc=expand(
             bids(
                 root="qc", suffix="reg.png", from_="dwiref", to="T1w", **subj_wildcards
