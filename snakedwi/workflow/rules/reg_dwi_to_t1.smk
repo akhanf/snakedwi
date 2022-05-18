@@ -1,7 +1,7 @@
 rule find_gradcorrect_warp:
     input:
         data=rules.cp_dwi_ref.output,
-        grad_coeff=config["grad_correct_coeffs"],
+        grad_coeff=os.path.join(workflow.basedir,'..',config["grad_correct_coeffs"]),
     output:
         data=bids(
             root=work,
@@ -22,15 +22,17 @@ rule find_gradcorrect_warp:
     resources:
         mem_mb=1000,
         runtime=30,
+    shadow: 'minimal'
     params:
         fov=0.2,
         numpoints=120,
+        out_warp='fullWarp_abs.nii.gz'
+    container: config['singularity']['gradcorrect']
     shell:
-        "gradient_unwarp.py {input.data} {output.data} siemens"
+        "gradient_unwarp.py {input.data} {output.data} siemens "
         "-g {input.grad_coeff} -n --fovmin -{params.fov} --fovmax {params.fov} "
-        "--numpoints {params.numpoints} --verbose &&"
-
-        "mv {output.data}/../fullWarp_abs.nii.gz {output.warp}"
+        "--numpoints {params.numpoints} --verbose && "
+        "mv {params.out_warp} {output.warp}"
 
 rule get_jacobian_determinant:
     input:
@@ -61,7 +63,8 @@ rule convert_gradcorrect_to_itk:
             root=work,
             datatype="dwi",
             desc="gradCorrect",
-            suffix="warp.itk",
+            type_='itk',
+            suffix="warp.nii.gz",
             **subj_wildcards,
         )
     log: f"logs/convert_gradcorrect_to_itk/{'.'.join(subj_wildcards.values())}.log"
@@ -491,7 +494,7 @@ rule resample_brainmask_to_t1w:
     shell:
         "antsApplyTransforms -d 3 --input-image-type 0 "
         "--input {input.brainmask} --reference-image {input.ref} "
-        "--transform {input.xfm_itk} --transform {input.gradcorrect_warp}"
+        "--transform {input.xfm_itk} --transform {input.gradcorrect_warp} "
         "--interpolation {params.interpolation} --output {output.brainmask} --verbose"
 
 
@@ -544,10 +547,10 @@ rule rotate_bvecs_to_t1w:
 
 rule gradcorrect_t1w:
     input:
-        data=rules.n4_t1.output.t1,
-        grad_coeff=config["grad_correct_coeffs"],
+        t1=rules.n4_t1.output.t1,
+        grad_coeff=os.path.join(workflow.basedir,'..',config["grad_correct_coeffs"]),
     output:
-        bids(
+        t1=bids(
             root=root,
             **subj_wildcards,
             desc="preproc",
@@ -559,15 +562,15 @@ rule gradcorrect_t1w:
     resources:
         mem_mb=1000,
         runtime=30,
+    shadow: 'minimal'
     params:
         fov=0.2,
         numpoints=120,
+    container: config['singularity']['gradcorrect']
     shell:
-        "gradient_unwarp.py {input.data} {output} siemens"
+        "gradient_unwarp.py {input.t1} {output.t1} siemens "
         "-g {input.grad_coeff} -n --fovmin -{params.fov} --fovmax {params.fov} "
-        "--numpoints {params.numpoints} --verbose &&"
-
-        "rm {output}/../fullWarp_abs.nii.gz"
+        "--numpoints {params.numpoints} --verbose"
 
 # dti fitting on dwi in t1w space
 rule dtifit_resampled_t1w:

@@ -151,6 +151,7 @@ singularity:
   ants: 'docker://kaczmarj/ants:2.3.4'  
   niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
   python: 'docker://akhanf/snakedwi-pythondeps:master'  
+  gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
 
 
 
@@ -236,7 +237,7 @@ ants:
   shape_update:
   gradient_step: 0.25
 
-grad_correct_coeffs: /project/ctb-akhanf/akhanf/opt/grad/.coeff_AC84.grad
+grad_correct_coeffs: 'resources/coeff_AC84.grad'
 
 #we convert flags and opts automatically 
 #so feel free to prescribe options that are not included here 
