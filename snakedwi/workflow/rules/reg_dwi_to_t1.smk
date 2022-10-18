@@ -1,14 +1,14 @@
 # just grab the first T1w for now:
 rule import_t1:
     input:
-        nii = lambda wildcards: expand(
+        nii=lambda wildcards: expand(
             config["input_path"]["T1w"],
             zip,
             **snakebids.filter_list(config["input_zip_lists"]["T1w"], wildcards)
         )[0],
-        metadatacheck= bids(root='work',subject='group',suffix='metadatacheck')
+        metadatacheck=bids(root="work", subject="group", suffix="metadatacheck"),
     output:
-        nii = bids(
+        nii=bids(
             root="work",
             datatype="anat",
             **config["subj_wildcards"],

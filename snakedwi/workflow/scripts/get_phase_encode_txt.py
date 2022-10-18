@@ -38,7 +38,9 @@ if len(json_dwi["PhaseEncodingDirection"]) == 2:
 
 if not "EffectiveEchoSpacing" in json_dwi:
     print("EffectiveEchoSpacing not defined in JSON, using default value")
-    json_dwi["EffectiveEchoSpacing"] = snakemake.config['default_effective_echo_spacing']
+    json_dwi["EffectiveEchoSpacing"] = snakemake.config[
+        "default_effective_echo_spacing"
+    ]
 
 # create the phenc_line row
 phenc_line = np.hstack(
