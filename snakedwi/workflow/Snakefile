@@ -1,115 +1,9 @@
-# ---- begin snakebids boilerplate ----------------------------------------------
-
-import snakebids
-from snakebids import bids
-
 
 configfile: "config/snakebids.yml"
 
 
-# writes inputs_config.yml and updates config dict
-config.update(
-    snakebids.generate_inputs(
-        bids_dir=config["bids_dir"],
-        pybids_inputs=config["pybids_inputs"],
-        derivatives=config["derivatives"],
-        participant_label=config["participant_label"],
-        exclude_participant_label=config["exclude_participant_label"],
-    )
-)
-
-
-# this adds constraints to the bids naming
-wildcard_constraints:
-    **snakebids.get_wildcard_constraints(config["pybids_inputs"]),
-
-
-# ---- end snakebids boilerplate ------------------------------------------------
-
-
-report: "../workflow/report/workflow.rst"
-
-
-subj_wildcards = config["subj_wildcards"]
-input_zip_lists = config["input_zip_lists"]
-
-
-def get_eddy_quad_all():
-    if config["eddy_no_quad"]:
-        return {}
-    else:
-        return {
-            "eddy_qc": expand(
-                bids(
-                    root="work",
-                    datatype="dwi",
-                    suffix="eddy.qc_pages",
-                    **config["subj_wildcards"]
-                ),
-                zip,
-                **config["input_zip_lists"]["dwi"]
-            )
-        }
-
-
-def get_bedpost_all():
-    if config["no_bedpost"]:
-        return {}
-    else:
-        return {
-            "bedpost": expand(
-                bids(
-                    root="results",
-                    datatype="dwi",
-                    suffix="diffusion.bedpostX",
-                    desc="eddy",
-                    space="T1w",
-                    res=config["resample_dwi"]["resample_scheme"],
-                    **config["subj_wildcards"]
-                ),
-                zip,
-                **config["input_zip_lists"]["dwi"]
-            )
-        }
-
-
-rule all:
-    input:
-        **get_eddy_quad_all(),
-        **get_bedpost_all(),
-        mask_qc=expand(
-            bids(
-                root="qc", suffix="mask.png", desc="brain", **config["subj_wildcards"]
-            ),
-            zip,
-            **config["input_zip_lists"]["dwi"]
-        ),
-        reg_qc=expand(
-            bids(
-                root="qc",
-                suffix="reg.png",
-                from_="dwiref",
-                to="T1w",
-                **config["subj_wildcards"]
-            ),
-            zip,
-            **config["input_zip_lists"]["dwi"]
-        ),
-        dtifit=expand(
-            bids(
-                root="results",
-                datatype="dwi",
-                suffix="dtifit",
-                desc="eddy",
-                space="T1w",
-                res=config["resample_dwi"]["resample_scheme"],
-                **config["subj_wildcards"]
-            ),
-            zip,
-            **config["input_zip_lists"]["dwi"]
-        ),
-
-
+include: "rules/setup.smk"
+include: "rules/common.smk"
 include: "rules/prepdwi.smk"
 include: "rules/reg_dwi_to_t1.smk"
 include: "rules/masking_bet_from-b0.smk"
@@ -121,3 +15,34 @@ include: "rules/seg_t1_brain_tissue.smk"
 # WIP:
 # include: "rules/mask_multishell.smk"
 # include: "rules/templateflow.smk"
+
+
+rule all:
+    input:
+        **get_eddy_quad_all(),
+        **get_bedpost_all(),
+        mask_qc=expand(
+            bids(root="qc", suffix="mask.png", desc="brain", **subj_wildcards),
+            zip,
+            **input_zip_lists["dwi"]
+        ),
+        reg_qc=expand(
+            bids(
+                root="qc", suffix="reg.png", from_="dwiref", to="T1w", **subj_wildcards
+            ),
+            zip,
+            **input_zip_lists["dwi"]
+        ),
+        dtifit=expand(
+            bids(
+                root=root,
+                datatype="dwi",
+                suffix="dtifit",
+                desc="eddy",
+                space="T1w",
+                res=config["resample_dwi"]["resample_scheme"],
+                **subj_wildcards
+            ),
+            zip,
+            **input_zip_lists["dwi"]
+        ),

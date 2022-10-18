@@ -1,5 +1,5 @@
-bids_dir: 'test_data/bids_AP_PA'
-output_dir: 'test_output'
+bids_dir: 'test_data/bids_multishell_downsampled'
+output_dir: 'test_output/snakedwi_multishell_downsampled'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
@@ -140,11 +140,17 @@ parse_args:
 #---- to update below this
 
 singularity:
-  prepdwi: '/project/6050199/akhanf/singularity/bids-apps/khanlab_prepdwi_latest.sif'  #should use mrtrix3.0 container instead
-  ants: '/project/6050199/akhanf/singularity/ants-v2.3.1.sif'
-  fsl_603: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif' 
-  fsl_604: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif'  #eddy seems to fail with 6.0.4
-  autotop: '/project/6050199/akhanf/singularity/bids-apps/khanlab_autotop_deps_v0.4.1.sif'
+  prepdwi: 'docker://khanlab/prepdwi:latest' 
+  mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'
+  fsl_603: 'docker://brainlife/fsl:6.0.3' #'/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif'
+  #fsl_604: 'docker://brainlife/fsl:6.0.4-patched2' #'/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif'  #eddy seems to fail with 6.0.4
+  #fsl: 'docker://brainlife/fsl:6.0.4-patched2' 
+  fsl_604: 'docker://khanlab/neuroglia-core:latest' 
+  fsl: 'docker://khanlab/neuroglia-core:latest' 
+  itksnap: 'docker://khanlab/itksnap:latest' 
+  ants: 'docker://kaczmarj/ants:2.3.4'  
+  niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
+  python: 'docker://akhanf/snakedwi-pythondeps:master'  
 
 
 
@@ -258,4 +264,6 @@ exclude_participant_label:
 masking_method: b0_BET
 b0_bet_frac: 0.5
 slspec_txt: False
-
+eddy_no_s2v: True
+no_bedpost: True
+root: 'results'
