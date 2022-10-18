@@ -2,7 +2,7 @@
 checkpoint split_shell_avgs:
     input:
         avg_4d=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells.nii.gz",
@@ -13,7 +13,7 @@ checkpoint split_shell_avgs:
     output:
         nii_dir=directory(
             bids(
-                root="work",
+                root=work,
                 desc="topup",
                 method="jac",
                 suffix="dwi.avgshells",
@@ -21,7 +21,7 @@ checkpoint split_shell_avgs:
             )
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "mkdir -p {output}; fslsplit {input} {params.out_prefix}"
 
@@ -30,7 +30,7 @@ checkpoint split_shell_avgs:
 rule n4_shell_avg:
     input:
         avg_nii=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi.{shell}.nii.gz",
@@ -38,14 +38,14 @@ rule n4_shell_avg:
         ),
     output:
         n4_nii=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi_n4.{shell}.nii.gz",
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     shell:
         "N4BiasFieldCorrection -i {input} -o {output}"
 
@@ -57,7 +57,7 @@ rule rescale_shell_avg:
     output:
         rescale_nii="{infile}_rescale.{shell}.nii.gz",
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     shell:
         "c3d -verbose {input} -clip 5% 95% -stretch 0% 99% 0 2000 -o {output}"
 
@@ -71,7 +71,7 @@ rule bet_shell_avg:
     output:
         bet_nii="{infile}_bet.{shell}.nii.gz",
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "bet {input} {output} -f {params.frac}"
 
@@ -85,7 +85,7 @@ rule smooth_binarize_shell_avg:
     output:
         mask_nii="{infile}_binarize.{shell}.nii.gz",
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     shell:
         "c3d {input} -binarize -sdt -smooth {params.smoothing} -threshold {params.sdt_thresh} inf 0 1 -o {output}"
 
@@ -94,14 +94,14 @@ rule smooth_binarize_shell_avg:
 rule n4_shell_avg_withb0mask:
     input:
         avg_nii=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi.{shell}.nii.gz",
             **subj_wildcards
         ),
         mask_nii=bids(
-            root="work",
+            root=work,
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
@@ -109,14 +109,14 @@ rule n4_shell_avg_withb0mask:
         ),
     output:
         n4_nii=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi_n4withb0mask.{shell}.nii.gz",
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     shell:
         "N4BiasFieldCorrection -i {input.avg_nii} -o {output} -x {input.mask_nii} --convergence [200x200x200x200] "
 
@@ -126,7 +126,7 @@ def get_diffweighted_shells_for_tissue_seg(wildcards):
     return sorted(
         expand(
             bids(
-                root="work",
+                root=work,
                 desc="topup",
                 method="jac",
                 suffix="dwi.avgshells/dwi_n4_rescale.{shell}.nii.gz",
@@ -145,7 +145,7 @@ rule tissue_seg_kmeans_init:
     input:
         shells=get_diffweighted_shells_for_tissue_seg,
         mask=bids(
-            root="work",
+            root=work,
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
@@ -160,14 +160,14 @@ rule tissue_seg_kmeans_init:
         posterior_glob="posteriors_*.nii.gz",
     output:
         seg=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_dseg.nii.gz",
             **subj_wildcards
         ),
         posteriors=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz",
@@ -178,16 +178,16 @@ rule tissue_seg_kmeans_init:
     container:
         config["singularity"]["prepdwi"]
     shell:
+        #merge posteriors into a 4d file (intermediate files will be removed b/c shadow) - TODO: update this so just requires ants
         "Atropos -d 3  {params.intensity_images} -i KMeans[{params.k}] -x {input.mask} -o [{output.seg},{params.posterior_fmt}] && "
         "fslmerge -t {output.posteriors} {params.posterior_glob} "
-        #merge posteriors into a 4d file (intermediate files will be removed b/c shadow)
 
 
 # get class 0 from tissue seg - corresponds to lowest intensity
 rule extract_posterior_bgnd:
     input:
         posterior_4d=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz",
@@ -195,14 +195,14 @@ rule extract_posterior_bgnd:
         ),
     output:
         posterior_bgnd=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz",
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "fslroi {input} {output} 0 1"
 
@@ -211,14 +211,14 @@ rule extract_posterior_bgnd:
 rule refine_mask_with_tissue_prob:
     input:
         mask=bids(
-            root="work",
+            root=work,
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
             **subj_wildcards
         ),
         posterior_bgnd=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz",
@@ -226,14 +226,14 @@ rule refine_mask_with_tissue_prob:
         ),
     output:
         mask=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz",
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     shell:
         "fslmaths {input.mask} -sub {input.posterior_bgnd} {output.mask}"
 
@@ -242,7 +242,7 @@ rule refine_mask_with_tissue_prob:
 rule smooth_threshold_refined_mask:
     input:
         mask=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz",
@@ -252,13 +252,13 @@ rule smooth_threshold_refined_mask:
         smooth="{smooth}",
     output:
         mask=bids(
-            root="work",
+            root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_smooth-{smooth}_mask.nii.gz",
             **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     shell:
         "c3d {input.mask} -smooth {params.smooth} -threshold 0.5 Inf 1 0 -o {output.mask}"

@@ -5,19 +5,19 @@
 rule import_avg_b0:
     input:
         bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     output:
         bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     group:
         "subj"
@@ -29,22 +29,16 @@ rule import_avg_b0:
 rule n4_avg_b0:
     input:
         bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     output:
-        bids(
-            root="work",
-            suffix="b0.nii.gz",
-            desc="n4",
-            datatype="dwi",
-            **config["subj_wildcards"]
-        ),
+        bids(root=work, suffix="b0.nii.gz", desc="n4", datatype="dwi", **subj_wildcards),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["ants"]
     group:
         "subj"
     shell:
@@ -54,23 +48,17 @@ rule n4_avg_b0:
 # rescale intensities, clip off first/last 5% of intensities, then rescale to 0-2000
 rule rescale_avg_b0:
     input:
-        bids(
-            root="work",
-            suffix="b0.nii.gz",
-            desc="n4",
-            datatype="dwi",
-            **config["subj_wildcards"]
-        ),
+        bids(root=work, suffix="b0.nii.gz", desc="n4", datatype="dwi", **subj_wildcards),
     output:
         bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="rescale",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     group:
         "subj"
     shell:
@@ -80,24 +68,20 @@ rule rescale_avg_b0:
 rule bet_avg_b0:
     input:
         bids(
-            root="work",
+            root=work,
             suffix="b0.nii.gz",
             desc="rescale",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     params:
         bet_frac=config["b0_bet_frac"],
     output:
         bids(
-            root="work",
-            suffix="b0.nii.gz",
-            desc="bet",
-            datatype="dwi",
-            **config["subj_wildcards"]
+            root=work, suffix="b0.nii.gz", desc="bet", datatype="dwi", **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
@@ -107,23 +91,19 @@ rule bet_avg_b0:
 rule binarize_avg_b0:
     input:
         bids(
-            root="work",
-            suffix="b0.nii.gz",
-            desc="bet",
-            datatype="dwi",
-            **config["subj_wildcards"]
+            root=work, suffix="b0.nii.gz", desc="bet", datatype="dwi", **subj_wildcards
         ),
     output:
         bids(
-            root="work",
+            root=work,
             suffix="mask.nii.gz",
             desc="brain",
             method="bet_from-b0",
             datatype="dwi",
-            **config["subj_wildcards"]
+            **subj_wildcards
         ),
     container:
-        config["singularity"]["prepdwi"]
+        config["singularity"]["itksnap"]
     group:
         "subj"
     shell:
