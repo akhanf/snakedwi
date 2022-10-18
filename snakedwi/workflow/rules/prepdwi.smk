@@ -1,34 +1,37 @@
 from snakebids import bids
-
+import pathlib
 
 wildcard_constraints:
     shell="[0-9]+",
 
+localrules: check_json_metadata
+
+rule check_json_metadata:
+    input:
+        expand(re.sub('.nii.gz','.json',config["input_path"]["dwi"]),zip,
+            **config["input_zip_lists"]["dwi"])
+    output:
+        touch(bids(root='work',subject='group',suffix='metadatacheck'))
+    script:
+        '../scripts/check_json_metadata.py'
 
 rule import_dwi:
     input:
-        nii=[
-            re.sub(".nii.gz", ext, config["input_path"]["dwi"])
-            for ext in [".nii.gz", ".bval", ".bvec", ".json"]
-        ],
+        f=re.sub(".nii.gz", '.{ext}', config["input_path"]["dwi"]),
+        metadatacheck= bids(root='work',subject='group',suffix='metadatacheck')
+    params:
+        out_folder=lambda wildcards,output: pathlib.Path(output.f).parents[0]
     output:
-        nii=multiext(
-            bids(
+        f=bids(
                 root="work",
-                suffix="dwi",
+                suffix="dwi.{ext,nii.gz|bval|bvec|json}",
                 datatype="dwi",
                 **config["input_wildcards"]["dwi"]
-            ),
-            ".nii.gz",
-            ".bval",
-            ".bvec",
-            ".json",
         ),
     group:
         "subj"
-    run:
-        for in_file, out_file in zip(input, output):
-            shell("cp -v {in_file} {out_file}")
+    shell: 'cp {input.f} {output.f}'
+
 
 
 rule dwidenoise:
