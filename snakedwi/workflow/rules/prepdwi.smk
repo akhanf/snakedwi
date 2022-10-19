@@ -1332,7 +1332,7 @@ rule run_bedpost:
         #remove the logs to reduce # of files  
         # remove the input dir (copy of files) 
         "{params.bedpost_cmd} {input.diff_dir} {params.parallel_opt} && "
-        "rm -rf {output.bedpost_dir}/logs && "
+        "rm -rf {output.bedpost_dir}/logs "
 
 
 rule cp_bedpost_to_results:
