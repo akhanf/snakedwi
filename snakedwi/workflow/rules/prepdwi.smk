@@ -3,25 +3,38 @@ wildcard_constraints:
     shell="[0-9]+",
 
 
+localrules:
+    check_json_metadata,
+
+
+rule check_json_metadata:
+    input:
+        expand(
+            re.sub(".nii.gz", ".json", input_path["dwi"]),
+            zip,
+            **input_zip_lists["dwi"]
+        ),
+    output:
+        touch(bids(root=work, subject="group", suffix="metadatacheck")),
+    script:
+        "../scripts/check_json_metadata.py"
+
+
 rule import_dwi:
     input:
-        nii=[
-            re.sub(".nii.gz", ext, input_path["dwi"])
-            for ext in [".nii.gz", ".bval", ".bvec", ".json"]
-        ],
+        dwi=re.sub(".nii.gz", ".{ext}", input_path["dwi"]),
+        metadatacheck=bids(root=work, subject="group", suffix="metadatacheck"),
     output:
-        nii=multiext(
-            bids(root=work, suffix="dwi", datatype="dwi", **input_wildcards["dwi"]),
-            ".nii.gz",
-            ".bval",
-            ".bvec",
-            ".json",
+        dwi=bids(
+            root=work,
+            suffix="dwi.{ext,nii.gz|bval|bvec|json}",
+            datatype="dwi",
+            **input_wildcards["dwi"]
         ),
     group:
         "subj"
-    run:
-        for in_file, out_file in zip(input, output):
-            shell("cp -v {in_file} {out_file}")
+    shell:
+        "cp {input.dwi} {output.dwi}"
 
 
 rule dwidenoise:

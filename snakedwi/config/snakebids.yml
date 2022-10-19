@@ -256,6 +256,8 @@ eddy:
     ol_type: 'sw'  #can be sw, gw, or both (use sw if no multi-band)
 
 
+default_effective_echo_spacing: 0.0001 #if not defined in JSON files
+
 #for test data
 participant_label: 
 exclude_participant_label:
