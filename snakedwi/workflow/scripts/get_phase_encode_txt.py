@@ -2,7 +2,6 @@ import nibabel as nib
 import json
 import numpy as np
 
-
 # load nifti
 bzero = nib.load(snakemake.input.bzero_nii)
 
@@ -15,8 +14,13 @@ with open(snakemake.input.json) as f:
 
 imsize = np.array(bzero.header.get_data_shape())
 
-phenc_axis = json_dwi["PhaseEncodingDirection"][0]  # either i, j, k
-
+if "PhaseEncodingDirection" in json_dwi:
+	phenc_axis = json_dwi["PhaseEncodingDirection"][0] 
+	phenc_string = "PhaseEncodingDirection"
+elif "PhaseEncodingAxis" in json_dwi:
+	phenc_axis = json_dwi["PhaseEncodingAxis"][0]  # either i, j, k
+	phenc_string = "PhaseEncodingAxis"
+	
 if phenc_axis == "i":
     vec = np.array([1, 0, 0])
 elif phenc_axis == "j":
@@ -25,28 +29,34 @@ elif phenc_axis == "k":
     vec = np.array([0, 0, 1])
 
 # print(f'vec: {vec}')
-# print(f'imsize: {imsize}')
+# print(f'imsize: {imsize}')f
 
 numPhaseEncodes = imsize[np.where(vec > 0)]
 
 # print(f'numPhaseEncodes: {numPhaseEncodes}')
 
 # check for i-, j-, k-; flip to -1 if so..
-if len(json_dwi["PhaseEncodingDirection"]) == 2:
-    if json_dwi["PhaseEncodingDirection"][1] == "-":
+if len(json_dwi[phenc_string]) == 2:
+    if json_dwi[phenc_string][1] == "-":
         vec[np.where(vec > 0)] = -1
 
-if not "EffectiveEchoSpacing" in json_dwi:
+if "EffectiveEchoSpacing" in json_dwi:
+    phenc_line = np.hstack(
+        [vec, np.array(json_dwi["EffectiveEchoSpacing"] * numPhaseEncodes)]
+    )
+elif "EstimatedEffectiveEchoSpacing" in json_dwi:
+    print("Estimtated Effective Echo Spacing found, using that")
+    phenc_line = np.hstack(
+        [vec, np.array(json_dwi["EstimatedEffectiveEchoSpacing"] * numPhaseEncodes)]
+    )   
+else:
     print("EffectiveEchoSpacing not defined in JSON, using default value")
-    json_dwi["EffectiveEchoSpacing"] = snakemake.config[
-        "default_effective_echo_spacing"
-    ]
-
+    json_dwi["EffectiveEchoSpacing"] = snakemake.config["default_effective_echo_spacing"]
+ 
 # create the phenc_line row
-phenc_line = np.hstack(
-    [vec, np.array(json_dwi["EffectiveEchoSpacing"] * numPhaseEncodes)]
-)
-
+#phenc_line = np.hstack(
+#    [vec, np.array(json_dwi["EffectiveEchoSpacing"] * numPhaseEncodes)]
+#)
 
 # replicate to the number of volumes, if it is 4d
 if len(imsize) == 4:
