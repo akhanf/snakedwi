@@ -143,6 +143,8 @@ singularity:
   prepdwi: 'docker://khanlab/prepdwi:latest' 
   mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'
   fsl: 'docker://brainlife/fsl:6.0.4-patched2' 
+  fsl_cpu: '/project/6050199/akhanf/singularity/bids-apps/brainlife_fsl_6.0.4-patched2.sif' #fsl_cpu and fsl_gpu must have absolute paths instead of docker uri - since they are used for rules where we explicitly include singularity exec in the command (eddy, bedpost)
+  fsl_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif'
   itksnap: 'docker://khanlab/itksnap:latest' 
   ants: 'docker://kaczmarj/ants:2.3.4'  
   niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
