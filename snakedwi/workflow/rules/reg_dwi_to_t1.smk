@@ -468,7 +468,7 @@ rule rotate_bvecs_to_t1w:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl_604"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:

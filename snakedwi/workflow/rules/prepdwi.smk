@@ -911,12 +911,10 @@ def get_eddy_slspec_opt(wildcards, input):
 
 def get_eddy_cmd(wildcards):
     if config.get("use_gpu_eddy_container", False):
-        return (
-            f"singularity exec --nv -e {config['singularity']['fsl_603']} eddy_cuda9.1"
-        )
+        return f"singularity exec --nv -e {config['singularity']['fsl']} eddy_cuda9.1"
 
     else:
-        return f"singularity exec -e {config['singularity']['fsl_603']} eddy_openmp"
+        return f"singularity exec -e {config['singularity']['fsl']} eddy_openmp"
 
 
 rule run_eddy:
@@ -968,7 +966,7 @@ rule run_eddy:
                 if value == True
             ]
         ),
-        container=config["singularity"]["fsl_603"],
+        container=config["singularity"]["fsl"],
         topup_opt=get_eddy_topup_opt,
         s2v_opts=get_eddy_s2v_opts,
         slspec_opt=get_eddy_slspec_opt,
@@ -1234,9 +1232,7 @@ rule copy_inputs_for_bedpost:
 
 def get_bedpost_cmd(wildcards):
     if config.get("use_gpu_bedpost_container", False):
-        return (
-            f"singularity exec --nv -e {config['singularity']['fsl_604']} bedpostx_gpu"
-        )
+        return f"singularity exec --nv -e {config['singularity']['fsl']} bedpostx_gpu"
     else:
         return os.path.join(workflow.basedir, f"scripts/bedpostx-parallel")
 
