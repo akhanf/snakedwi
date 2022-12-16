@@ -914,8 +914,9 @@ def get_eddy_cmd(wildcards):
         return (
             f"singularity exec --nv -e {config['singularity']['fsl_603']} eddy_cuda9.1"
         )
+
     else:
-        return "eddy_openmp"
+        return f"singularity exec -e {config['singularity']['fsl_603']} eddy_openmp"
 
 
 rule run_eddy:
