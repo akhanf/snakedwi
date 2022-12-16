@@ -872,25 +872,24 @@ def get_eddy_topup_opt(wildcards, input):
 
 def get_eddy_s2v_opts(wildcards, input):
     options = []
-    if config["eddy_no_s2v"]:
-        options += [
-            f"--{key}={value}"
-            for (key, value) in config["eddy"]["without_s2v"].items()
-            if value is not None
-        ]
-    else:
+    if config["use_eddy_s2v"]:
         options += [
             f"--{key}={value}"
             for (key, value) in config["eddy"]["with_s2v"].items()
             if value is not None
         ]
+    else:
+        options += [
+            f"--{key}={value}"
+            for (key, value) in config["eddy"]["without_s2v"].items()
+            if value is not None
+        ]
+
     return " ".join(options)
 
 
 def get_eddy_slspec_input(wildcards):
-    if config["eddy_no_s2v"]:
-        return {}
-    else:
+    if config["use_eddy_s2v"]:
         return {
             "eddy_slspec_txt": bids(
                 root=work,
@@ -901,16 +900,19 @@ def get_eddy_slspec_input(wildcards):
             )
         }
 
+    else:
+        return {}
+
 
 def get_eddy_slspec_opt(wildcards, input):
-    if config["eddy_no_s2v"]:
-        return ""
-    else:
+    if config["use_eddy_s2v"]:
         return f"--slspec={input.eddy_slspec_txt}"
+    else:
+        return ""
 
 
 def get_eddy_cmd(wildcards):
-    if config.get("use_gpu_eddy_container", False):
+    if config.get("use_eddy_gpu", False):
         return (
             f"singularity exec --nv -e {config['singularity']['fsl_gpu']} eddy_cuda9.1"
         )
@@ -1233,7 +1235,7 @@ rule copy_inputs_for_bedpost:
 
 
 def get_bedpost_cmd(wildcards):
-    if config.get("use_gpu_bedpost_container", False):
+    if config.get("use_bedpost_gpu", False):
         return (
             f"singularity exec --nv -e {config['singularity']['fsl_gpu']} bedpostx_gpu"
         )
@@ -1245,7 +1247,7 @@ def get_bedpost_cmd(wildcards):
 
 
 def get_bedpost_parallel_opt(wildcards, threads):
-    if config.get("use_gpu_bedpost_container", False):
+    if config.get("use_bedpost_gpu", False):
         return ""
     else:
         return f"-P {threads}"

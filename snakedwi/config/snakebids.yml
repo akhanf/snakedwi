@@ -14,7 +14,7 @@ analysis_levels: &analysis_levels
  - participant
 
 no_topup: False
-eddy_no_s2v: False
+use_eddy_s2v: False
 eddy_no_quad: False
 no_bedpost: False
 
@@ -97,9 +97,9 @@ parse_args:
     default: False
 
    
-  --eddy_no_s2v:
-    help: 'Disables slice-to-volume in eddy. This option must be used
-          if your dwi json does not include SliceTiming (default: %(default)s)'
+  --use_eddy_s2v:
+    help: 'Enable slice-to-volume in eddy.  Your dwi json must include
+        SliceTiming information, and you must use the --use_eddy_gpu option. (default: %(default)s)'
     action: 'store_true'
     default: False
 
@@ -126,14 +126,14 @@ parse_args:
     type: Path
 
 
-  --use_gpu_eddy_container:
-    help: 'Use GPU-based eddy container'
+  --use_eddy_gpu:
+    help: 'Use GPU-based version of eddy (must set container path in config)'
     action: 'store_true'
     default: False
 
 
-  --use_gpu_bedpost_container:
-    help: 'Use GPU-based bedpost container'
+  --use_bedpost_gpu:
+    help: 'Use GPU-based version of bedpost (must set container path in config)'
     action: 'store_true'
     default: False
 
@@ -262,6 +262,8 @@ exclude_participant_label:
 masking_method: b0_BET
 b0_bet_frac: 0.5
 slspec_txt: False
-eddy_no_s2v: True
+use_eddy_s2v: False
 no_bedpost: True
+use_eddy_gpu: False
+use_bedpost_gpu: False
 root: 'results'
