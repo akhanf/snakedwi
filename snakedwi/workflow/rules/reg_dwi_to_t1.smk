@@ -446,8 +446,7 @@ rule rotate_bvecs_to_t1w:
         bvals=bids(
             root=root, suffix="dwi.bval", desc="eddy", datatype="dwi", **subj_wildcards
         ),
-    params:
-        script=workflow.source_path("../scripts/rotate_bvecs.sh"),
+        script=os.path.join(workflow.basedir, f"scripts/rotate_bvecs.sh")
     output:
         bvecs=bids(
             root=root,
@@ -472,8 +471,8 @@ rule rotate_bvecs_to_t1w:
     group:
         "subj"
     shell:
-        "chmod a+x {params.script} && "
-        "{params.script} {input.bvecs} {input.xfm_fsl} {output.bvecs} && "
+        "chmod a+x {input.script} && "
+        "{input.script} {input.bvecs} {input.xfm_fsl} {output.bvecs} && "
         "cp -v {input.bvals} {output.bvals}"
 
 
