@@ -446,7 +446,7 @@ rule rotate_bvecs_to_t1w:
         bvals=bids(
             root=root, suffix="dwi.bval", desc="eddy", datatype="dwi", **subj_wildcards
         ),
-        script=os.path.join(workflow.basedir, f"scripts/rotate_bvecs.sh")
+        script=os.path.join(workflow.basedir, f"scripts/rotate_bvecs.sh"),
     output:
         bvecs=bids(
             root=root,

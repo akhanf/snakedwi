@@ -910,7 +910,8 @@ def get_eddy_slspec_opt(wildcards, input):
     else:
         return ""
 
-if config['use_eddy_gpu']:
+
+if config["use_eddy_gpu"]:
 
     rule run_eddy_gpu:
         input:
@@ -998,6 +999,7 @@ if config['use_eddy_gpu']:
             " {params.topup_opt} "
             " {params.flags}  &> {log}"
 
+
 else:
 
     rule run_eddy_cpu:
@@ -1071,7 +1073,8 @@ else:
             mem_mb=32000,
         log:
             bids(root="logs", suffix="run_eddy.log", **subj_wildcards),
-        container: config["singularity"]["fsl"]
+        container:
+            config["singularity"]["fsl"]
         group:
             "subj"
         shell:
@@ -1084,7 +1087,6 @@ else:
             " {params.slspec_opt} "
             " {params.topup_opt} "
             " {params.flags}  &> {log}"
-
 
 
 rule cp_eddy_outputs:
@@ -1119,6 +1121,8 @@ rule cp_eddy_outputs:
     run:
         for in_file, out_file in zip(input, output):
             shell("cp -v {in_file} {out_file}")
+
+
 
 
 rule eddy_quad:
@@ -1312,8 +1316,7 @@ rule copy_inputs_for_bedpost:
         "cp {input.bvec} {output.bvec} "
 
 
-
-if config['use_bedpost_gpu']:
+if config["use_bedpost_gpu"]:
 
     rule run_bedpost_gpu:
         input:
@@ -1375,7 +1378,7 @@ if config['use_bedpost_gpu']:
                 "bvecs",
             ),
         params:
-            container=config['singularity']['bedpost_gpu']
+            container=config["singularity"]["bedpost_gpu"],
         output:
             bedpost_dir=directory(
                 bids(
@@ -1400,6 +1403,7 @@ if config['use_bedpost_gpu']:
             # remove the input dir (copy of files) 
             "singularity exec --nv -e {params.container} bedpostx_gpu {input.diff_dir} && "
             "rm -rf {output.bedpost_dir}/logs "
+
 
 else:
 
@@ -1463,11 +1467,10 @@ else:
                 "bvecs",
             ),
         params:
-            container=config['singularity']['fsl_cpu'],
-            bedpost_script = os.path.join(workflow.basedir, "scripts/bedpostx-parallel"),
-            parallel_script = os.path.join(workflow.basedir, "scripts/parallel"),
-            parallel_script_container = "/usr/bin/parallel",
-
+            container=config["singularity"]["fsl_cpu"],
+            bedpost_script=os.path.join(workflow.basedir, "scripts/bedpostx-parallel"),
+            parallel_script=os.path.join(workflow.basedir, "scripts/parallel"),
+            parallel_script_container="/usr/bin/parallel",
         output:
             bedpost_dir=directory(
                 bids(
@@ -1482,7 +1485,7 @@ else:
             ),
         group:
             "subj"
-        threads: 32  
+        threads: 32
         resources:
             mem_mb=16000,
             time=360,
@@ -1490,8 +1493,6 @@ else:
             "singularity exec -B {params.parallel_script}:{params.parallel_script_container} -e "
             " {params.container} {params.bedpost_script} {input.diff_dir} -P {threads} && "
             "rm -rf {output.bedpost_dir}/logs "
-
-
 
 
 rule cp_bedpost_to_results:
@@ -1521,9 +1522,9 @@ rule cp_bedpost_to_results:
         "subj"
     shell:
         "cp -Rv {input} {output}"
-
-
 # TODO: gradient correction (optional step -- only if gradient file is provided)..
+
+
 #  gradient_unwarp.py
 #  reg_jacobian
 #  convertwarp -> change this to wb_command -convert-warpfield  to get itk transforms
