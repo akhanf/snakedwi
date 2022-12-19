@@ -910,103 +910,181 @@ def get_eddy_slspec_opt(wildcards, input):
     else:
         return ""
 
+if config['use_eddy_gpu']:
 
-def get_eddy_cmd(wildcards):
-    if config.get("use_eddy_gpu", False):
-        return (
-            f"singularity exec --nv -e {config['singularity']['fsl_gpu']} eddy_cuda9.1"
-        )
+    rule run_eddy_gpu:
+        input:
+            unpack(get_eddy_slspec_input),
+            dwi_concat=bids(
+                root=work,
+                suffix="dwi.nii.gz",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+            phenc_concat=bids(
+                root=work,
+                suffix="phenc.txt",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+            eddy_index_txt=bids(
+                root=work,
+                suffix="dwi.eddy_index.txt",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+            brainmask=get_mask_for_eddy(),
+            bvals=bids(
+                root=work,
+                suffix="dwi.bval",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+            bvecs=bids(
+                root=work,
+                suffix="dwi.bvec",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+        params:
+            #set eddy output prefix to 'dwi' inside the output folder
+            out_prefix=lambda wildcards, output: os.path.join(output.out_folder, "dwi"),
+            flags=" ".join(
+                [
+                    f"--{key}"
+                    for (key, value) in config["eddy"]["flags"].items()
+                    if value == True
+                ]
+            ),
+            container=config["singularity"]["eddy_gpu"],
+            topup_opt=get_eddy_topup_opt,
+            s2v_opts=get_eddy_s2v_opts,
+            slspec_opt=get_eddy_slspec_opt,
+        output:
+            #eddy creates many files, so write them to a eddy subfolder instead
+            out_folder=directory(
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards)
+            ),
+            dwi=os.path.join(
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+                "dwi.nii.gz",
+            ),
+            bvec=os.path.join(
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+                "dwi.eddy_rotated_bvecs",
+            ),
+        threads: 16  #this needs to be set in order to avoid multiple gpus from executing
+        resources:
+            gpus=1,
+            time=360,  #6 hours (this is a conservative estimate, may be shorter)
+            mem_mb=32000,
+        log:
+            bids(root="logs", suffix="run_eddy_gpu.log", **subj_wildcards),
+        group:
+            "subj"
+        shell:
+            "singularity exec --nv -e {params.container} eddy_cuda9.1 "
+            " --imain={input.dwi_concat} --mask={input.brainmask} "
+            " --acqp={input.phenc_concat} --index={input.eddy_index_txt} "
+            " --bvecs={input.bvecs} --bvals={input.bvals} "
+            " --out={params.out_prefix} "
+            " {params.s2v_opts} "
+            " {params.slspec_opt} "
+            " {params.topup_opt} "
+            " {params.flags}  &> {log}"
 
-    else:
-        return f"singularity exec -e {config['singularity']['fsl_cpu']} eddy_openmp"
+else:
 
+    rule run_eddy_cpu:
+        input:
+            unpack(get_eddy_slspec_input),
+            dwi_concat=bids(
+                root=work,
+                suffix="dwi.nii.gz",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+            phenc_concat=bids(
+                root=work,
+                suffix="phenc.txt",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+            eddy_index_txt=bids(
+                root=work,
+                suffix="dwi.eddy_index.txt",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+            brainmask=get_mask_for_eddy(),
+            bvals=bids(
+                root=work,
+                suffix="dwi.bval",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+            bvecs=bids(
+                root=work,
+                suffix="dwi.bvec",
+                desc="degibbs",
+                datatype="dwi",
+                **subj_wildcards
+            ),
+        params:
+            #set eddy output prefix to 'dwi' inside the output folder
+            out_prefix=lambda wildcards, output: os.path.join(output.out_folder, "dwi"),
+            flags=" ".join(
+                [
+                    f"--{key}"
+                    for (key, value) in config["eddy"]["flags"].items()
+                    if value == True
+                ]
+            ),
+            topup_opt=get_eddy_topup_opt,
+            s2v_opts=get_eddy_s2v_opts,
+            slspec_opt=get_eddy_slspec_opt,
+        output:
+            #eddy creates many files, so write them to a eddy subfolder instead
+            out_folder=directory(
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards)
+            ),
+            dwi=os.path.join(
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+                "dwi.nii.gz",
+            ),
+            bvec=os.path.join(
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+                "dwi.eddy_rotated_bvecs",
+            ),
+        threads: 16  #this needs to be set in order to avoid multiple gpus from executing
+        resources:
+            time=360,  #6 hours (this is a conservative estimate, may be shorter)
+            mem_mb=32000,
+        log:
+            bids(root="logs", suffix="run_eddy.log", **subj_wildcards),
+        container: config["singularity"]["fsl"]
+        group:
+            "subj"
+        shell:
+            "eddy_openmp "
+            " --imain={input.dwi_concat} --mask={input.brainmask} "
+            " --acqp={input.phenc_concat} --index={input.eddy_index_txt} "
+            " --bvecs={input.bvecs} --bvals={input.bvals} "
+            " --out={params.out_prefix} "
+            " {params.s2v_opts} "
+            " {params.slspec_opt} "
+            " {params.topup_opt} "
+            " {params.flags}  &> {log}"
 
-rule run_eddy:
-    input:
-        unpack(get_eddy_slspec_input),
-        dwi_concat=bids(
-            root=work,
-            suffix="dwi.nii.gz",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        phenc_concat=bids(
-            root=work,
-            suffix="phenc.txt",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        eddy_index_txt=bids(
-            root=work,
-            suffix="dwi.eddy_index.txt",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        brainmask=get_mask_for_eddy(),
-        bvals=bids(
-            root=work,
-            suffix="dwi.bval",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        bvecs=bids(
-            root=work,
-            suffix="dwi.bvec",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-    params:
-        #set eddy output prefix to 'dwi' inside the output folder
-        out_prefix=lambda wildcards, output: os.path.join(output.out_folder, "dwi"),
-        flags=" ".join(
-            [
-                f"--{key}"
-                for (key, value) in config["eddy"]["flags"].items()
-                if value == True
-            ]
-        ),
-        container=config["singularity"]["fsl"],
-        topup_opt=get_eddy_topup_opt,
-        s2v_opts=get_eddy_s2v_opts,
-        slspec_opt=get_eddy_slspec_opt,
-        eddy_cmd=get_eddy_cmd,
-    output:
-        #eddy creates many files, so write them to a eddy subfolder instead
-        out_folder=directory(
-            bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards)
-        ),
-        dwi=os.path.join(
-            bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
-            "dwi.nii.gz",
-        ),
-        bvec=os.path.join(
-            bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
-            "dwi.eddy_rotated_bvecs",
-        ),
-    threads: 16  #this needs to be set in order to avoid multiple gpus from executing
-    resources:
-        gpus=1,
-        time=360,  #6 hours (this is a conservative estimate, may be shorter)
-        mem_mb=32000,
-    log:
-        bids(root="logs", suffix="run_eddy.log", **subj_wildcards),
-    group:
-        "subj"
-    shell:
-        "{params.eddy_cmd} "
-        " --imain={input.dwi_concat} --mask={input.brainmask} "
-        " --acqp={input.phenc_concat} --index={input.eddy_index_txt} "
-        " --bvecs={input.bvecs} --bvals={input.bvals} "
-        " --out={params.out_prefix} "
-        " {params.s2v_opts} "
-        " {params.slspec_opt} "
-        " {params.topup_opt} "
-        " {params.flags}  &> {log}"
 
 
 rule cp_eddy_outputs:
@@ -1234,38 +1312,12 @@ rule copy_inputs_for_bedpost:
         "cp {input.bvec} {output.bvec} "
 
 
-def get_bedpost_cmd(wildcards):
-    if config.get("use_bedpost_gpu", False):
-        return (
-            f"singularity exec --nv -e {config['singularity']['fsl_gpu']} bedpostx_gpu"
-        )
-    else:
-        bedpost_script = os.path.join(workflow.basedir, f"scripts/bedpostx-parallel")
-        parallel_script = os.path.join(workflow.basedir, f"scripts/parallel")
-        parallel_script_container = "/usr/bin/parallel"
-        return f"singularity exec -B {parallel_script}:{parallel_script_container} -e {config['singularity']['fsl_cpu']} {bedpost_script}"
 
+if config['use_bedpost_gpu']:
 
-def get_bedpost_parallel_opt(wildcards, threads):
-    if config.get("use_bedpost_gpu", False):
-        return ""
-    else:
-        return f"-P {threads}"
-
-
-rule run_bedpost:
-    input:
-        diff_dir=bids(
-            root=work,
-            desc="eddy",
-            suffix="diffusion",
-            space="T1w",
-            res=config["resample_dwi"]["resample_scheme"],
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        dwi=os.path.join(
-            bids(
+    rule run_bedpost_gpu:
+        input:
+            diff_dir=bids(
                 root=work,
                 desc="eddy",
                 suffix="diffusion",
@@ -1274,10 +1326,86 @@ rule run_bedpost:
                 datatype="dwi",
                 **subj_wildcards
             ),
-            "data.nii.gz",
-        ),
-        brainmask=os.path.join(
-            bids(
+            dwi=os.path.join(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                ),
+                "data.nii.gz",
+            ),
+            brainmask=os.path.join(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                ),
+                "nodif_brain_mask.nii.gz",
+            ),
+            bval=os.path.join(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                ),
+                "bvals",
+            ),
+            bvec=os.path.join(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                ),
+                "bvecs",
+            ),
+        params:
+            container=config['singularity']['bedpost_gpu']
+        output:
+            bedpost_dir=directory(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion.bedpostX",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                )
+            ),
+        group:
+            "subj"
+        threads: 32  #this needs to be set in order to avoid multiple gpus from executing
+        resources:
+            gpus=1,
+            mem_mb=16000,
+            time=360,
+        shell:
+            #remove the logs to reduce # of files  
+            # remove the input dir (copy of files) 
+            "singularity exec --nv -e {params.container} bedpostx_gpu {input.diff_dir} && "
+            "rm -rf {output.bedpost_dir}/logs "
+
+else:
+
+    rule run_bedpost_cpu:
+        input:
+            diff_dir=bids(
                 root=work,
                 desc="eddy",
                 suffix="diffusion",
@@ -1286,59 +1414,84 @@ rule run_bedpost:
                 datatype="dwi",
                 **subj_wildcards
             ),
-            "nodif_brain_mask.nii.gz",
-        ),
-        bval=os.path.join(
-            bids(
-                root=work,
-                desc="eddy",
-                suffix="diffusion",
-                space="T1w",
-                res=config["resample_dwi"]["resample_scheme"],
-                datatype="dwi",
-                **subj_wildcards
+            dwi=os.path.join(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                ),
+                "data.nii.gz",
             ),
-            "bvals",
-        ),
-        bvec=os.path.join(
-            bids(
-                root=work,
-                desc="eddy",
-                suffix="diffusion",
-                space="T1w",
-                res=config["resample_dwi"]["resample_scheme"],
-                datatype="dwi",
-                **subj_wildcards
+            brainmask=os.path.join(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                ),
+                "nodif_brain_mask.nii.gz",
             ),
-            "bvecs",
-        ),
-    params:
-        bedpost_cmd=get_bedpost_cmd,
-        parallel_opt=get_bedpost_parallel_opt,
-    output:
-        bedpost_dir=directory(
-            bids(
-                root=work,
-                desc="eddy",
-                suffix="diffusion.bedpostX",
-                space="T1w",
-                res=config["resample_dwi"]["resample_scheme"],
-                datatype="dwi",
-                **subj_wildcards
-            )
-        ),
-    group:
-        "subj"
-    threads: 32  #this needs to be set in order to avoid multiple gpus from executing
-    resources:
-        gpus=1,
-        mem_mb=16000,
-        time=360,
-    shell:
-        #remove the logs to reduce # of files  
-        # remove the input dir (copy of files) 
-        "{params.bedpost_cmd} {input.diff_dir} {params.parallel_opt} && "
-        "rm -rf {output.bedpost_dir}/logs "
+            bval=os.path.join(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                ),
+                "bvals",
+            ),
+            bvec=os.path.join(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                ),
+                "bvecs",
+            ),
+        params:
+            container=config['singularity']['fsl_cpu'],
+            bedpost_script = os.path.join(workflow.basedir, "scripts/bedpostx-parallel"),
+            parallel_script = os.path.join(workflow.basedir, "scripts/parallel"),
+            parallel_script_container = "/usr/bin/parallel",
+
+        output:
+            bedpost_dir=directory(
+                bids(
+                    root=work,
+                    desc="eddy",
+                    suffix="diffusion.bedpostX",
+                    space="T1w",
+                    res=config["resample_dwi"]["resample_scheme"],
+                    datatype="dwi",
+                    **subj_wildcards
+                )
+            ),
+        group:
+            "subj"
+        threads: 32  
+        resources:
+            mem_mb=16000,
+            time=360,
+        shell:
+            "singularity exec -B {params.parallel_script}:{params.parallel_script_container} -e "
+            " {params.container} {params.bedpost_script} {input.diff_dir} -P {threads} && "
+            "rm -rf {output.bedpost_dir}/logs "
+
+
 
 
 rule cp_bedpost_to_results:
