@@ -7,15 +7,17 @@ for json_file in snakemake.input:
         json_dwi = json.load(f)
 
         if (snakemake.config["slspec_txt"] == False) and (
-            snakemake.config["eddy_no_s2v"] == False
+            snakemake.config["use_eddy_s2v"] == True
         ):
             if "SliceTiming" not in json_dwi:
-                print(f"ERROR: SliceTiming not found in {json_file}")
+                print(
+                    f"ERROR: Eddy slice to volume enabled, but SliceTiming not found in {json_file}"
+                )
                 print("You must do one of the following:")
                 print(" 1. add the SliceTiming field to your dwi JSON files")
                 print(" 2. use the --slspec_txt option to provide a global slspec file")
                 print(
-                    " 3. use the --eddy_no_s2v option to disable slice-to-volume correction"
+                    " 3. do not set the --use_eddy_s2v option to disable slice-to-volume correction"
                 )
 
                 sys.exit(1)
