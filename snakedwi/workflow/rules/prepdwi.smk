@@ -718,13 +718,24 @@ rule qc_brainmask_for_eddy:
         ),
         seg=get_mask_for_eddy(),
     output:
-        #        png = bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),
         png=report(
-            bids(root="qc", suffix="mask.png", desc="brain", **subj_wildcards),
+            bids(
+                root=root,
+                datatype="qc",
+                suffix="mask.png",
+                desc="brain",
+                **subj_wildcards
+            ),
             caption="../report/brainmask_dwi.rst",
             category="Brainmask",
         ),
-        html=bids(root="qc", suffix="mask.html", desc="brain", **subj_wildcards),
+        html=bids(
+            root=root,
+            datatype="qc",
+            suffix="mask.html",
+            desc="brain",
+            **subj_wildcards
+        ),
     group:
         "subj"
     container:
@@ -984,12 +995,10 @@ if config["use_eddy_gpu"]:
             gpus=1,
             time=360,  #6 hours (this is a conservative estimate, may be shorter)
             mem_mb=32000,
-        log:
-            bids(root="logs", suffix="run_eddy_gpu.log", **subj_wildcards),
         group:
             "subj"
         shell:
-            "singularity exec --nv -e {params.container} eddy_cuda9.1 "
+            "singularity exec --nv --home $PWD -e {params.container} eddy_cuda9.1 "
             " --imain={input.dwi_concat} --mask={input.brainmask} "
             " --acqp={input.phenc_concat} --index={input.eddy_index_txt} "
             " --bvecs={input.bvecs} --bvals={input.bvals} "
@@ -997,7 +1006,7 @@ if config["use_eddy_gpu"]:
             " {params.s2v_opts} "
             " {params.slspec_opt} "
             " {params.topup_opt} "
-            " {params.flags}  &> {log}"
+            " {params.flags}"
 
 
 else:
@@ -1401,7 +1410,7 @@ if config["use_bedpost_gpu"]:
         shell:
             #remove the logs to reduce # of files  
             # remove the input dir (copy of files) 
-            "singularity exec --nv -e {params.container} bedpostx_gpu {input.diff_dir} && "
+            "singularity exec --nv --home $PWD -e {params.container} bedpostx_gpu {input.diff_dir} && "
             "rm -rf {output.bedpost_dir}/logs "
 
 
@@ -1490,7 +1499,7 @@ else:
             mem_mb=16000,
             time=360,
         shell:
-            "singularity exec -B {params.parallel_script}:{params.parallel_script_container} -e "
+            "singularity exec --home $PWD -B {params.parallel_script}:{params.parallel_script_container} -e "
             " {params.container} {params.bedpost_script} {input.diff_dir} -P {threads} && "
             "rm -rf {output.bedpost_dir}/logs "
 
