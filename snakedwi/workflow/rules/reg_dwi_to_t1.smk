@@ -103,13 +103,23 @@ rule qc_reg_dwi_t1:
     output:
         png=report(
             bids(
-                root=root,datatype='qc', suffix="reg.png", **subj_wildcards, from_="dwiref", to="T1w"
+                root=root,
+                datatype="qc",
+                suffix="reg.png",
+                **subj_wildcards,
+                from_="dwiref",
+                to="T1w"
             ),
             caption="../report/reg_dwi_t1.rst",
             category="B0 T1w registration",
         ),
         html=bids(
-            root=root,datatype='qc', suffix="reg.html", from_="dwiref", to="T1w", **subj_wildcards
+            root=root,
+            datatype="qc",
+            suffix="reg.html",
+            from_="dwiref",
+            to="T1w",
+            **subj_wildcards
         ),
     group:
         "subj"

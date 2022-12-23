@@ -12,7 +12,8 @@ rule qc_reg:
     output:
         png=report(
             bids(
-                root=root,datatype='qc',
+                root=root,
+                datatype="qc",
                 subject="{subject}",
                 suffix="regqc.png",
                 from_="subject",
@@ -24,7 +25,8 @@ rule qc_reg:
             subcategory="{desc} {template}",
         ),
         html=bids(
-            root=root,datatype='qc',
+            root=root,
+            datatype="qc",
             subject="{subject}",
             suffix="regqc.html",
             from_="subject",
@@ -51,7 +53,8 @@ rule qc_probseg:
     output:
         png=report(
             bids(
-                root=root,datatype='qc',
+                root=root,
+                datatype="qc",
                 subject="{subject}",
                 suffix="probseg.png",
                 desc="atropos3seg",
@@ -82,7 +85,8 @@ rule qc_dseg:
     output:
         png=report(
             bids(
-                root=root,datatype='qc',
+                root=root,
+                datatype="qc",
                 subject="{subject}",
                 suffix="dseg.png",
                 atlas="{atlas}",
@@ -93,7 +97,8 @@ rule qc_dseg:
             subcategory="{atlas} Atlas from {template}",
         ),
         html=bids(
-            root=root,datatype='qc',
+            root=root,
+            datatype="qc",
             subject="{subject}",
             suffix="dseg.html",
             atlas="{atlas}",
