@@ -718,13 +718,12 @@ rule qc_brainmask_for_eddy:
         ),
         seg=get_mask_for_eddy(),
     output:
-        #        png = bids(root='qc',subject='{subject}',suffix='mask.png',desc='brain'),
         png=report(
-            bids(root="qc", suffix="mask.png", desc="brain", **subj_wildcards),
+            bids(root=root,datatype='qc', suffix="mask.png", desc="brain", **subj_wildcards),
             caption="../report/brainmask_dwi.rst",
             category="Brainmask",
         ),
-        html=bids(root="qc", suffix="mask.html", desc="brain", **subj_wildcards),
+        html=bids(root=root,datatype='qc', suffix="mask.html", desc="brain", **subj_wildcards),
     group:
         "subj"
     container:
