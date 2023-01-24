@@ -52,7 +52,9 @@ rule reg_dwi_to_t1:
         ),
     params:
         general_opts="-d 3",
-        rigid_opts="-m NMI -a -dof 6 -ia-identity",
+        rigid_opts="-m NMI -a -dof 6 -ia-{rigid_dwi_t1_init}".format(
+            rigid_dwi_t1_init=config["rigid_dwi_t1_init"]
+        ),
     output:
         warped_avgb0=bids(
             root=work,
