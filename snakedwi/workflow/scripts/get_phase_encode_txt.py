@@ -15,12 +15,12 @@ with open(snakemake.input.json) as f:
 imsize = np.array(bzero.header.get_data_shape())
 
 if "PhaseEncodingDirection" in json_dwi:
-	phenc_axis = json_dwi["PhaseEncodingDirection"][0] 
-	phenc_string = "PhaseEncodingDirection"
+    phenc_axis = json_dwi["PhaseEncodingDirection"][0]
+    phenc_string = "PhaseEncodingDirection"
 elif "PhaseEncodingAxis" in json_dwi:
-	phenc_axis = json_dwi["PhaseEncodingAxis"][0]  # either i, j, k
-	phenc_string = "PhaseEncodingAxis"
-	
+    phenc_axis = json_dwi["PhaseEncodingAxis"][0]  # either i, j, k
+    phenc_string = "PhaseEncodingAxis"
+
 if phenc_axis == "i":
     vec = np.array([1, 0, 0])
 elif phenc_axis == "j":
@@ -48,15 +48,17 @@ elif "EstimatedEffectiveEchoSpacing" in json_dwi:
     print("Estimtated Effective Echo Spacing found, using that")
     phenc_line = np.hstack(
         [vec, np.array(json_dwi["EstimatedEffectiveEchoSpacing"] * numPhaseEncodes)]
-    )   
+    )
 else:
     print("EffectiveEchoSpacing not defined in JSON, using default value")
-    json_dwi["EffectiveEchoSpacing"] = snakemake.config["default_effective_echo_spacing"]
- 
+    json_dwi["EffectiveEchoSpacing"] = snakemake.config[
+        "default_effective_echo_spacing"
+    ]
+
 # create the phenc_line row
-#phenc_line = np.hstack(
+# phenc_line = np.hstack(
 #    [vec, np.array(json_dwi["EffectiveEchoSpacing"] * numPhaseEncodes)]
-#)
+# )
 
 # replicate to the number of volumes, if it is 4d
 if len(imsize) == 4:
