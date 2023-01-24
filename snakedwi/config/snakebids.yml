@@ -137,6 +137,16 @@ parse_args:
     action: 'store_true'
     default: False
 
+  --rigid_dwi_t1_init:
+    help: 'Type of initialization to use for dwi to t1 rigid registration. (default: %(default)s)'
+    nargs: '?'
+    choices: 
+      - 'identity'
+      - 'image-centers'
+    default: 'identity'
+
+
+
 #---- to update below this
 
 singularity:
@@ -267,4 +277,5 @@ use_eddy_s2v: False
 no_bedpost: True
 use_eddy_gpu: False
 use_bedpost_gpu: False
+rigid_dwi_t1_init: 'identity'
 root: 'results'
