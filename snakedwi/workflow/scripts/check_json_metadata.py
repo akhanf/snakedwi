@@ -22,16 +22,15 @@ for json_file in snakemake.input:
 
                 sys.exit(1)
 
-        if snakemake.config["no_topup"] == False:
+        # we need to have PhaseEncodingDirection even if top-up isn't used, since Eddy requires it
+        if "PhaseEncodingDirection" not in json_dwi:
+            print(f"ERROR: PhaseEncodingDirection not found in {json_file}")
+            print("You must do one of the following:")
+            print(" 1. add the PhaseEncodingDirection field to your dwi JSON files")
+            print(" 2. use the --no_topup option to disable top-up")
+            sys.exit(1)
 
-            if "PhaseEncodingDirection" not in json_dwi:
-                print(f"ERROR: PhaseEncodingDirection not found in {json_file}")
-                print("You must do one of the following:")
-                print(" 1. add the PhaseEncodingDirection field to your dwi JSON files")
-                print(" 2. use the --no_topup option to disable top-up")
-                sys.exit(1)
-
-            if "EffectiveEchoSpacing" not in json_dwi:
-                effechospc = snakemake.config["default_effective_echo_spacing"]
-                print(f"WARNING: EffectiveEchoSpacing not found in {json_file}")
-                print(f"If not defined, a default value of {effechospc} will be used")
+        if "EffectiveEchoSpacing" not in json_dwi:
+            effechospc = snakemake.config["default_effective_echo_spacing"]
+            print(f"WARNING: EffectiveEchoSpacing not found in {json_file}")
+            print(f"If not defined, a default value of {effechospc} will be used")
