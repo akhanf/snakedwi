@@ -17,6 +17,8 @@ imsize = np.array(bzero.header.get_data_shape())
 if "PhaseEncodingDirection" in json_dwi:
     phenc_axis = json_dwi["PhaseEncodingDirection"][0]
     phenc_string = "PhaseEncodingDirection"
+
+# NOTE: PhaseEncodingAxis doesn't encode + or -, so if this is used then you cannot use rev phase encoding distortion correction (but it can still be used if there is just a single scan)
 elif "PhaseEncodingAxis" in json_dwi:
     phenc_axis = json_dwi["PhaseEncodingAxis"][0]  # either i, j, k
     phenc_string = "PhaseEncodingAxis"
@@ -54,6 +56,10 @@ else:
     json_dwi["EffectiveEchoSpacing"] = snakemake.config[
         "default_effective_echo_spacing"
     ]
+    phenc_line = np.hstack(
+        [vec, np.array(json_dwi["EffectiveEchoSpacing"] * numPhaseEncodes)]
+    )
+
 
 # create the phenc_line row
 # phenc_line = np.hstack(
@@ -67,6 +73,7 @@ else:
     phenc_data = np.column_stack(phenc_line)
     # need to column_stack so that it becomes 2d array
     # otherwwise savetxt will always save 1d array as column..
+
 
 # save to txt
 np.savetxt(snakemake.output.phenc_txt, phenc_data, fmt="%.5f")
