@@ -1531,6 +1531,9 @@ rule cp_bedpost_to_results:
         "subj"
     shell:
         "cp -Rv {input} {output}"
+
+
+
 # TODO: gradient correction (optional step -- only if gradient file is provided)..
 
 
@@ -1539,3 +1542,100 @@ rule cp_bedpost_to_results:
 #  reg_jacobian
 #  convertwarp -> change this to wb_command -convert-warpfield  to get itk transforms
 #  applywarp -> change this to antsApplyTransforms
+
+rule bet_anat:
+    input:
+        in_anat=bids(
+            root=root,
+            datatype="anat",
+            **subj_wildcards,
+            desc="preproc",
+            suffix="T1w.nii.gz"
+        ),
+    params:
+        bet_frac=0.5
+    output:
+        mask_anat=bids(
+            root=work,
+            datatype='sdc',
+            **subj_wildcards,
+            suffix="anatmask.nii.gz",
+            desc="brain"
+        ),
+    container:
+        config["singularity"]["fsl"]
+    group:
+        "subj"
+    shell:
+        "bet {input} {output} -f {params.bet_frac}"
+
+
+
+rule sdc_syn_preproc:
+    input:
+        in_epis=bids(
+            root=work,
+            suffix="concatb0.nii.gz",
+            datatype="dwi",
+            desc="degibbs",
+            **subj_wildcards
+        ),
+        in_anat=bids(
+            root=root,
+            datatype="anat",
+            **subj_wildcards,
+            desc="preproc",
+            suffix="T1w.nii.gz"
+        ),
+        json_files=lambda wildcards: expand(
+            bids(
+                root=work,
+                suffix="dwi.json",
+                datatype="dwi",
+                **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wildcards)
+        ),
+        mask_anat=bids(
+            root=work,
+            datatype='sdc',
+            **subj_wildcards,
+            suffix="anatmask.nii.gz",
+            desc="brain"
+        ),
+        std2anat_xfm=bids(root=work,**subj_wildcards,suffix='template2subj.mat')
+    output:
+        out_dir=directory(bids(root=work,datatype='sdc',suffix='preproc',**subj_wildcards))
+#        epi_ref=bids(root=work,datatype='sdc',suffix='epiref.nii.gz',**subj_wildcards),
+#        anat_ref=bids(root=work,datatype='sdc',suffix='anatref.nii.gz',**subj_wildcards),
+#        anat_mask=bids(root=work,datatype='sdc',suffix='anatmask.nii.gz',**subj_wildcards),
+#        sd_prior=bids(root=work,datatype='sdc',suffix='sdprior.nii.gz',**subj_wildcards),
+    threads: 8
+    script:
+        '../scripts/sdc_preproc.py'
+        
+
+rule invert_subj_to_template_xfm_for_sdc:
+    input:        
+        bids(
+            root=work,
+            datatype="anat",
+            **subj_wildcards,
+            suffix="xfm.txt",
+            from_="subject",
+            to=config['template'],
+            desc="affine",
+            type_="ras"
+        ),
+    output:
+        bids(root=work,**subj_wildcards,suffix='template2subj.mat')
+    container:
+        config["singularity"]["itksnap"]
+    group:
+        "subj"
+    shell:
+        "c3d_affine_tool {input} -inv -oitk {output}"
+
+
+       
