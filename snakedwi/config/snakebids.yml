@@ -283,4 +283,5 @@ no_bedpost: True
 use_eddy_gpu: False
 use_bedpost_gpu: False
 rigid_dwi_t1_init: 'identity'
+rigid_dwi_t1_iters: '50x50'
 root: 'results'

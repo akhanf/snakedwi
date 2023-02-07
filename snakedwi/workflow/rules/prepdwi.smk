@@ -1634,7 +1634,7 @@ rule bet_anat:
 
 
 
-rule sdc_syn_preproc:
+rule sdc_syn_sdc:
     input:
         in_epis=bids(
             root=work,
@@ -1650,6 +1650,17 @@ rule sdc_syn_preproc:
             desc="preproc",
             suffix="T1w.nii.gz"
         ),
+        dwi_files=lambda wildcards: expand(
+            bids(
+                root=work,
+                suffix="dwi.nii.gz",
+                datatype="dwi",
+                desc='degibbs',
+                **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wildcards)
+        ),
         json_files=lambda wildcards: expand(
             bids(
                 root=work,
@@ -1660,6 +1671,7 @@ rule sdc_syn_preproc:
             zip,
             **filter_list(input_zip_lists["dwi"], wildcards)
         ),
+        #TODO: this mask is just with bet - replace with synthstrip rule.. 
         mask_anat=bids(
             root=work,
             datatype='sdc',
@@ -1667,16 +1679,24 @@ rule sdc_syn_preproc:
             suffix="anatmask.nii.gz",
             desc="brain"
         ),
+        #TODO: same thing, we should replace this with synthstrip rule...
+        epi_mask=bids(
+            root=work,
+            suffix="mask.nii.gz",
+            desc="brain",
+            method="bet_from-b0",
+            datatype="dwi",
+            **subj_wildcards
+        ),
         std2anat_xfm=bids(root=work,**subj_wildcards,suffix='template2subj.mat')
     output:
-        out_dir=directory(bids(root=work,datatype='sdc',suffix='preproc',**subj_wildcards))
-#        epi_ref=bids(root=work,datatype='sdc',suffix='epiref.nii.gz',**subj_wildcards),
-#        anat_ref=bids(root=work,datatype='sdc',suffix='anatref.nii.gz',**subj_wildcards),
-#        anat_mask=bids(root=work,datatype='sdc',suffix='anatmask.nii.gz',**subj_wildcards),
-#        sd_prior=bids(root=work,datatype='sdc',suffix='sdprior.nii.gz',**subj_wildcards),
+        base_dir=temp(directory(bids(root=work,datatype='dwi',suffix='sdcflows',**subj_wildcards))),
+        unwarped=bids(root=work,datatype='dwi',suffix='b0.nii.gz',desc='unwarped',method='sdcflows',**subj_wildcards),
+        xfm=bids(root=work,datatype='dwi',suffix='xfm.nii.gz',desc='itk',method='sdcflows',**subj_wildcards),
+        fmap=bids(root=work,datatype='dwi',suffix='fmap.nii.gz',desc='b0',method='sdcflows',**subj_wildcards),
     threads: 8
     script:
-        '../scripts/sdc_preproc.py'
+        '../scripts/sdcflows_syn.py'
         
 
 rule invert_subj_to_template_xfm_for_sdc:
