@@ -224,12 +224,85 @@ rule concat_bzeros:
         "{params.cmd} 2> {log}"
 
 
+def get_cmd_align_bzeros(wildcards, input, output, threads):
+    cmds = []
+    cmds.append(f"mkdir -p {output.bzeros_dir}")
+    ref_img = input.bzero_niis[0]
+    for i, flo_img in enumerate(input.bzero_niis[1:]):
+        cmds.append(
+            f"greedy -threads {threads} -d 3 -a -m NCC 2x2x2 -dof 6 -ia-identity -n 50x50 -i {ref_img} {flo_img} -o {output.bzeros_dir}/xfm_ras_{i}.txt"
+        )
+        cmds.append(
+            f"greedy -threads {threads} -d 3 -rf {ref_img} -rm {flo_img} {output.bzeros_dir}/warped_{i}.nii.gz -r {output.bzeros_dir}/xfm_ras_{i}.txt"
+        )
+    cmds.append(f"cp {ref_img} {output.bzeros_dir}/ref.nii.gz")
+    return " && ".join(cmds)
+
+
+rule align_bzeros:
+    input:
+        bzero_niis=lambda wildcards: expand(
+            bids(
+                root=work,
+                suffix="b0.nii.gz",
+                datatype="dwi",
+                desc="degibbs",
+                **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wildcards)
+        ),
+    params:
+        cmd=get_cmd_align_bzeros,
+    output:
+        bzeros_dir=directory(
+            bids(
+                root=work,
+                suffix="alignedb0s",
+                datatype="dwi",
+                desc="degibbs",
+                **subj_wildcards
+            )
+        ),
+    container:
+        config["singularity"]["itksnap"]
+    group:
+        "subj"
+    shell:
+        "{params.cmd}"
+
+
+rule merge_aligned_bzeros:
+    input:
+        bzeros_dir=bids(
+            root=work,
+            suffix="alignedb0s",
+            datatype="dwi",
+            desc="degibbs",
+            **subj_wildcards
+        ),
+    output:
+        nii=bids(
+            root=work,
+            suffix="alignedb0.nii.gz",
+            datatype="dwi",
+            desc="degibbs",
+            **subj_wildcards
+        ),
+    group:
+        "subj"
+    container:
+        config["singularity"]["fsl"]
+    shell:
+        "fslmerge -t {output} {input.bzeros_dir}/*.nii.gz"
+
+
 # this rule should only run if there are multiple images
 rule run_topup:
     input:
-        bzero_concat=bids(
+        bzero_aligned=bids(
             root=work,
-            suffix="concatb0.nii.gz",
+            suffix="alignedb0.nii.gz",
             datatype="dwi",
             desc="degibbs",
             **subj_wildcards
@@ -810,15 +883,25 @@ def get_dwi_ref(wildcards):
     filtered = filter_list(input_zip_lists["dwi"], wildcards)
     num_scans = len(filtered["subject"])
 
-    if num_scans > 1 and not config["no_topup"]:
-        return bids(
-            root=work,
-            suffix="b0.nii.gz",
-            desc="topup",
-            method="jac",
-            datatype="dwi",
-            **subj_wildcards
-        )
+    if num_scans > 1:
+        if config["no_topup"]:
+            return bids(
+                root=work,
+                suffix="alignedb0.nii.gz",
+                datatype="dwi",
+                desc="degibbs",
+                **subj_wildcards
+            )
+        else:
+            return bids(
+                root=work,
+                suffix="b0.nii.gz",
+                desc="topup",
+                method="jac",
+                datatype="dwi",
+                **subj_wildcards
+            )
+
     else:
         return bids(
             root=work,
