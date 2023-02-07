@@ -877,34 +877,19 @@ else:
 
 def get_dwi_ref(wildcards):
 
-    # this gets the number of DWI scans for this subject(session)
-    filtered = filter_list(input_zip_lists["dwi"], wildcards)
-    num_scans = len(filtered["subject"])
-
-
-#    if num_scans > 1:
-if config["no_topup"]:
-    return bids(
-        root=work, suffix="b0.nii.gz", datatype="dwi", desc="moco", **subj_wildcards
-    )
-else:
-    return bids(
-        root=work,
-        suffix="b0.nii.gz",
-        desc="topup",
-        method="jac",
-        datatype="dwi",
-        **subj_wildcards
-    )
-
-#   else:
-#        return bids(
-#            root=work,
-#            suffix="b0.nii.gz",
-#            desc="degibbs",
-#            datatype="dwi",
-#            **subj_wildcards
-#        )
+    if config["no_topup"]:
+        return bids(
+            root=work, suffix="b0.nii.gz", datatype="dwi", desc="moco", **subj_wildcards
+        )
+    else:
+        return bids(
+            root=work,
+            suffix="b0.nii.gz",
+            desc="topup",
+            method="jac",
+            datatype="dwi",
+            **subj_wildcards
+        )
 
 
 rule cp_dwi_ref:
