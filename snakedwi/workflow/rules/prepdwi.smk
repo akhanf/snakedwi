@@ -119,6 +119,60 @@ rule mrdegibbs:
         "cp {input[3]} {output[3]}"
 
 
+rule moco_bzeros:
+    """ run motion-correction (rigid reg to init volume) on the bzeros """
+    input:
+        nii_4d=bids(
+            root=work,
+            suffix="b0s.nii.gz",
+            datatype="dwi",
+            desc="degibbs",
+            **subj_wildcards
+        ),
+    output:
+        affine_dir=directory(
+            bids(
+                root=work,
+                suffix="transforms",
+                desc="moco",
+                datatype="dwi",
+                **subj_wildcards
+            )
+        ),
+        nii_4d=bids(
+            root=work,
+            suffix="b0s.nii.gz",
+            desc="moco",
+            datatype="dwi",
+            **subj_wildcards
+        ),
+        nii_avg3d=bids(
+            root=work,
+            suffix="b0.nii.gz",
+            desc="moco",
+            datatype="dwi",
+            **subj_wildcards
+        ),
+    threads: 8  #doesn't need to be more than the number of bzeros 
+    resources:
+        mem_mb=32000,
+    shadow:
+        "minimal"
+    container:
+        config["singularity"]["prepdwi"]  #-- this rule needs niftyreg, c3d and mrtrix
+    group:
+        "subj"
+    shell:
+        "c4d {input.nii_4d} -slice w 0:-1 -oo dwi_%03d.nii && "
+        "parallel --eta --jobs {threads} "
+        "reg_aladin -flo dwi_{{1}}.nii  -ref dwi_000.nii -res warped_{{1}}.nii -aff affine_xfm_ras_{{1}}.txt "
+        " ::: `ls dwi_???.nii | tail -n +2 | grep -Po '(?<=dwi_)[0-9]+'` && "
+        " mkdir -p {output.affine_dir} && cp affine_xfm_ras_*.txt {output.affine_dir} && "
+        " echo -e '1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1' > {output.affine_dir}/affine_xfm_ras_000.txt && "
+        " mrcat dwi_000.nii warped_*.nii {output.nii_4d} && "
+        " mrmath {output.nii_4d} mean {output.nii_avg3d} -axis 3"
+
+
 # now have nii with just the b0's, want to create the topup phase-encoding text files for each one:
 rule get_phase_encode_txt:
     input:
@@ -224,85 +278,12 @@ rule concat_bzeros:
         "{params.cmd} 2> {log}"
 
 
-def get_cmd_align_bzeros(wildcards, input, output, threads):
-    cmds = []
-    cmds.append(f"mkdir -p {output.bzeros_dir}")
-    ref_img = input.bzero_niis[0]
-    for i, flo_img in enumerate(input.bzero_niis[1:]):
-        cmds.append(
-            f"greedy -threads {threads} -d 3 -a -m NCC 2x2x2 -dof 6 -ia-identity -n 50x50 -i {ref_img} {flo_img} -o {output.bzeros_dir}/xfm_ras_{i}.txt"
-        )
-        cmds.append(
-            f"greedy -threads {threads} -d 3 -rf {ref_img} -rm {flo_img} {output.bzeros_dir}/warped_{i}.nii.gz -r {output.bzeros_dir}/xfm_ras_{i}.txt"
-        )
-    cmds.append(f"cp {ref_img} {output.bzeros_dir}/ref.nii.gz")
-    return " && ".join(cmds)
-
-
-rule align_bzeros:
-    input:
-        bzero_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="b0.nii.gz",
-                datatype="dwi",
-                desc="degibbs",
-                **input_wildcards["dwi"]
-            ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
-        ),
-    params:
-        cmd=get_cmd_align_bzeros,
-    output:
-        bzeros_dir=directory(
-            bids(
-                root=work,
-                suffix="alignedb0s",
-                datatype="dwi",
-                desc="degibbs",
-                **subj_wildcards
-            )
-        ),
-    container:
-        config["singularity"]["itksnap"]
-    group:
-        "subj"
-    shell:
-        "{params.cmd}"
-
-
-rule merge_aligned_bzeros:
-    input:
-        bzeros_dir=bids(
-            root=work,
-            suffix="alignedb0s",
-            datatype="dwi",
-            desc="degibbs",
-            **subj_wildcards
-        ),
-    output:
-        nii=bids(
-            root=work,
-            suffix="alignedb0.nii.gz",
-            datatype="dwi",
-            desc="degibbs",
-            **subj_wildcards
-        ),
-    group:
-        "subj"
-    container:
-        config["singularity"]["fsl"]
-    shell:
-        "fslmerge -t {output} {input.bzeros_dir}/*.nii.gz"
-
-
 # this rule should only run if there are multiple images
 rule run_topup:
     input:
-        bzero_aligned=bids(
+        bzero_concat=bids(
             root=work,
-            suffix="alignedb0.nii.gz",
+            suffix="concatb0.nii.gz",
             datatype="dwi",
             desc="degibbs",
             **subj_wildcards
@@ -761,6 +742,23 @@ rule get_shell_avg:
         "../scripts/get_shell_avg.py"
 
 
+# this gets vols from a a particular shell (can use to get b0s)
+rule get_shell_vols:
+    input:
+        dwi="{dwi_prefix}_dwi.nii.gz",
+        shells="{dwi_prefix}_dwi.shells.json",
+    params:
+        bval="{shell}",
+    output:
+        avgshell="{dwi_prefix}_b{shell}s.nii.gz",
+    group:
+        "subj"
+    container:
+        config["singularity"]["python"]
+    script:
+        "../scripts/get_shell_vols.py"
+
+
 def get_mask_for_eddy():
     if config["masking_method"] == "b0_BET":
         method = "bet_from-b0"
@@ -883,33 +881,30 @@ def get_dwi_ref(wildcards):
     filtered = filter_list(input_zip_lists["dwi"], wildcards)
     num_scans = len(filtered["subject"])
 
-    if num_scans > 1:
-        if config["no_topup"]:
-            return bids(
-                root=work,
-                suffix="alignedb0.nii.gz",
-                datatype="dwi",
-                desc="degibbs",
-                **subj_wildcards
-            )
-        else:
-            return bids(
-                root=work,
-                suffix="b0.nii.gz",
-                desc="topup",
-                method="jac",
-                datatype="dwi",
-                **subj_wildcards
-            )
 
-    else:
-        return bids(
-            root=work,
-            suffix="b0.nii.gz",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        )
+#    if num_scans > 1:
+if config["no_topup"]:
+    return bids(
+        root=work, suffix="b0.nii.gz", datatype="dwi", desc="moco", **subj_wildcards
+    )
+else:
+    return bids(
+        root=work,
+        suffix="b0.nii.gz",
+        desc="topup",
+        method="jac",
+        datatype="dwi",
+        **subj_wildcards
+    )
+
+#   else:
+#        return bids(
+#            root=work,
+#            suffix="b0.nii.gz",
+#            desc="degibbs",
+#            datatype="dwi",
+#            **subj_wildcards
+#        )
 
 
 rule cp_dwi_ref:
