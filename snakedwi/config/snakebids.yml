@@ -145,6 +145,11 @@ parse_args:
       - 'image-centers'
     default: 'identity'
 
+  --rigid_dwi_t1_iters:
+    help: 'Number of iterations to use at each multi-resolution stage for dwi to t1 rigid registration. (default: %(default)s)'
+    default: '50x50'
+
+
 
 
 #---- to update below this
