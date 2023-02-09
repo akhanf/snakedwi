@@ -10,7 +10,9 @@ rule affine_to_template:
             datatype="anat",
             **subj_wildcards
         ),
-        ref=lambda wildcards: os.path.join(workflow.basedir,'..',config["template_t1w"]).format(**wildcards),
+        ref=lambda wildcards: os.path.join(
+            workflow.basedir, "..", config["template_t1w"]
+        ).format(**wildcards),
     output:
         warped_subj=bids(
             root=work,
