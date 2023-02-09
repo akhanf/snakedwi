@@ -1627,33 +1627,6 @@ rule cp_bedpost_to_results:
 #  applywarp -> change this to antsApplyTransforms
 
 
-rule bet_anat:
-    input:
-        in_anat=bids(
-            root=root,
-            datatype="anat",
-            **subj_wildcards,
-            desc="preproc",
-            suffix="T1w.nii.gz"
-        ),
-    params:
-        bet_frac=0.5,
-    output:
-        mask_anat=bids(
-            root=work,
-            datatype="sdc",
-            **subj_wildcards,
-            suffix="anatmask.nii.gz",
-            desc="brain"
-        ),
-    container:
-        config["singularity"]["fsl"]
-    group:
-        "subj"
-    shell:
-        "bet {input} {output} -f {params.bet_frac}"
-
-
 rule sdc_syn_sdc:
     input:
         in_epis=bids(
@@ -1688,14 +1661,14 @@ rule sdc_syn_sdc:
             zip,
             **filter_list(input_zip_lists["dwi"], wildcards)
         ),
-        #TODO: this mask is just with bet - replace with synthstrip rule.. 
         mask_anat=bids(
-            root=work,
-            datatype="sdc",
+            root=root,
+            datatype="anat",
             **subj_wildcards,
-            suffix="anatmask.nii.gz",
-            desc="brain"
+            desc="brain",
+            suffix="mask.nii.gz"
         ),
+
         #TODO: same thing, we should replace this with synthstrip rule...
         epi_mask=bids(
             root=work,
