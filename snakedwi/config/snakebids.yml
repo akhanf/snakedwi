@@ -114,7 +114,8 @@ parse_args:
     choices: 
       - 'b0_BET'
       - 'b0_SyN'
-    default: 'b0_BET'
+      - 'b0_synthstrip'
+    default: 'b0_synthstrip'
 
   --b0_bet_frac:
     help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
@@ -276,7 +277,7 @@ default_effective_echo_spacing: 0.0001 #if not defined in JSON files
 #for test data
 participant_label: 
 exclude_participant_label:
-masking_method: b0_BET
+masking_method: b0_synthstrip
 b0_bet_frac: 0.5
 slspec_txt: False
 use_eddy_s2v: False

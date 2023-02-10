@@ -9,6 +9,7 @@ include: "rules/masking_bet_from-b0.smk"
 include: "rules/masking_b0_to_template.smk"
 include: "rules/reg_t1_to_template.smk"
 include: "rules/seg_t1_brain_tissue.smk"
+include: "rules/masking_b0_synthstrip.smk"
 
 
 # WIP:

@@ -12,6 +12,7 @@ rule import_t1:
     shell:
         "cp {input.nii} {output.nii}"
 
+
 rule synthstrip_t1:
     input:
         t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
@@ -31,7 +32,7 @@ rule synthstrip_t1:
         config["singularity"]["synthstrip"]
     threads: 8
     shell:
-        "python3 /freesurfer/mri_synthstrip -i {input.t1} -m {output.mask} --no-csf"
+        "python3 /freesurfer/mri_synthstrip -i {input.t1} -m {output.mask}"
 
 
 rule fixheader_synthstrip:
@@ -62,7 +63,7 @@ rule fixheader_synthstrip:
 
 rule n4_t1_withmask:
     input:
-        t1=bids(root=root, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
         mask=bids(
             root=root,
             datatype="anat",

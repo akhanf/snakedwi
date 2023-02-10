@@ -764,6 +764,8 @@ def get_mask_for_eddy():
         method = "bet_from-b0"
     elif config["masking_method"] == "b0_SyN":
         method = f"b0SyN_from-{config['template']}"
+    elif config["masking_method"] == "b0_synthstrip":
+        method = "synthstrip_from-b0"
 
     # then get bids name of file
     return bids(
@@ -1668,16 +1670,7 @@ rule sdc_syn_sdc:
             desc="brain",
             suffix="mask.nii.gz"
         ),
-
-        #TODO: same thing, we should replace this with synthstrip rule...
-        epi_mask=bids(
-            root=work,
-            suffix="mask.nii.gz",
-            desc="brain",
-            method="bet_from-b0",
-            datatype="dwi",
-            **subj_wildcards
-        ),
+        epi_mask=get_mask_for_eddy(),
         std2anat_xfm=bids(root=work, **subj_wildcards, suffix="template2subj.mat"),
     output:
         base_dir=temp(
