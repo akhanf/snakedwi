@@ -13,9 +13,64 @@ rule import_t1:
         "cp {input.nii} {output.nii}"
 
 
-rule n4_t1:
+rule synthstrip_t1:
     input:
         t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+    output:
+        mask=temp(
+            bids(
+                root=work,
+                datatype="anat",
+                **subj_wildcards,
+                desc="nofixhdrbrain",
+                suffix="mask.nii.gz"
+            )
+        ),
+    group:
+        "subj"
+    container:
+        config["singularity"]["synthstrip"]
+    threads: 8
+    shell:
+        "python3 /freesurfer/mri_synthstrip -i {input.t1} -m {output.mask}"
+
+
+rule fixheader_synthstrip:
+    input:
+        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        mask=bids(
+            root=work,
+            datatype="anat",
+            **subj_wildcards,
+            desc="nofixhdrbrain",
+            suffix="mask.nii.gz"
+        ),
+    output:
+        mask=bids(
+            root=root,
+            datatype="anat",
+            **subj_wildcards,
+            desc="brain",
+            suffix="mask.nii.gz"
+        ),
+    group:
+        "subj"
+    container:
+        config["singularity"]["itksnap"]
+    shell:
+        "c3d {input.t1} {input.mask} -copy-transform -o {output.mask}"
+
+
+rule n4_t1_withmask:
+    input:
+        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        mask=bids(
+            root=root,
+            datatype="anat",
+            **subj_wildcards,
+            desc="brain",
+            suffix="mask.nii.gz"
+        ),
     output:
         t1=bids(
             root=root,
@@ -31,7 +86,7 @@ rule n4_t1:
         "subj"
     shell:
         "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} "
-        "N4BiasFieldCorrection -d 3 -i {input.t1} -o {output}"
+        "N4BiasFieldCorrection -d 3 -i {input.t1} -x {input.mask} -o {output}"
 
 
 rule reg_dwi_to_t1:

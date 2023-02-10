@@ -10,8 +10,8 @@ rule affine_to_template:
             datatype="anat",
             **subj_wildcards
         ),
-        ref=lambda wildcards: workflow.source_path(
-            os.path.join("..", "..", config["template_t1w"])
+        ref=lambda wildcards: os.path.join(
+            workflow.basedir, "..", config["template_t1w"]
         ).format(**wildcards),
     output:
         warped_subj=bids(
@@ -33,7 +33,7 @@ rule affine_to_template:
             type_="ras"
         ),
     container:
-        config["singularity"]["niftyreg"]
+        config["singularity"]["prepdwi"]
     group:
         "subj"
     shell:

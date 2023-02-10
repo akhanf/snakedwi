@@ -764,6 +764,8 @@ def get_mask_for_eddy():
         method = "bet_from-b0"
     elif config["masking_method"] == "b0_SyN":
         method = f"b0SyN_from-{config['template']}"
+    elif config["masking_method"] == "b0_synthstrip":
+        method = "synthstrip_from-b0"
 
     # then get bids name of file
     return bids(
@@ -909,27 +911,40 @@ rule cp_dwi_ref:
         "cp {input} {output}"
 
 
-def get_eddy_topup_input(wildcards):
+def get_eddy_topup_fmap_input(wildcards):
     # this gets the number of DWI scans for this subject(session)
     filtered = filter_list(input_zip_lists["dwi"], wildcards)
     num_scans = len(filtered["subject"])
 
     if num_scans > 1 and not config["no_topup"]:
-        topup_inputs = {
-            filename: bids(
+        return {
+            "topup_fieldcoef": bids(
                 root=work,
-                suffix=f"{filename}.nii.gz",
+                suffix=f"topup_fieldcoef.nii.gz",
                 datatype="dwi",
                 **subj_wildcards,
-            ).format(**wildcards)
-            for filename in ["topup_fieldcoef", "topup_movpar"]
+            ).format(**wildcards),
+            "topup_movpar": bids(
+                root=work,
+                suffix=f"topup_movpar.txt",
+                datatype="dwi",
+                **subj_wildcards,
+            ).format(**wildcards),
         }
-        return topup_inputs
     else:
-        return None
+        return {
+            "fmap": bids(
+                root=work,
+                datatype="dwi",
+                suffix="fmap.nii.gz",
+                desc="b0",
+                method="sdcflows",
+                **subj_wildcards,
+            ).format(**wildcards)
+        }
 
 
-def get_eddy_topup_opt(wildcards, input):
+def get_eddy_topup_fmap_opt(wildcards, input):
 
     # this gets the number of DWI scans for this subject(session)
     filtered = filter_list(input_zip_lists["dwi"], wildcards)
@@ -941,7 +956,15 @@ def get_eddy_topup_opt(wildcards, input):
         ).format(**wildcards)
         return f"--topup={topup_prefix}"
     else:
-        return ""
+        fmap_prefix = bids(
+            root=work,
+            datatype="dwi",
+            suffix="fmap",
+            desc="b0",
+            method="sdcflows",
+            **subj_wildcards,
+        ).format(**wildcards)
+        return f"--field={fmap_prefix}"
 
 
 def get_eddy_s2v_opts(wildcards, input):
@@ -990,6 +1013,7 @@ if config["use_eddy_gpu"]:
     rule run_eddy_gpu:
         input:
             unpack(get_eddy_slspec_input),
+            unpack(get_eddy_topup_fmap_input),
             dwi_concat=bids(
                 root=work,
                 suffix="dwi.nii.gz",
@@ -1037,7 +1061,7 @@ if config["use_eddy_gpu"]:
                 ]
             ),
             container=config["singularity"]["eddy_gpu"],
-            topup_opt=get_eddy_topup_opt,
+            topup_opt=get_eddy_topup_fmap_opt,
             s2v_opts=get_eddy_s2v_opts,
             slspec_opt=get_eddy_slspec_opt,
         output:
@@ -1077,6 +1101,7 @@ else:
     rule run_eddy_cpu:
         input:
             unpack(get_eddy_slspec_input),
+            unpack(get_eddy_topup_fmap_input),
             dwi_concat=bids(
                 root=work,
                 suffix="dwi.nii.gz",
@@ -1123,7 +1148,7 @@ else:
                     if value == True
                 ]
             ),
-            topup_opt=get_eddy_topup_opt,
+            topup_opt=get_eddy_topup_fmap_opt,
             s2v_opts=get_eddy_s2v_opts,
             slspec_opt=get_eddy_slspec_opt,
         output:
@@ -1602,3 +1627,103 @@ rule cp_bedpost_to_results:
 #  reg_jacobian
 #  convertwarp -> change this to wb_command -convert-warpfield  to get itk transforms
 #  applywarp -> change this to antsApplyTransforms
+
+
+rule sdc_syn_sdc:
+    input:
+        in_epis=bids(
+            root=work,
+            suffix="b0s.nii.gz",
+            datatype="dwi",
+            desc="moco",
+            **subj_wildcards
+        ),
+        in_anat=bids(
+            root=root,
+            datatype="anat",
+            **subj_wildcards,
+            desc="preproc",
+            suffix="T1w.nii.gz"
+        ),
+        dwi_files=lambda wildcards: expand(
+            bids(
+                root=work,
+                suffix="dwi.nii.gz",
+                datatype="dwi",
+                desc="degibbs",
+                **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wildcards)
+        ),
+        json_files=lambda wildcards: expand(
+            bids(
+                root=work, suffix="dwi.json", datatype="dwi", **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wildcards)
+        ),
+        mask_anat=bids(
+            root=root,
+            datatype="anat",
+            **subj_wildcards,
+            desc="brain",
+            suffix="mask.nii.gz"
+        ),
+        epi_mask=get_mask_for_eddy(),
+        std2anat_xfm=bids(root=work, **subj_wildcards, suffix="template2subj.mat"),
+    output:
+        base_dir=temp(
+            directory(
+                bids(root=work, datatype="dwi", suffix="sdcflows", **subj_wildcards)
+            )
+        ),
+        unwarped=bids(
+            root=work,
+            datatype="dwi",
+            suffix="b0.nii.gz",
+            desc="unwarped",
+            method="sdcflows",
+            **subj_wildcards
+        ),
+        xfm=bids(
+            root=work,
+            datatype="dwi",
+            suffix="xfm.nii.gz",
+            desc="itk",
+            method="sdcflows",
+            **subj_wildcards
+        ),
+        fmap=bids(
+            root=work,
+            datatype="dwi",
+            suffix="fmap.nii.gz",
+            desc="b0",
+            method="sdcflows",
+            **subj_wildcards
+        ),
+    threads: 8
+    script:
+        "../scripts/sdcflows_syn.py"
+
+
+rule invert_subj_to_template_xfm_for_sdc:
+    input:
+        bids(
+            root=work,
+            datatype="anat",
+            **subj_wildcards,
+            suffix="xfm.txt",
+            from_="subject",
+            to=config["template"],
+            desc="affine",
+            type_="ras"
+        ),
+    output:
+        bids(root=work, **subj_wildcards, suffix="template2subj.mat"),
+    container:
+        config["singularity"]["itksnap"]
+    group:
+        "subj"
+    shell:
+        "c3d_affine_tool {input} -inv -oitk {output}"
