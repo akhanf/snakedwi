@@ -408,7 +408,7 @@ rule cp_eddy_outputs:
         bids(
             root=root,
             suffix="mask.nii.gz",
-            desc="eddy",
+            desc="brain",
             datatype="dwi",
             **subj_wildcards
         ),
