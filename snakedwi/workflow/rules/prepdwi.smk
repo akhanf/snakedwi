@@ -3,21 +3,41 @@ wildcard_constraints:
     shell="[0-9]+",
 
 
-localrules:
-    check_json_metadata,
-
-
-rule check_json_metadata:
+checkpoint check_subj_dwi_metadata:
     input:
-        expand(
+        dwi_jsons=lambda wildcards: expand(
             re.sub(".nii.gz", ".json", input_path["dwi"]),
             zip,
-            **input_zip_lists["dwi"]
+            **filter_list(input_zip_lists["dwi"], wildcards)
         ),
     output:
-        touch(bids(root=work, subject="group", suffix="metadatacheck")),
+        wfmetadata=directory(
+            bids(root=work, datatype="dwi", suffix="wfmetadata", **subj_wildcards)
+        ),
+    group:
+        "subj"
     script:
-        "../scripts/check_json_metadata.py"
+        "../scripts/check_subj_dwi_metadata.py"
+
+
+def get_inputs_after_sdc(wildcards):
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+    print(method)
+    if method == "topup":
+
+        return "topup_out"
+    elif method == "sdc":
+        return "sdc_out"
+
+
+rule test_run_downstream:
+    input:
+        get_inputs_after_sdc,
+    output:
+        downstream=bids(
+            root=work, datatype="dwi", suffix="downstream", **subj_wildcards
+        ),
 
 
 rule import_dwi:
@@ -878,12 +898,10 @@ else:
 
 
 def get_dwi_ref(wildcards):
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
 
-    if config["no_topup"]:
-        return bids(
-            root=work, suffix="b0.nii.gz", datatype="dwi", desc="moco", **subj_wildcards
-        )
-    else:
+    if method == "topup":
         return bids(
             root=work,
             suffix="b0.nii.gz",
@@ -891,6 +909,10 @@ def get_dwi_ref(wildcards):
             method="jac",
             datatype="dwi",
             **subj_wildcards
+        )
+    else:
+        return bids(
+            root=work, suffix="b0.nii.gz", datatype="dwi", desc="moco", **subj_wildcards
         )
 
 
@@ -916,7 +938,10 @@ def get_eddy_topup_fmap_input(wildcards):
     filtered = filter_list(input_zip_lists["dwi"], wildcards)
     num_scans = len(filtered["subject"])
 
-    if num_scans > 1 and not config["no_topup"]:
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+
+    if num_scans > 1 and method == "topup":
         return {
             "topup_fieldcoef": bids(
                 root=work,
@@ -950,7 +975,10 @@ def get_eddy_topup_fmap_opt(wildcards, input):
     filtered = filter_list(input_zip_lists["dwi"], wildcards)
     num_scans = len(filtered["subject"])
 
-    if num_scans > 1 and not config["no_topup"]:
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+
+    if num_scans > 1 and method == "topup":
         topup_prefix = bids(
             root=work, suffix="topup", datatype="dwi", **subj_wildcards
         ).format(**wildcards)
