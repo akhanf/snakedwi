@@ -167,7 +167,7 @@ singularity:
   niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
   python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'  
   synthstrip: 'docker://freesurfer/synthstrip:1.3'
-  sdcflows: 'docker://nipreps/sdcflows:2.2.2'
+  sdcflows: 'docker://nipreps/fmriprep:22.1.1' #can't currently just use sdcflows docker as it is missing freesurfer's mri_robust_template
 
 
 
