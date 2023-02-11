@@ -71,6 +71,37 @@ rule convert_template_xfm_ras2itk:
         "c3d_affine_tool {input}  -oitk {output}"
 
 
+rule invert_subj_to_template_xfm:
+    input:
+        bids(
+            root=work,
+            datatype="anat",
+            **subj_wildcards,
+            suffix="xfm.txt",
+            from_="subject",
+            to=config["template"],
+            desc="affine",
+            type_="ras"
+        ),
+    output:
+        bids(
+            root=work,
+            datatype="anat",
+            from_=config["template"],
+            to="subject",
+            desc="affine",
+            type_="itk",
+            **subj_wildcards,
+            suffix="xfm.txt"
+        ),
+    container:
+        config["singularity"]["itksnap"]
+    group:
+        "subj"
+    shell:
+        "c3d_affine_tool {input} -inv -oitk {output}"
+
+
 rule warp_brainmask_from_template_affine:
     input:
         mask=lambda wildcards: workflow.source_path(

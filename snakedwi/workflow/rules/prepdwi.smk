@@ -962,7 +962,7 @@ def get_eddy_topup_fmap_input(wildcards):
                 datatype="dwi",
                 suffix="fmap.nii.gz",
                 desc="b0",
-                method="sdcflows",
+                method="synsdc",
                 **subj_wildcards,
             ).format(**wildcards)
         }
@@ -988,7 +988,7 @@ def get_eddy_topup_fmap_opt(wildcards, input):
             datatype="dwi",
             suffix="fmap",
             desc="b0",
-            method="sdcflows",
+            method="synsdc",
             **subj_wildcards,
         ).format(**wildcards)
         return f"--field={fmap_prefix}"
@@ -1656,7 +1656,7 @@ rule cp_bedpost_to_results:
 #  applywarp -> change this to antsApplyTransforms
 
 
-rule sdc_syn_sdc:
+rule syn_sdc:
     input:
         in_epis=bids(
             root=work,
@@ -1698,19 +1698,23 @@ rule sdc_syn_sdc:
             suffix="mask.nii.gz"
         ),
         epi_mask=get_mask_for_eddy(),
-        std2anat_xfm=bids(root=work, **subj_wildcards, suffix="template2subj.mat"),
-    output:
-        base_dir=temp(
-            directory(
-                bids(root=work, datatype="dwi", suffix="sdcflows", **subj_wildcards)
-            )
+        std2anat_xfm=bids(
+            root=work,
+            datatype="anat",
+            from_=config["template"],
+            to="subject",
+            desc="affine",
+            type_="itk",
+            **subj_wildcards,
+            suffix="xfm.txt"
         ),
+    output:
         unwarped=bids(
             root=work,
             datatype="dwi",
             suffix="b0.nii.gz",
             desc="unwarped",
-            method="sdcflows",
+            method="synsdc",
             **subj_wildcards
         ),
         xfm=bids(
@@ -1718,7 +1722,7 @@ rule sdc_syn_sdc:
             datatype="dwi",
             suffix="xfm.nii.gz",
             desc="itk",
-            method="sdcflows",
+            method="synsdc",
             **subj_wildcards
         ),
         fmap=bids(
@@ -1726,31 +1730,9 @@ rule sdc_syn_sdc:
             datatype="dwi",
             suffix="fmap.nii.gz",
             desc="b0",
-            method="sdcflows",
+            method="synsdc",
             **subj_wildcards
         ),
     threads: 8
     script:
         "../scripts/sdcflows_syn.py"
-
-
-rule invert_subj_to_template_xfm_for_sdc:
-    input:
-        bids(
-            root=work,
-            datatype="anat",
-            **subj_wildcards,
-            suffix="xfm.txt",
-            from_="subject",
-            to=config["template"],
-            desc="affine",
-            type_="ras"
-        ),
-    output:
-        bids(root=work, **subj_wildcards, suffix="template2subj.mat"),
-    container:
-        config["singularity"]["itksnap"]
-    group:
-        "subj"
-    shell:
-        "c3d_affine_tool {input} -inv -oitk {output}"

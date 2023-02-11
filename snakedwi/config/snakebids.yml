@@ -165,7 +165,7 @@ singularity:
   itksnap: 'docker://khanlab/itksnap:latest' 
   ants: 'docker://kaczmarj/ants:2.3.4'  
   niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
-  python: 'docker://akhanf/snakedwi-pythondeps:master'  
+  python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'  
   synthstrip: 'docker://freesurfer/synthstrip:1.3'
 
 
