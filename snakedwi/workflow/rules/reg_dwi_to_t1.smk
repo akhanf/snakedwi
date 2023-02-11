@@ -4,7 +4,6 @@ rule import_t1:
         nii=lambda wildcards: expand(
             input_path["T1w"], zip, **filter_list(input_zip_lists["T1w"], wildcards)
         )[0],
-        metadatacheck=bids(root=work, subject="group", suffix="metadatacheck"),
     output:
         nii=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
     group:

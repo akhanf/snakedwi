@@ -43,7 +43,6 @@ rule test_run_downstream:
 rule import_dwi:
     input:
         dwi=re.sub(".nii.gz", ".{ext}", input_path["dwi"]),
-        metadatacheck=bids(root=work, subject="group", suffix="metadatacheck"),
     output:
         dwi=bids(
             root=work,
