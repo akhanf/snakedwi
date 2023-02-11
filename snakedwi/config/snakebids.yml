@@ -98,8 +98,8 @@ parse_args:
 
    
   --use_eddy_s2v:
-    help: 'Enable slice-to-volume in eddy.  Your dwi json must include
-        SliceTiming information, and you must use the --use_eddy_gpu option. (default: %(default)s)'
+    help: 'Enable slice-to-volume in eddy.  Your dwi json must either include
+        SliceTiming information, or you must specify it with the --slspec-txt CLI. If any subjects do not have this information, they will be run without slice-to-volume enabled. You must also use the --use_eddy_gpu option. (default: %(default)s)'
     action: 'store_true'
     default: False
 

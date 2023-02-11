@@ -11,8 +11,8 @@ checkpoint check_subj_dwi_metadata:
             **filter_list(input_zip_lists["dwi"], wildcards)
         ),
     output:
-        wfmetadata=directory(
-            bids(root=work, datatype="dwi", suffix="wfmetadata", **subj_wildcards)
+        workflowopts=directory(
+            bids(root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards)
         ),
     group:
         "subj"

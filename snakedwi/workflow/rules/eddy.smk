@@ -141,8 +141,14 @@ def get_eddy_topup_fmap_opt(wildcards, input):
 
 
 def get_eddy_s2v_opts(wildcards, input):
+
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    ([s2v_is_enabled],) = glob_wildcards(
+        os.path.join(checkpoint_output, "eddys2v-{isenabled}")
+    )
+
     options = []
-    if config["use_eddy_s2v"]:
+    if s2v_is_enabled == "yes":
         options += [
             f"--{key}={value}"
             for (key, value) in config["eddy"]["with_s2v"].items()
@@ -159,7 +165,13 @@ def get_eddy_s2v_opts(wildcards, input):
 
 
 def get_eddy_slspec_input(wildcards):
-    if config["use_eddy_s2v"]:
+
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    ([s2v_is_enabled],) = glob_wildcards(
+        os.path.join(checkpoint_output, "eddys2v-{isenabled}")
+    )
+
+    if s2v_is_enabled == "yes":
         return {
             "eddy_slspec_txt": bids(
                 root=work,
@@ -175,7 +187,13 @@ def get_eddy_slspec_input(wildcards):
 
 
 def get_eddy_slspec_opt(wildcards, input):
-    if config["use_eddy_s2v"]:
+
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    ([s2v_is_enabled],) = glob_wildcards(
+        os.path.join(checkpoint_output, "eddys2v-{isenabled}")
+    )
+
+    if s2v_is_enabled == "yes":
         return f"--slspec={input.eddy_slspec_txt}"
     else:
         return ""
@@ -377,6 +395,7 @@ rule cp_eddy_outputs:
             datatype="dwi",
             **subj_wildcards
         ),
+        mask=get_b0_mask(),
     output:
         multiext(
             bids(
@@ -385,6 +404,13 @@ rule cp_eddy_outputs:
             ".nii.gz",
             ".bvec",
             ".bval",
+        ),
+        bids(
+            root=root,
+            suffix="mask.nii.gz",
+            desc="eddy",
+            datatype="dwi",
+            **subj_wildcards
         ),
     group:
         "subj"
@@ -433,10 +459,10 @@ rule eddy_quad:
         slspec_opt=get_eddy_slspec_opt,
     output:
         out_dir=directory(
-            bids(root=work, suffix="eddy.qc", datatype="dwi", **subj_wildcards)
+            bids(root=root, suffix="eddyqc", datatype="qc", **subj_wildcards)
         ),
         eddy_qc_pdf=bids(
-            root=work, suffix="eddy.qc/qc.pdf", datatype="dwi", **subj_wildcards
+            root=root, suffix="eddyqc/qc.pdf", datatype="qc", **subj_wildcards
         ),
     container:
         config["singularity"]["fsl"]
@@ -447,30 +473,3 @@ rule eddy_quad:
         "eddy_quad {params.eddy_prefix} -idx {input.eddy_index_txt} -par {input.phenc_concat} "
         " -m {input.brainmask} -b {input.bvals} -g {input.bvecs} -o {output.out_dir} "
         " {params.slspec_opt} -v"
-
-
-rule split_eddy_qc_report:
-    input:
-        eddy_qc_pdf=bids(
-            root=work, suffix="eddy.qc/qc.pdf", datatype="dwi", **subj_wildcards
-        ),
-    output:
-        report(
-            directory(
-                bids(
-                    root=work, suffix="eddy.qc_pages", datatype="dwi", **subj_wildcards
-                )
-            ),
-            patterns=["{pagenum}.png"],
-            caption="../report/eddy_qc.rst",
-            category="eddy_qc",
-            subcategory=bids(
-                **subj_wildcards, include_subject_dir=False, include_session_dir=False
-            ),
-        ),
-    group:
-        "subj"
-    container:
-        config["singularity"]["python"]
-    script:
-        "../scripts/split_pdf.py"

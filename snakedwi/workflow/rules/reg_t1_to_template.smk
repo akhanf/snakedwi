@@ -24,7 +24,7 @@ rule affine_to_template:
         ),
         xfm_ras=bids(
             root=work,
-            datatype="anat",
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -44,7 +44,7 @@ rule convert_template_xfm_ras2itk:
     input:
         bids(
             root=work,
-            datatype="anat",
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -54,8 +54,8 @@ rule convert_template_xfm_ras2itk:
         ),
     output:
         bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -75,7 +75,7 @@ rule invert_subj_to_template_xfm:
     input:
         bids(
             root=work,
-            datatype="anat",
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -85,8 +85,8 @@ rule invert_subj_to_template_xfm:
         ),
     output:
         bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             from_=config["template"],
             to="subject",
             desc="affine",
@@ -109,8 +109,8 @@ rule warp_brainmask_from_template_affine:
         ).format(**wildcards),
         ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
         xfm=bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -144,8 +144,8 @@ rule warp_tissue_probseg_from_template_affine:
         ).format(**wildcards),
         ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
         xfm=bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -281,8 +281,8 @@ rule ants_syn_affine_init:
             suffix="T1w.nii.gz",
         ),
         init_xfm=bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",

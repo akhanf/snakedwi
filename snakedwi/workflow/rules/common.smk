@@ -4,9 +4,7 @@ def get_eddy_quad_all():
     else:
         return {
             "eddy_qc": expand(
-                bids(
-                    root=work, datatype="dwi", suffix="eddy.qc_pages", **subj_wildcards
-                ),
+                bids(root=root, datatype="qc", suffix="eddyqc", **subj_wildcards),
                 zip,
                 **input_zip_lists["dwi"]
             )

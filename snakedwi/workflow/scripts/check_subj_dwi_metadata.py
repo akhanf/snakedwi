@@ -8,17 +8,22 @@ phase_encoding_axes = []
 
 phenc_dirs = []
 
+eddy_s2v = snakemake.config["use_eddy_s2v"]
+
+
 for json_file in snakemake.input:
 
     with open(json_file, "r") as f:
         json_dwi = json.load(f)
 
-    if (snakemake.config["slspec_txt"] == False) and (
-        snakemake.config["use_eddy_s2v"] == True
-    ):
+    if eddy_s2v and (snakemake.config["slspec_txt"] == False):
         if "SliceTiming" not in json_dwi:
+            print(f"WARNING: disabling s2v for {snakemake.wildcards}")
+
+            eddy_s2v = False
+
             print(
-                f"ERROR: Eddy slice to volume enabled, but SliceTiming not found in {json_file}"
+                f"Eddy slice to volume enabled, but SliceTiming not found in {json_file}"
             )
             print("You must do one of the following:")
             print(" 1. add the SliceTiming field to your dwi JSON files")
@@ -49,13 +54,24 @@ if len(set(phase_encoding_axes)) > 1:
 else:
     print(f"Phase encoding axes: {phase_encoding_axes}")
 
+
+# make the output folder
+shell("mkdir -p {snakemake.output}")
+
 if len(set(phase_encoding_directions)) < 2:
     print(
         f"Opposing phase encoding directions not available, {phase_encoding_directions}, using syn for sdc"
     )
-    shell("mkdir -p {snakemake.output} && touch {snakemake.output}/sdc-syn")
+    shell("touch {snakemake.output}/sdc-syn")
 else:
     print(
         f"Opposing phase encoding directions are available, {phase_encoding_directions}, using topup for sdc"
     )
-    shell("mkdir -p {snakemake.output} && touch {snakemake.output}/sdc-topup")
+    shell("touch {snakemake.output}/sdc-topup")
+
+if eddy_s2v:
+    print("Enabling eddy s2v in the workflow")
+    shell("touch {snakemake.output}/eddys2v-yes")
+else:
+    print("Disabling eddy s2v in the workflow")
+    shell("touch {snakemake.output}/eddys2v-no")

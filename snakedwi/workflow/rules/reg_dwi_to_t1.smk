@@ -125,7 +125,7 @@ rule reg_dwi_to_t1:
             from_="dwi",
             to="T1w",
             type_="ras",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     container:
@@ -194,17 +194,17 @@ rule convert_xfm_ras2itk:
             from_="dwi",
             to="T1w",
             type_="ras",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     output:
         xfm_itk=bids(
-            root=work,
+            root=root,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
             type_="itk",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     container:
@@ -237,7 +237,7 @@ rule convert_xfm_ras2fsl:
             from_="dwi",
             to="T1w",
             type_="ras",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     output:
@@ -247,7 +247,7 @@ rule convert_xfm_ras2fsl:
             from_="dwi",
             to="T1w",
             type_="fsl",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     container:
@@ -422,12 +422,12 @@ rule resample_dwi_to_t1w:
             **subj_wildcards
         ),
         xfm_itk=bids(
-            root=work,
+            root=root,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
             type_="itk",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     params:
@@ -466,12 +466,12 @@ rule resample_brainmask_to_t1w:
         ),
         brainmask=get_b0_mask(),
         xfm_itk=bids(
-            root=work,
+            root=root,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
             type_="itk",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     params:
@@ -507,7 +507,7 @@ rule rotate_bvecs_to_t1w:
             from_="dwi",
             to="T1w",
             type_="fsl",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
         bvals=bids(
