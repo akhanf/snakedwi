@@ -181,6 +181,7 @@ rule apply_topup_jac:
         " applytopup --verbose --datain={input.phenc_concat} --imain={input.nii} --inindex={params.inindex} "
         " -t {params.topup_prefix} -o dwi_topup --method=jac && mv dwi_topup.nii.gz {output.nii}"
 
+
 # topup-corrected data is only used for brainmasking..
 # here, use the jac method by default (later can decide if lsr approach can be used based on headers)
 # with jac approach, the jac images need to be concatenated, then avgshell extracted
@@ -262,7 +263,6 @@ rule concat_dwi_topup_jac:
         "subj"
     shell:
         "mrcat {input} {output}"
-
 
 
 rule syn_sdc:
@@ -347,7 +347,6 @@ rule syn_sdc:
         "../scripts/sdcflows_syn.py"
 
 
-
 def get_dwi_ref(wildcards):
     checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
     ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
@@ -382,6 +381,3 @@ rule cp_dwi_ref:
         "subj"
     shell:
         "cp {input} {output}"
-
-
-

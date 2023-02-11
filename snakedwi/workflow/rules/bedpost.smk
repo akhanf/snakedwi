@@ -315,4 +315,3 @@ rule cp_bedpost_to_results:
         "subj"
     shell:
         "cp -Rv {input} {output}"
-

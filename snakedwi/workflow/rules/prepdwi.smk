@@ -19,6 +19,7 @@ checkpoint check_subj_dwi_metadata:
     script:
         "../scripts/check_subj_dwi_metadata.py"
 
+
 rule import_dwi:
     input:
         dwi=re.sub(".nii.gz", ".{ext}", input_path["dwi"]),
@@ -276,8 +277,6 @@ rule concat_bzeros:
         "{params.cmd} 2> {log}"
 
 
-
-
 rule concat_degibbs_dwi:
     input:
         dwi_niis=lambda wildcards: expand(
@@ -396,6 +395,7 @@ rule concat_runs_json:
     shell:
         "cp {input[0]} {output}"
 
+
 #    script: '../scripts/concat_json.py'
 
 
@@ -460,6 +460,7 @@ rule get_shell_vols:
     script:
         "../scripts/get_shell_vols.py"
 
+
 def get_b0_mask():
     if config["masking_method"] == "b0_BET":
         method = "bet_from-b0"
@@ -515,5 +516,3 @@ rule qc_b0_brainmask:
         config["singularity"]["python"]
     script:
         "../scripts/vis_qc_dseg.py"
-
-

@@ -27,7 +27,6 @@ rule get_eddy_index_txt:
         "../scripts/get_eddy_index_txt.py"
 
 
-
 # if the --slspec_txt option is not used, use the SliceTiming json, otherwise just get from the file supplied at command-line
 if not config["slspec_txt"]:
 
@@ -475,5 +474,3 @@ rule split_eddy_qc_report:
         config["singularity"]["python"]
     script:
         "../scripts/split_pdf.py"
-
-
