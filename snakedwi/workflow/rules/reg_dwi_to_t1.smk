@@ -464,7 +464,7 @@ rule resample_brainmask_to_t1w:
             datatype="dwi",
             **subj_wildcards
         ),
-        brainmask=get_mask_for_eddy(),
+        brainmask=get_b0_mask(),
         xfm_itk=bids(
             root=work,
             suffix="xfm.txt",
