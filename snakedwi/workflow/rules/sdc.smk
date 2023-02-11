@@ -309,7 +309,7 @@ rule syn_sdc:
         epi_mask=get_b0_mask(),
         std2anat_xfm=bids(
             root=work,
-            datatype="anat",
+            datatype="transforms",
             from_=config["template"],
             to="subject",
             desc="affine",

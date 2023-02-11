@@ -85,7 +85,7 @@ rule invert_subj_to_template_xfm:
         ),
     output:
         bids(
-            root=root,
+            root=work,
             datatype="transforms",
             from_=config["template"],
             to="subject",
