@@ -1,5 +1,5 @@
-bids_dir: 'test_data/bids_multishell_downsampled'
-output_dir: 'test_output/snakedwi_multishell_downsampled'
+bids_dir: 'test_data/bids_multishell_downsampled_notopup'
+output_dir: 'test_output/snakedwi_multishell_downsampled_notopup'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
@@ -167,6 +167,7 @@ singularity:
   niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
   python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'  
   synthstrip: 'docker://freesurfer/synthstrip:1.3'
+  sdcflows: 'docker://nipreps/sdcflows:2.2.2'
 
 
 

@@ -343,6 +343,10 @@ rule syn_sdc:
             **subj_wildcards
         ),
     threads: 8
+    group:
+        "subj"
+    container:
+        config["singularity"]["sdcflows"]
     script:
         "../scripts/sdcflows_syn.py"
 
