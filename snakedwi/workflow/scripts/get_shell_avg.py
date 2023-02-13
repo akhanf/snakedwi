@@ -11,7 +11,7 @@ bval = snakemake.params.bval
 
 # input dwi
 dwi_nib = nib.load(snakemake.input.dwi)
-print(dwi_nib.shape)
+# print(dwi_nib.shape)
 
 # create output shape
 newshape = np.array(dwi_nib.shape[:3])

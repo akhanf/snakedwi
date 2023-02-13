@@ -12,13 +12,11 @@ from glob import glob
 
 with tempfile.TemporaryDirectory() as tmpdirname:
 
-    print("created temporary directory", tmpdirname)
-
     workflow = Workflow(name="nipype_wf")
 
     syn_preprocessing_wf = init_syn_preprocessing_wf(
         omp_nthreads=snakemake.threads,
-        debug=True,
+        debug=False,
         auto_bold_nss=False,
         t1w_inversion=True,
         name=f"syn_preprocessing",
@@ -26,7 +24,7 @@ with tempfile.TemporaryDirectory() as tmpdirname:
 
     syn_sdc_wf = init_syn_sdc_wf(
         omp_nthreads=snakemake.threads,
-        debug=True,
+        debug=False,
         name=f"syn_sdc",
         sloppy=False,
         atlas_threshold=3,
@@ -34,10 +32,10 @@ with tempfile.TemporaryDirectory() as tmpdirname:
 
     # read dwi json files to get metadata for each volume
     in_meta = []
-    for json_file in snakemake.input.json_files:
 
-        with open(json_file) as f:
-            in_meta.append(json.load(f))
+    # the b0 is already an average, so we just need the first metadata
+    with open(snakemake.input.json_file) as f:
+        in_meta.append(json.load(f))
 
     syn_preprocessing_wf.inputs.inputnode.in_epis = Path(
         snakemake.input.in_epis
@@ -60,7 +58,6 @@ with tempfile.TemporaryDirectory() as tmpdirname:
         nvols = epi_shape[3]
 
     # create t_masks variable, list of booleans (all true in this case, since all are b0s), length as number of epis
-    print(f"number of vols: {nvols}")
     t_masks = [True for i in range(nvols)]
     syn_preprocessing_wf.inputs.inputnode.t_masks = t_masks
     syn_preprocessing_wf.inputs.inputnode.in_meta = in_meta
@@ -100,6 +97,7 @@ with tempfile.TemporaryDirectory() as tmpdirname:
     # mapping from outputnode of syn_sdc_wf to the snakemake rule output names
     out_file_mapping = {
         "fmap_ref": "unwarped",
+        "fmap_mask": "unwarped_mask",
         "fmap": "fmap",
         "out_warp": "xfm",
     }
