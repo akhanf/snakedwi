@@ -32,12 +32,19 @@ rule affine_to_template:
             desc="affine",
             type_="ras"
         ),
+    log:
+        bids(
+            root="logs",
+            **subj_wildcards,
+            suffix="affine_to_template.log",
+            space="{template}",
+        ),
     container:
         config["singularity"]["prepdwi"]
     group:
         "subj"
     shell:
-        "reg_aladin -flo {input.flo} -ref {input.ref} -res {output.warped_subj} -aff {output.xfm_ras}"
+        "reg_aladin -flo {input.flo} -ref {input.ref} -res {output.warped_subj} -aff {output.xfm_ras} > {log}"
 
 
 rule convert_template_xfm_ras2itk:

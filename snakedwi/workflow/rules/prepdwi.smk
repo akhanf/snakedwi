@@ -461,13 +461,25 @@ rule get_shell_vols:
         "../scripts/get_shell_vols.py"
 
 
+def get_b0_init_mask():
+    return bids(
+        root=work,
+        suffix="mask.nii.gz",
+        desc="brain",
+        method="synthstrip",
+        from_="mocob0",
+        datatype="dwi",
+        **subj_wildcards,
+    )
+
+
 def get_b0_mask():
     if config["masking_method"] == "b0_BET":
         method = "bet_from-b0"
     elif config["masking_method"] == "b0_SyN":
         method = f"b0SyN_from-{config['template']}"
     elif config["masking_method"] == "b0_synthstrip":
-        method = "synthstrip_from-b0"
+        method = "synthstrip_from-dwirefb0"
 
     # then get bids name of file
     return bids(

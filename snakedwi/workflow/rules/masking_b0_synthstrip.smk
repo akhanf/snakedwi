@@ -3,7 +3,7 @@ rule synthstrip_b0:
         b0=bids(
             root=work,
             suffix="b0.nii.gz",
-            desc="dwiref",
+            desc="{desc}",
             datatype="dwi",
             **subj_wildcards
         ),
@@ -14,7 +14,7 @@ rule synthstrip_b0:
                 suffix="mask.nii.gz",
                 desc="nofixhdrbrain",
                 method="synthstrip",
-                from_="b0",
+                from_="{desc}b0",
                 datatype="dwi",
                 **subj_wildcards
             )
@@ -33,7 +33,7 @@ rule synthstrip_b0_fix_header:
         b0=bids(
             root=work,
             suffix="b0.nii.gz",
-            desc="dwiref",
+            desc="{desc}",
             datatype="dwi",
             **subj_wildcards
         ),
@@ -42,7 +42,7 @@ rule synthstrip_b0_fix_header:
             suffix="mask.nii.gz",
             desc="nofixhdrbrain",
             method="synthstrip",
-            from_="b0",
+            from_="{desc}b0",
             datatype="dwi",
             **subj_wildcards
         ),
@@ -52,7 +52,7 @@ rule synthstrip_b0_fix_header:
             suffix="mask.nii.gz",
             desc="brain",
             method="synthstrip",
-            from_="b0",
+            from_="{desc}b0",
             datatype="dwi",
             **subj_wildcards
         ),

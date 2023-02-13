@@ -7,9 +7,9 @@ with open(snakemake.input.shells) as f:
     shells_dict = json.load(f)
 
 nshells = len(shells_dict["shells"])
-print(f"nshells: {nshells}")
+# print(f"nshells: {nshells}")
 dwi_nib = nib.load(snakemake.input.dwi)
-print(dwi_nib.shape)
+# print(dwi_nib.shape)
 # create output shape
 newshape = np.zeros(
     [
@@ -19,7 +19,7 @@ newshape = np.zeros(
 newshape[:3] = np.array(dwi_nib.shape[:3])
 newshape[3] = nshells
 # newshape = np.array([dwi_nib.shape[:3].asarray(),nshells])
-print(newshape)
+# print(newshape)
 avg_shells = np.zeros(newshape.astype(int))
 
 

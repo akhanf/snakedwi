@@ -269,7 +269,7 @@ rule syn_sdc:
     input:
         in_epis=bids(
             root=work,
-            suffix="b0s.nii.gz",
+            suffix="b0.nii.gz",
             datatype="dwi",
             desc="moco",
             **subj_wildcards
@@ -281,24 +281,13 @@ rule syn_sdc:
             desc="preproc",
             suffix="T1w.nii.gz"
         ),
-        dwi_files=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                datatype="dwi",
-                desc="degibbs",
-                **input_wildcards["dwi"]
-            ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
-        ),
-        json_files=lambda wildcards: expand(
+        json_file=lambda wildcards: expand(
             bids(
                 root=work, suffix="dwi.json", datatype="dwi", **input_wildcards["dwi"]
             ),
             zip,
             **filter_list(input_zip_lists["dwi"], wildcards)
-        ),
+        )[0],
         mask_anat=bids(
             root=root,
             datatype="anat",
@@ -306,7 +295,7 @@ rule syn_sdc:
             desc="brain",
             suffix="mask.nii.gz"
         ),
-        epi_mask=get_b0_mask(),
+        epi_mask=get_b0_init_mask(),
         std2anat_xfm=bids(
             root=work,
             datatype="transforms",
@@ -323,6 +312,14 @@ rule syn_sdc:
             datatype="dwi",
             suffix="b0.nii.gz",
             desc="unwarped",
+            method="synsdc",
+            **subj_wildcards
+        ),
+        unwarped_mask=bids(
+            root=work,
+            datatype="dwi",
+            suffix="mask.nii.gz",
+            desc="brain",
             method="synsdc",
             **subj_wildcards
         ),
@@ -345,6 +342,8 @@ rule syn_sdc:
     threads: 8
     group:
         "subj"
+    shadow:
+        "minimal"
     container:
         config["singularity"]["sdcflows"]
     script:
@@ -366,7 +365,12 @@ def get_dwi_ref(wildcards):
         )
     else:
         return bids(
-            root=work, suffix="b0.nii.gz", datatype="dwi", desc="moco", **subj_wildcards
+            root=work,
+            datatype="dwi",
+            suffix="b0.nii.gz",
+            desc="unwarped",
+            method="synsdc",
+            **subj_wildcards
         )
 
 

@@ -36,8 +36,8 @@ else:
     # get number of shells for each bin-width choice
     nshells = [len(s) for s in shells]
 
-    print("nshells")
-    print(nshells)
+    # print("nshells")
+    # print(nshells)
 
     # use the highest number of bins that still produces the minimal number of shells
     min_nshells = np.min(nshells)
@@ -50,8 +50,8 @@ else:
     # round to nearest 100
     chosen_shells = np.around(chosen_shells, -2).astype("int")
 
-    print("chosen_shells")
-    print(chosen_shells)
+    # print("chosen_shells")
+    # print(chosen_shells)
 
     # write to file
     # np.savetxt(snakemake.output[0],chosen_shells,fmt='%d')
@@ -61,8 +61,8 @@ else:
     rep_shells = np.tile(chosen_shells, [len(bvals), 1])
     rep_bvals = np.tile(bvals, [len(chosen_shells), 1]).T
 
-    print(rep_shells)
-    print(rep_bvals)
+    # print(rep_shells)
+    # print(rep_bvals)
 
     # abs diff between bvals and shells
     diff = np.abs(rep_bvals - rep_shells)
