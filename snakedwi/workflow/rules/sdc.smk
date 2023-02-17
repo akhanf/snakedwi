@@ -350,6 +350,40 @@ rule syn_sdc:
         "../scripts/sdcflows_syn.py"
 
 
+rule run_synthSR:
+    input:
+        '{prefix}.nii.gz'
+    output:
+        '{prefix}synthSR.nii.gz'
+    threads: 8
+    shell:
+        'mri_synthsr --i {input} --o {output} --cpu --threads {threads}'
+
+rule reg_b0_to_t1_synthsr:
+    input:
+        t1synth=bids(suffix='T1wSynthSR.nii.gz'), #should be rigidly aligned first
+        b0synth=bids(suffix='b0SynthSR.nii.gz')
+    params:
+        general_opts='-d 3 -v'
+        metric=lambda wildcards, input: f'MeanSquares[{input.t1synth},{input.b0synth}]'
+        transform='SyN[0.1]',
+        convergence='100x50x20',
+        smoothing_sigmas='2x1x0vox',
+        shrink_factors='4x2x1',
+        restrict_deformation='0x1x0', #should be set to the phase encode dir - can read json for this..
+        output_prefix=bids()
+    output:
+        xfm=bids(),
+        unwarped=bids()
+    shell:
+        'antsRegistration {params.general_opts} --metric {params.metric} --convergence {params.convergence} '
+        '  --smoothing-sigmas {params.smoothing_sigmas} --shrink-factors {params.shrink_factors}  '
+        ' --transform {params.transform} --output [{params.output_prefix},{output.unwarped}]  --restrict-deformation 0x1x0'
+
+
+
+
+
 def get_dwi_ref(wildcards):
     checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
     ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
