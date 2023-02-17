@@ -492,6 +492,7 @@ def get_b0_mask():
     )
 
 
+
 # generate qc snapshot for brain  mask
 rule qc_b0_brainmask:
     input:
@@ -504,27 +505,26 @@ rule qc_b0_brainmask:
         ),
         seg=get_b0_mask(),
     output:
-        png=report(
-            bids(
-                root=root,
-                datatype="qc",
-                suffix="mask.png",
-                desc="brain",
-                **subj_wildcards
-            ),
-            caption="../report/brainmask_dwi.rst",
-            category="Brainmask",
-        ),
-        html=bids(
+        pics=directory(bids(
             root=root,
             datatype="qc",
-            suffix="mask.html",
+            suffix="mask",
             desc="brain",
-            **subj_wildcards
-        ),
+            **subj_wildcards,
+        ))
     group:
         "subj"
     container:
         config["singularity"]["python"]
     script:
         "../scripts/vis_qc_dseg.py"
+    envmodules:
+        "mrtrix/3.0.1"
+    shell:
+        "mkdir -p {output.pics} && "
+
+        "xvfb-run -a bash -c 'mrview {input.img} -overlay.load {input.seg} "
+        "-overlay.opacity 0.3 -overlay.threshold_min 0 -noannotations "
+        "-overlay.interpolation false -overlay.colour 255,0,0 "
+        "-capture.folder {output.pics} "
+        "$(../scripts/mrview_capture {input.img}) -exit'"

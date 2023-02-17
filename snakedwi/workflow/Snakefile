@@ -30,7 +30,7 @@ rule all:
             bids(
                 root=root,
                 datatype="qc",
-                suffix="mask.png",
+                suffix="mask",
                 desc="brain",
                 **subj_wildcards
             ),
@@ -41,7 +41,7 @@ rule all:
             bids(
                 root=root,
                 datatype="qc",
-                suffix="reg.png",
+                suffix="reg",
                 from_="dwiref",
                 to="T1w",
                 **subj_wildcards

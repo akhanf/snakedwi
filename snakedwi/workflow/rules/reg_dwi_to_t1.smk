@@ -158,32 +158,25 @@ rule qc_reg_dwi_t1:
             **subj_wildcards
         ),
     output:
-        png=report(
-            bids(
-                root=root,
-                datatype="qc",
-                suffix="reg.png",
-                **subj_wildcards,
-                from_="dwiref",
-                to="T1w"
-            ),
-            caption="../report/reg_dwi_t1.rst",
-            category="B0 T1w registration",
-        ),
-        html=bids(
+        pics=directory(bids(
             root=root,
             datatype="qc",
-            suffix="reg.html",
+            suffix="reg",
             from_="dwiref",
             to="T1w",
-            **subj_wildcards
-        ),
+            **subj_wildcards,
+        ))
     group:
         "subj"
-    container:
-        config["singularity"]["python"]
-    script:
-        "../scripts/vis_regqc.py"
+    envmodules:
+        "mrtrix/3.0.1"
+    shell:
+        "mkdir -p {output.pics} && "
+        "xvfb-run -a bash -c 'mrview {input.flo} -overlay.load {input.ref} "
+        "-overlay.opacity 0.6 -overlay.threshold_min 0 -noannotations "
+        "-capture.folder {output.pics} "
+        "$(../scripts/mrview_capture {input.img}) -exit'"
+
 
 
 rule convert_xfm_ras2itk:
