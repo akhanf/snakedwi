@@ -17,6 +17,7 @@ no_topup: False
 use_eddy_s2v: False
 eddy_no_quad: False
 no_bedpost: False
+use_syn_sdc: False
 
 targets_by_analysis_level:
   participant:
@@ -150,6 +151,10 @@ parse_args:
     help: 'Number of iterations to use at each multi-resolution stage for dwi to t1 rigid registration. (default: %(default)s)'
     default: '50x50'
 
+  --use_syn_sdc:
+    help: "Use SyN fieldmap-less distortion-correction (warning: experimental!). (default: %(default)s)"
+    action: 'store_true'
+    default: False
 
 
 

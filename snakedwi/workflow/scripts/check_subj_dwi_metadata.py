@@ -59,10 +59,17 @@ else:
 shell("mkdir -p {snakemake.output}")
 
 if len(set(phase_encoding_directions)) < 2:
-    print(
-        f"Opposing phase encoding directions not available, {phase_encoding_directions}, using syn for sdc"
-    )
-    shell("touch {snakemake.output}/sdc-syn")
+    if snakemake.config["use_syn_sdc"]:
+
+        print(
+            f"Opposing phase encoding directions not available, {phase_encoding_directions}, using syn for sdc"
+        )
+        shell("touch {snakemake.output}/sdc-syn")
+    else:
+        print(
+            f"Opposing phase encoding directions not available, {phase_encoding_directions}, skipping sdc"
+        )
+        shell("touch {snakemake.output}/sdc-none")
 else:
     print(
         f"Opposing phase encoding directions are available, {phase_encoding_directions}, using topup for sdc"

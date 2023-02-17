@@ -363,7 +363,7 @@ def get_dwi_ref(wildcards):
             datatype="dwi",
             **subj_wildcards
         )
-    else:
+    elif method == "syn":
         return bids(
             root=work,
             datatype="dwi",
@@ -371,6 +371,16 @@ def get_dwi_ref(wildcards):
             desc="unwarped",
             method="synsdc",
             **subj_wildcards
+        )
+    else:
+        return (
+            bids(
+                root=work,
+                suffix="b0.nii.gz",
+                datatype="dwi",
+                desc="moco",
+                **subj_wildcards
+            ),
         )
 
 
