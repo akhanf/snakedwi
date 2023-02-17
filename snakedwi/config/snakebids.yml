@@ -156,6 +156,10 @@ parse_args:
     action: 'store_true'
     default: False
 
+  --gradcorrect_coeffs:
+    help: Path to file containing scanner specific gradient correction
+          coefficients.
+    # default: '/project/ctb-akhanf/akhanf/opt/grad/.coeff_AC84.grad'
 
 
 #---- to update below this
