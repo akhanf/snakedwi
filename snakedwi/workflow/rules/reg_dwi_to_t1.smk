@@ -12,9 +12,22 @@ rule import_t1:
         "cp {input.nii} {output.nii}"
 
 
+def get_input_for_synthstrip(wildcards):
+    if config["gradcorrect_coeffs"]:
+        return bids(
+            root=work,
+            datatype="anat",
+            desc="gradcorrect",
+            **subj_wildcards,
+            suffix="T1w.nii.gz"
+        )
+    else:
+        return bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz")
+
+
 rule synthstrip_t1:
     input:
-        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        t1=get_input_for_synthstrip,
     output:
         mask=temp(
             bids(
@@ -404,6 +417,11 @@ rule create_cropped_ref_custom_resolution:
 
 rule resample_dwi_to_t1w:
     input:
+        **(
+            {"gradcorrect_warp": rules.convert_gradcorrect_to_itk.output}
+            if config["gradcorrect_coeffs"]
+            else {}
+        ),
         ref=bids(
             root=work,
             suffix="avgb0.nii.gz",
@@ -449,11 +467,20 @@ rule resample_dwi_to_t1w:
     group:
         "subj"
     shell:
-        "antsApplyTransforms -d 3 --input-image-type 3 --input {input.dwi} --reference-image {input.ref} --transform {input.xfm_itk} --interpolation {params.interpolation} --output {output.dwi} --verbose "
+        "antsApplyTransforms -d 3 --input-image-type 3 "
+        "--input {input.dwi} --reference-image {input.ref} "
+        "--transform {input.xfm_itk} "
+        f"{'-t {input.gradcorrect_warp}' if config['gradcorrect_coeffs'] else ''} "
+        "--interpolation {params.interpolation} --output {output.dwi} --verbose "
 
 
 rule resample_brainmask_to_t1w:
     input:
+        **(
+            {"gradcorrect_warp": rules.convert_gradcorrect_to_itk.output}
+            if config["gradcorrect_coeffs"]
+            else {}
+        ),
         ref=bids(
             root=work,
             suffix="avgb0.nii.gz",
@@ -493,7 +520,11 @@ rule resample_brainmask_to_t1w:
     group:
         "subj"
     shell:
-        "antsApplyTransforms -d 3 --input-image-type 0 --input {input.brainmask} --reference-image {input.ref} --transform {input.xfm_itk} --interpolation {params.interpolation} --output {output.brainmask} --verbose"
+        "antsApplyTransforms -d 3 --input-image-type 0 "
+        "--input {input.brainmask} --reference-image {input.ref} "
+        "--transform {input.xfm_itk} "
+        f"{'-t {input.gradcorrect_warp}' if config['gradcorrect_coeffs'] else ''} "
+        "--interpolation {params.interpolation} --output {output.brainmask} --verbose "
 
 
 rule rotate_bvecs_to_t1w:

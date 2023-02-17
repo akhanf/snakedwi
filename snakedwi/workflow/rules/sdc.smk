@@ -350,18 +350,29 @@ rule syn_sdc:
         "../scripts/sdcflows_syn.py"
 
 
-def get_dwi_ref(wildcards):
+def get_dwi_ref_old(wildcards):
     checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
     ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
 
-    if method == "topup":
+    if config["gradcorrect_coeffs"]:
+        # if using gradcorrect, then the checkpoint for sdc method will be
+        # done in the find_gradcorrect_warp rule instead
+        return bids(
+            root=work,
+            datatype="dwi",
+            desc="gradcorrect",
+            suffix="b0.nii.gz",
+            **subj_wildcards,
+        )
+
+    elif method == "topup":
         return bids(
             root=work,
             suffix="b0.nii.gz",
             desc="topup",
             method="jac",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         )
     elif method == "syn":
         return bids(
@@ -370,7 +381,7 @@ def get_dwi_ref(wildcards):
             suffix="b0.nii.gz",
             desc="unwarped",
             method="synsdc",
-            **subj_wildcards
+            **subj_wildcards,
         )
     else:
         return (
@@ -379,9 +390,56 @@ def get_dwi_ref(wildcards):
                 suffix="b0.nii.gz",
                 datatype="dwi",
                 desc="moco",
-                **subj_wildcards
+                **subj_wildcards,
             ),
         )
+
+
+def get_dwi_ref(wildcards):
+    if config["gradcorrect_coeffs"]:
+        # if using gradcorrect, then the checkpoint for sdc method will be
+        # done in the find_gradcorrect_warp rule instead
+        return bids(
+            root=work,
+            datatype="dwi",
+            desc="gradcorrect",
+            suffix="b0.nii.gz",
+            **subj_wildcards,
+        )
+    else:
+        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[
+            0
+        ]
+        ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+
+        if method == "topup":
+            return bids(
+                root=work,
+                suffix="b0.nii.gz",
+                desc="topup",
+                method="jac",
+                datatype="dwi",
+                **subj_wildcards,
+            )
+        elif method == "syn":
+            return bids(
+                root=work,
+                datatype="dwi",
+                suffix="b0.nii.gz",
+                desc="unwarped",
+                method="synsdc",
+                **subj_wildcards,
+            )
+        else:
+            return (
+                bids(
+                    root=work,
+                    suffix="b0.nii.gz",
+                    datatype="dwi",
+                    desc="moco",
+                    **subj_wildcards,
+                ),
+            )
 
 
 rule cp_dwi_ref:

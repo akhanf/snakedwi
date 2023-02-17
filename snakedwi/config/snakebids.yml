@@ -1,5 +1,5 @@
-bids_dir: 'test_data/bids_multishell_downsampled_notopup'
-output_dir: 'test_output/snakedwi_multishell_downsampled_notopup'
+bids_dir: 'test_data/bids_multishell_downsampled'
+output_dir: 'test_output/snakedwi_multishell_downsampled'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
@@ -157,8 +157,8 @@ parse_args:
     default: False
 
   --gradcorrect_coeffs:
-    help: Path to file containing scanner specific gradient correction
-          coefficients.
+    help: "Path to file containing scanner specific gradient correction coefficients. Use this to enable gradient non-linearity correction. (default: %(default)s)"
+    default: null
     # default: '/project/ctb-akhanf/akhanf/opt/grad/.coeff_AC84.grad'
 
 
@@ -177,6 +177,9 @@ singularity:
   python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'  
   synthstrip: 'docker://freesurfer/synthstrip:1.3'
   sdcflows: 'docker://nipreps/fmriprep:22.1.1' #can't currently just use sdcflows docker as it is missing freesurfer's mri_robust_template
+  gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
+  connectome_workbench: 'docker://khanlab/autotop_deps:v0.4.2'
+
 
 
 
@@ -297,3 +300,5 @@ use_bedpost_gpu: False
 rigid_dwi_t1_init: 'identity'
 rigid_dwi_t1_iters: '50x50'
 root: 'results'
+gradcorrect_coeffs: null
+

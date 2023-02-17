@@ -1,22 +1,61 @@
+def get_dwi_ref_for_gradcorrect(wildcards):
+    if config["gradcorrect_coeffs"]:
+
+        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[
+            0
+        ]
+        ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+
+        if method == "topup":
+            return bids(
+                root=work,
+                suffix="b0.nii.gz",
+                desc="topup",
+                method="jac",
+                datatype="dwi",
+                **subj_wildcards
+            )
+        elif method == "syn":
+            return bids(
+                root=work,
+                datatype="dwi",
+                suffix="b0.nii.gz",
+                desc="unwarped",
+                method="synsdc",
+                **subj_wildcards
+            )
+        else:
+            return (
+                bids(
+                    root=work,
+                    suffix="b0.nii.gz",
+                    datatype="dwi",
+                    desc="moco",
+                    **subj_wildcards
+                ),
+            )
+    else:
+        return ""
+
 
 rule find_gradcorrect_warp:
     input:
-        data=rules.cp_dwi_ref.output,
+        dwiref=get_dwi_ref_for_gradcorrect,
         grad_coeff=config["gradcorrect_coeffs"] or "",
     output:
-        data=bids(
+        dwiref=bids(
             root=work,
             datatype="dwi",
-            desc="unwarped",
+            desc="gradcorrect",
             suffix="b0.nii.gz",
             **subj_wildcards,
         ),
         warp=bids(
             root=work,
-            datatype="dwi",
-            desc="gradCorrect",
+            datatype="transforms",
+            desc="gradcorrect",
             type_="fsl",
-            suffix="warp.nii.gz",
+            suffix="xfm.nii.gz",
             **subj_wildcards,
         ),
     log:
@@ -38,22 +77,21 @@ rule find_gradcorrect_warp:
     container:
         config["singularity"]["gradcorrect"]
     shell:
-        "gradient_unwarp.py {input.data} {output.data} siemens "
+        "gradient_unwarp.py {input.dwiref} {output.dwiref} siemens "
         "-g {input.grad_coeff} -n --fovmin -{params.fov} --fovmax {params.fov} "
         "--numpoints {params.numpoints} --verbose && "
         "mv {params.out_warp} {output.warp}"
 
 
-
 rule get_jacobian_determinant:
     input:
-        ref=rules.find_gradcorrect_warp.output.data,
+        ref=rules.find_gradcorrect_warp.output.dwiref,
         warp=rules.find_gradcorrect_warp.output.warp,
     output:
         detjac=bids(
             root=root,
             datatype="dwi",
-            desc="gradCorrect",
+            desc="gradcorrect",
             suffix="detjac.nii.gz",
             **subj_wildcards,
         ),
@@ -71,14 +109,14 @@ rule get_jacobian_determinant:
 rule convert_gradcorrect_to_itk:
     input:
         warp=rules.find_gradcorrect_warp.output.warp,
-        refvol=rules.cp_dwi_ref.output,
+        refvol=rules.find_gradcorrect_warp.output.dwiref,
     output:
         warp=bids(
-            root=work,
-            datatype="dwi",
-            desc="gradCorrect",
+            root=root,
+            datatype="transforms",
+            desc="gradcorrect",
             type_="itk",
-            suffix="warp.nii.gz",
+            suffix="xfm.nii.gz",
             **subj_wildcards,
         ),
     log:
@@ -94,82 +132,25 @@ rule convert_gradcorrect_to_itk:
         "wb_command -convert-warpfield -from-fnirt {input.warp} {input.refvol} -absolute -to-itk {output.warp}"
 
 
-rule resample_dwi_to_t1w:
-    input:
-        ref=bids(
-            root=work,
-            suffix="avgb0.nii.gz",
-            space="T1w",
-            desc="dwiref",
-            proc="crop",
-            res=config["resample_dwi"]["resample_scheme"],
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        dwi=bids(
-            root=root,
-            suffix="dwi.nii.gz",
-            desc="eddy",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        xfm_itk=bids(
-            root=work,
-            suffix="xfm.txt",
-            from_="dwi",
-            to="T1w",
-            type_="itk",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        **(
-            {"gradcorrect_warp": rules.convert_gradcorrect_to_itk.output}
-            if config["gradcorrect_coeffs"] else {}
-        ),
-    params:
-        interpolation="Linear",
-    output:
-        dwi=bids(
-            root=root,
-            suffix="dwi.nii.gz",
-            desc="eddy",
-            space="T1w",
-            res=config["resample_dwi"]["resample_scheme"],
-            datatype="dwi",
-            **subj_wildcards
-        ),
-    container:
-        config["singularity"]["ants"]
-    resources:
-        mem_mb=32000,  #-- this is going to be dependent on size of image.. 
-    group:
-        "subj"
-    shell:
-        "antsApplyTransforms -d 3 --input-image-type 3 "
-        "--input {input.dwi} --reference-image {input.ref} "
-        "--transform {input.xfm_itk} "
-        f"{'-t {input.gradcorrect_warp}' if config['gradcorrect_coeffs'] else ''} "
-        "--interpolation {params.interpolation} --output {output.dwi} --verbose "
-
 rule gradcorrect_t1w:
     input:
-        t1=rules.import_t1.output,
+        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
         grad_coeff=config["gradcorrect_coeffs"] or "",
     output:
         t1=bids(
-            root=root,
+            root=work,
             **subj_wildcards,
-            desc="preproc",
+            desc="gradcorrect",
             datatype="anat",
             suffix="T1w.nii.gz",
         ),
         warp=bids(
             root=root,
             **subj_wildcards,
-            suffix="warp.nii.gz",
-            desc="gradCorrect",
+            suffix="xfm.nii.gz",
+            desc="gradcorrect",
             space="T1w",
-            datatype="anat"
+            datatype="transforms"
         ),
     log:
         f"logs/gradcorrect_t1w/{'.'.join(subj_wildcards.values())}.log",
@@ -194,5 +175,3 @@ rule gradcorrect_t1w:
         "-g {input.grad_coeff} -n --fovmin -{params.fov} --fovmax {params.fov} "
         "--numpoints {params.numpoints} --verbose && "
         "mv {params.out_warp} {output.warp}"
-
-
