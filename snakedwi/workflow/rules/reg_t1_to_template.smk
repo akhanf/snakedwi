@@ -54,8 +54,8 @@ rule convert_template_xfm_ras2itk:
             datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
-            from_="subject",
-            to="{template}",
+            from_="{from}",
+            to="{to}",
             desc="{desc}",
             type_="ras"
         ),
@@ -65,8 +65,8 @@ rule convert_template_xfm_ras2itk:
             datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
-            from_="subject",
-            to="{template}",
+            from_="{from}",
+            to="{to}",
             desc="{desc}",
             type_="itk"
         ),

@@ -352,36 +352,141 @@ rule syn_sdc:
 
 rule run_synthSR:
     input:
-        '{prefix}.nii.gz'
+        "{prefix}.nii.gz",
     output:
-        '{prefix}synthSR.nii.gz'
+        "{prefix}SynthSR.nii.gz",
     threads: 8
+    group:
+        "subj"
+    container:
+        config["singularity"]["synthsr"]
     shell:
-        'mri_synthsr --i {input} --o {output} --cpu --threads {threads}'
+        "python /SynthSR/scripts/predict_command_line.py  --cpu --threads {threads} {input} {output}"
+
+
+rule rigid_reg_t1_to_b0_synthsr:
+    input:
+        flo=bids(
+            root=root,
+            datatype="anat",
+            **subj_wildcards,
+            desc="preproc",
+            suffix="T1wSynthSR.nii.gz"
+        ),
+        ref=bids(
+            root=work,
+            suffix="b0SynthSR.nii.gz",
+            datatype="dwi",
+            desc="moco",
+            **subj_wildcards
+        ),
+    output:
+        warped_subj=bids(
+            root=work,
+            suffix="T1wSynthSRreg.nii.gz",
+            space="rigidb0",
+            datatype="dwi",
+            **subj_wildcards
+        ),
+        xfm_ras=bids(
+            root=work,
+            suffix="xfm.txt",
+            from_="T1wSynthSR",
+            to="b0SynthSR",
+            type_="ras",
+            desc="rigid",
+            datatype="transforms",
+            **subj_wildcards
+        ),
+    container:
+        config["singularity"]["prepdwi"]
+    log:
+        bids(root="logs", suffix="rigid_reg_t1_to_b0_synthsr.txt", **subj_wildcards),
+    group:
+        "subj"
+    shell:
+        "reg_aladin -flo {input.flo} -ref {input.ref} -res {output.warped_subj} -aff {output.xfm_ras} > {log}"
+
 
 rule reg_b0_to_t1_synthsr:
     input:
-        t1synth=bids(suffix='T1wSynthSR.nii.gz'), #should be rigidly aligned first
-        b0synth=bids(suffix='b0SynthSR.nii.gz')
+        t1synth=bids(
+            root=root,
+            datatype="anat",
+            **subj_wildcards,
+            desc="preproc",
+            suffix="T1wSynthSR.nii.gz"
+        ),
+        b0synth=bids(
+            root=work,
+            suffix="b0SynthSR.nii.gz",
+            datatype="dwi",
+            desc="moco",
+            **subj_wildcards
+        ),
+        rigid_xfm_itk=bids(
+            root=root,
+            suffix="xfm.txt",
+            from_="T1wSynthSR",
+            to="b0SynthSR",
+            type_="itk",
+            desc="rigid",
+            datatype="transforms",
+            **subj_wildcards
+        ),
     params:
-        general_opts='-d 3 -v'
-        metric=lambda wildcards, input: f'MeanSquares[{input.t1synth},{input.b0synth}]'
-        transform='SyN[0.1]',
-        convergence='100x50x20',
-        smoothing_sigmas='2x1x0vox',
-        shrink_factors='4x2x1',
-        restrict_deformation='0x1x0', #should be set to the phase encode dir - can read json for this..
-        output_prefix=bids()
+        general_opts="-d 3 -v",
+        metric=lambda wildcards, input: f"MeanSquares[{input.t1synth},{input.b0synth}]",
+        transform="SyN[0.1]",
+        convergence="100x50x20",
+        smoothing_sigmas="2x1x0vox",
+        shrink_factors="4x2x1",
+        restrict_deformation="0x1x0",  #should be set to the phase encode dir - can read json for this..
+        output_prefix=bids(
+            root=root,
+            suffix="xfm",
+            from_="T1wSynthSR",
+            to="b0SynthSR",
+            type_="itk",
+            desc="SyN",
+            datatype="transforms",
+            **subj_wildcards
+        ),
     output:
-        xfm=bids(),
-        unwarped=bids()
+        unwarped=bids(
+            root=work,
+            suffix="b0unwarped.nii.gz",
+            desc="SynthSRSyn",
+            datatype="dwi",
+            **subj_wildcards
+        ),
     shell:
-        'antsRegistration {params.general_opts} --metric {params.metric} --convergence {params.convergence} '
-        '  --smoothing-sigmas {params.smoothing_sigmas} --shrink-factors {params.shrink_factors}  '
-        ' --transform {params.transform} --output [{params.output_prefix},{output.unwarped}]  --restrict-deformation 0x1x0'
+        "antsRegistration {params.general_opts} --metric {params.metric} --convergence {params.convergence} "
+        "  --smoothing-sigmas {params.smoothing_sigmas} --shrink-factors {params.shrink_factors}  "
+        " --initial-fixed-transform {input.rigid_xfm_itk} --transform {params.transform} "
+        " --output [{params.output_prefix},{output.unwarped}]  --restrict-deformation 0x1x0"
 
 
-
+"""
+        fwd_xfm=bids(
+            root=root,
+            suffix="xfm0Warp.nii.gz",
+            from_="T1wSynthSR",
+            to="b0SynthSR",
+            type_="itk",
+            desc='SyN',
+            datatype="transforms",
+            **subj_wildcards),
+        inv_xfm=bids(
+            root=root,
+            suffix="xfm1InverseWarp.nii.gz",
+            from_="T1wSynthSR",
+            to="b0SynthSR",
+            type_="itk",
+            desc='SyN',
+            datatype="transforms",
+            **subj_wildcards)
+"""
 
 
 def get_dwi_ref(wildcards):
