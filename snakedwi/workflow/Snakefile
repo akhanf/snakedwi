@@ -4,6 +4,9 @@ configfile: "config/snakebids.yml"
 include: "rules/setup.smk"
 include: "rules/common.smk"
 include: "rules/prepdwi.smk"
+include: "rules/sdc.smk"
+include: "rules/eddy.smk"
+include: "rules/bedpost.smk"
 include: "rules/reg_dwi_to_t1.smk"
 include: "rules/masking_bet_from-b0.smk"
 include: "rules/masking_b0_to_template.smk"
@@ -12,9 +15,11 @@ include: "rules/seg_t1_brain_tissue.smk"
 include: "rules/masking_b0_synthstrip.smk"
 
 
-# WIP:
-# include: "rules/mask_multishell.smk"
-# include: "rules/templateflow.smk"
+if config["use_eddy_s2v"] and not config["use_eddy_gpu"]:
+    print(
+        "ERROR: Eddy Slice-to-volume correction (--use-eddy-s2v) must be used with eddy GPU (--use-eddy-gpu)"
+    )
+    sys.exit(1)
 
 
 rule all:

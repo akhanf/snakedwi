@@ -24,7 +24,7 @@ rule affine_to_template:
         ),
         xfm_ras=bids(
             root=work,
-            datatype="anat",
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -32,19 +32,26 @@ rule affine_to_template:
             desc="affine",
             type_="ras"
         ),
+    log:
+        bids(
+            root="logs",
+            **subj_wildcards,
+            suffix="affine_to_template.log",
+            space="{template}",
+        ),
     container:
         config["singularity"]["prepdwi"]
     group:
         "subj"
     shell:
-        "reg_aladin -flo {input.flo} -ref {input.ref} -res {output.warped_subj} -aff {output.xfm_ras}"
+        "reg_aladin -flo {input.flo} -ref {input.ref} -res {output.warped_subj} -aff {output.xfm_ras} > {log}"
 
 
 rule convert_template_xfm_ras2itk:
     input:
         bids(
             root=work,
-            datatype="anat",
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -54,8 +61,8 @@ rule convert_template_xfm_ras2itk:
         ),
     output:
         bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -71,6 +78,37 @@ rule convert_template_xfm_ras2itk:
         "c3d_affine_tool {input}  -oitk {output}"
 
 
+rule invert_subj_to_template_xfm:
+    input:
+        bids(
+            root=work,
+            datatype="transforms",
+            **subj_wildcards,
+            suffix="xfm.txt",
+            from_="subject",
+            to=config["template"],
+            desc="affine",
+            type_="ras"
+        ),
+    output:
+        bids(
+            root=work,
+            datatype="transforms",
+            from_=config["template"],
+            to="subject",
+            desc="affine",
+            type_="itk",
+            **subj_wildcards,
+            suffix="xfm.txt"
+        ),
+    container:
+        config["singularity"]["itksnap"]
+    group:
+        "subj"
+    shell:
+        "c3d_affine_tool {input} -inv -oitk {output}"
+
+
 rule warp_brainmask_from_template_affine:
     input:
         mask=lambda wildcards: workflow.source_path(
@@ -78,8 +116,8 @@ rule warp_brainmask_from_template_affine:
         ).format(**wildcards),
         ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
         xfm=bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -113,8 +151,8 @@ rule warp_tissue_probseg_from_template_affine:
         ).format(**wildcards),
         ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
         xfm=bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",
@@ -250,8 +288,8 @@ rule ants_syn_affine_init:
             suffix="T1w.nii.gz",
         ),
         init_xfm=bids(
-            root=work,
-            datatype="anat",
+            root=root,
+            datatype="transforms",
             **subj_wildcards,
             suffix="xfm.txt",
             from_="subject",

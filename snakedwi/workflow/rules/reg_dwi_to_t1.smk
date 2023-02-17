@@ -4,7 +4,6 @@ rule import_t1:
         nii=lambda wildcards: expand(
             input_path["T1w"], zip, **filter_list(input_zip_lists["T1w"], wildcards)
         )[0],
-        metadatacheck=bids(root=work, subject="group", suffix="metadatacheck"),
     output:
         nii=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
     group:
@@ -126,7 +125,7 @@ rule reg_dwi_to_t1:
             from_="dwi",
             to="T1w",
             type_="ras",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     container:
@@ -195,17 +194,17 @@ rule convert_xfm_ras2itk:
             from_="dwi",
             to="T1w",
             type_="ras",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     output:
         xfm_itk=bids(
-            root=work,
+            root=root,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
             type_="itk",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     container:
@@ -238,7 +237,7 @@ rule convert_xfm_ras2fsl:
             from_="dwi",
             to="T1w",
             type_="ras",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     output:
@@ -248,7 +247,7 @@ rule convert_xfm_ras2fsl:
             from_="dwi",
             to="T1w",
             type_="fsl",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     container:
@@ -423,12 +422,12 @@ rule resample_dwi_to_t1w:
             **subj_wildcards
         ),
         xfm_itk=bids(
-            root=work,
+            root=root,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
             type_="itk",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     params:
@@ -465,14 +464,14 @@ rule resample_brainmask_to_t1w:
             datatype="dwi",
             **subj_wildcards
         ),
-        brainmask=get_mask_for_eddy(),
+        brainmask=get_b0_mask(),
         xfm_itk=bids(
-            root=work,
+            root=root,
             suffix="xfm.txt",
             from_="dwi",
             to="T1w",
             type_="itk",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
     params:
@@ -508,7 +507,7 @@ rule rotate_bvecs_to_t1w:
             from_="dwi",
             to="T1w",
             type_="fsl",
-            datatype="dwi",
+            datatype="transforms",
             **subj_wildcards
         ),
         bvals=bids(
