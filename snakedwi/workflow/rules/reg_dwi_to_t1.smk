@@ -30,6 +30,8 @@ rule synthstrip_t1:
     container:
         config["singularity"]["synthstrip"]
     threads: 8
+    shadow:
+        "minimal"
     shell:
         "python3 /freesurfer/mri_synthstrip -i {input.t1} -m {output.mask}"
 

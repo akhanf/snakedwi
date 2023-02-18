@@ -360,6 +360,8 @@ rule run_synthSR:
         "subj"
     container:
         config["singularity"]["synthsr"]
+    shadow:
+        "minimal"
     shell:
         "python /SynthSR/scripts/predict_command_line.py  --cpu --threads {threads} {input} {output}"
 
