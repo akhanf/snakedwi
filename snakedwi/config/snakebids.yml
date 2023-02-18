@@ -18,6 +18,7 @@ use_eddy_s2v: False
 eddy_no_quad: False
 no_bedpost: False
 use_syn_sdc: False
+use_synthsr_sdc: True 
 
 targets_by_analysis_level:
   participant:

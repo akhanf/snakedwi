@@ -364,6 +364,38 @@ rule run_synthSR:
         "python /SynthSR/scripts/predict_command_line.py  --cpu --threads {threads} {input} {output}"
 
 
+rule reslice_synthSR_b0:
+    input:
+        ref=bids(
+            root=work,
+            suffix="b0.nii.gz",
+            datatype="dwi",
+            desc="moco",
+            **subj_wildcards
+        ),
+        synthsr=bids(
+            root=work,
+            suffix="b0SynthSR.nii.gz",
+            datatype="dwi",
+            desc="moco",
+            **subj_wildcards
+        ),
+    output:
+        synthsr=bids(
+            root=work,
+            suffix="b0SynthSRresliced.nii.gz",
+            datatype="dwi",
+            desc="moco",
+            **subj_wildcards
+        ),
+    container:
+        config["singularity"]["itksnap"]
+    group:
+        "subj"
+    shell:
+        "c3d {input.ref} {input.synthsr} -reslice-identity -o {output.synthsr}"
+
+
 rule rigid_reg_t1_to_b0_synthsr:
     input:
         flo=bids(
@@ -375,7 +407,7 @@ rule rigid_reg_t1_to_b0_synthsr:
         ),
         ref=bids(
             root=work,
-            suffix="b0SynthSR.nii.gz",
+            suffix="b0SynthSRresliced.nii.gz",
             datatype="dwi",
             desc="moco",
             **subj_wildcards
@@ -411,27 +443,17 @@ rule rigid_reg_t1_to_b0_synthsr:
 rule reg_b0_to_t1_synthsr:
     input:
         t1synth=bids(
-            root=root,
-            datatype="anat",
-            **subj_wildcards,
-            desc="preproc",
-            suffix="T1wSynthSR.nii.gz"
+            root=work,
+            suffix="T1wSynthSRreg.nii.gz",
+            space="rigidb0",
+            datatype="dwi",
+            **subj_wildcards
         ),
         b0synth=bids(
             root=work,
-            suffix="b0SynthSR.nii.gz",
+            suffix="b0SynthSRresliced.nii.gz",
             datatype="dwi",
             desc="moco",
-            **subj_wildcards
-        ),
-        rigid_xfm_itk=bids(
-            root=root,
-            suffix="xfm.txt",
-            from_="T1wSynthSR",
-            to="b0SynthSR",
-            type_="itk",
-            desc="rigid",
-            datatype="transforms",
             **subj_wildcards
         ),
     params:
@@ -442,11 +464,98 @@ rule reg_b0_to_t1_synthsr:
         smoothing_sigmas="2x1x0vox",
         shrink_factors="4x2x1",
         restrict_deformation="0x1x0",  #should be set to the phase encode dir - can read json for this..
-        output_prefix=bids(
+    output:
+        unwarped=bids(
+            root=work,
+            suffix="b0SynthSRunwarped.nii.gz",
+            desc="Syn",
+            datatype="dwi",
+            **subj_wildcards
+        ),
+        fwd_xfm=bids(
             root=root,
-            suffix="xfm",
-            from_="T1wSynthSR",
-            to="b0SynthSR",
+            suffix="xfm.nii.gz",
+            from_="b0SynthSR",
+            to="T1wSynthSR",
+            type_="itk",
+            desc="SyN",
+            datatype="transforms",
+            **subj_wildcards
+        ),
+    shadow:
+        "minimal"
+    container:
+        config["singularity"]["ants"]
+    group:
+        "subj"
+    shell:
+        "antsRegistration {params.general_opts} --metric {params.metric} --convergence {params.convergence} "
+        "  --smoothing-sigmas {params.smoothing_sigmas} --shrink-factors {params.shrink_factors}  "
+        "  --transform {params.transform} "
+        " --output [ants_,{output.unwarped}]  --restrict-deformation 0x1x0 && "
+        " mv ants_0Warp.nii.gz {output.fwd_xfm} "
+
+
+rule displacement_field_to_fmap:
+    input:
+        disp_field=bids(
+            root=root,
+            suffix="xfm.nii.gz",
+            from_="b0SynthSR",
+            to="T1wSynthSR",
+            type_="itk",
+            desc="SyN",
+            datatype="transforms",
+            **subj_wildcards
+        ),
+        dwi_nii=lambda wildcards: expand(
+            bids(
+                root=work,
+                suffix="dwi.nii.gz",
+                datatype="dwi",
+                **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wildcards)
+        )[0],
+        dwi_json=lambda wildcards: expand(
+            bids(
+                root=work, suffix="dwi.json", datatype="dwi", **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wildcards)
+        )[0],
+    params:
+        demean=True,
+    output:
+        fmap=bids(
+            root=work,
+            datatype="dwi",
+            suffix="fmap.nii.gz",
+            desc="b0",
+            method="synthSRsdc",
+            **subj_wildcards
+        ),
+    container:
+        config["singularity"]["python"]
+    script:
+        "../scripts/displacement_field_to_fmap.py"
+
+
+rule apply_unwarp_synthsr:
+    input:
+        b0=bids(
+            root=work,
+            suffix="b0.nii.gz",
+            datatype="dwi",
+            desc="moco",
+            **subj_wildcards
+        ),
+        xfm=bids(
+            root=root,
+            suffix="xfm.nii.gz",
+            from_="b0SynthSR",
+            to="T1wSynthSR",
             type_="itk",
             desc="SyN",
             datatype="transforms",
@@ -455,38 +564,19 @@ rule reg_b0_to_t1_synthsr:
     output:
         unwarped=bids(
             root=work,
-            suffix="b0unwarped.nii.gz",
-            desc="SynthSRSyn",
+            suffix="b0.nii.gz",
             datatype="dwi",
+            desc="unwarped",
+            method="synthSRsdc",
             **subj_wildcards
         ),
+    container:
+        config["singularity"]["ants"]
+    group:
+        "subj"
     shell:
-        "antsRegistration {params.general_opts} --metric {params.metric} --convergence {params.convergence} "
-        "  --smoothing-sigmas {params.smoothing_sigmas} --shrink-factors {params.shrink_factors}  "
-        " --initial-fixed-transform {input.rigid_xfm_itk} --transform {params.transform} "
-        " --output [{params.output_prefix},{output.unwarped}]  --restrict-deformation 0x1x0"
-
-
-"""
-        fwd_xfm=bids(
-            root=root,
-            suffix="xfm0Warp.nii.gz",
-            from_="T1wSynthSR",
-            to="b0SynthSR",
-            type_="itk",
-            desc='SyN',
-            datatype="transforms",
-            **subj_wildcards),
-        inv_xfm=bids(
-            root=root,
-            suffix="xfm1InverseWarp.nii.gz",
-            from_="T1wSynthSR",
-            to="b0SynthSR",
-            type_="itk",
-            desc='SyN',
-            datatype="transforms",
-            **subj_wildcards)
-"""
+        "antsApplyTransforms -d 3 -i {input.b0} -o {output.unwarped} "
+        " -r {input.b0} -t {input.xfm} -e 0 -n NearestNeighbor"
 
 
 def get_dwi_ref(wildcards):
@@ -502,6 +592,16 @@ def get_dwi_ref(wildcards):
             datatype="dwi",
             **subj_wildcards
         )
+    elif method == "synthsr":
+        return bids(
+            root=work,
+            datatype="dwi",
+            suffix="b0.nii.gz",
+            desc="unwarped",
+            method="synthSRsdc",
+            **subj_wildcards
+        )
+
     elif method == "syn":
         return bids(
             root=work,
