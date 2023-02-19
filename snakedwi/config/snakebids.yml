@@ -13,12 +13,6 @@ derivatives: False
 analysis_levels: &analysis_levels
  - participant
 
-no_topup: False
-use_eddy_s2v: False
-eddy_no_quad: False
-no_bedpost: False
-use_syn_sdc: False
-use_synthsr_sdc: True 
 
 targets_by_analysis_level:
   participant:
@@ -93,10 +87,16 @@ parse_args:
     action: 'store_true'
     default: False
 
-  --no_bedpost:
-    help: 'Disable bedpost  (default: %(default)s)'
-    action: 'store_true'
+  --use_bedpost: 
+    help: 'Enable bedpost  (default: %(default)s)'
+    action: 'store_false'
+    dest: 'no_bedpost'
     default: False
+
+    #  --no_bedpost:
+    #    help: 'Disable bedpost  (default: %(default)s)'
+    #    action: 'store_true'
+    #    default: True
 
    
   --use_eddy_s2v:
@@ -295,6 +295,7 @@ eddy:
 default_effective_echo_spacing: 0.0001 #if not defined in JSON files
 
 #for test data
+root: 'results'
 participant_label: 
 exclude_participant_label:
 masking_method: b0_synthstrip
@@ -306,4 +307,7 @@ use_eddy_gpu: False
 use_bedpost_gpu: False
 rigid_dwi_t1_init: 'identity'
 rigid_dwi_t1_iters: '50x50'
-root: 'results'
+eddy_no_quad: False
+no_topup: False
+use_syn_sdc: False
+use_synthsr_sdc: True 
