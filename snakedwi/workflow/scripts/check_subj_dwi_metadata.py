@@ -89,3 +89,6 @@ if eddy_s2v:
 else:
     print("Disabling eddy s2v in the workflow")
     shell("touch {snakemake.output}/eddys2v-no")
+
+print("Writing phase encoding axis")
+shell("touch {snakemake.output}/PEaxis-{phase_encoding_axes[0]}")
