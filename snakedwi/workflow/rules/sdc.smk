@@ -442,8 +442,20 @@ rule rigid_reg_t1_to_b0_synthsr:
         "reg_aladin -flo {input.flo} -ref {input.ref} -res {output.warped_subj} -aff {output.xfm_ras} > {log}"
 
 
+def get_restrict_deformation(wildcards, input, output):
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    ([peaxis],) = glob_wildcards(os.path.join(checkpoint_output, "PEaxis-{axis}"))
+    if peaxis == "i":
+        return "1x0x0"
+    elif peaxis == "j":
+        return "0x1x0"
+    elif peaxis == "k":
+        return "0x0x1"  # unlikely..
+
+
 rule reg_b0_to_t1_synthsr:
     input:
+        rules.check_subj_dwi_metadata.output,
         t1synth=bids(
             root=work,
             suffix="T1wSynthSRreg.nii.gz",
@@ -465,7 +477,8 @@ rule reg_b0_to_t1_synthsr:
         convergence="100x50x20",
         smoothing_sigmas="2x1x0vox",
         shrink_factors="4x2x1",
-        restrict_deformation="0x1x0",  #should be set to the phase encode dir - can read json for this..
+        restrict_deformation=get_restrict_deformation,
+    # "0x1x0",  #should be set to the phase encode dir - can read json for this..
     output:
         unwarped=bids(
             root=work,
@@ -488,13 +501,15 @@ rule reg_b0_to_t1_synthsr:
         "minimal"
     container:
         config["singularity"]["ants"]
+    log:
+        bids(root="logs", suffix="reg_b0_to_t1_synthsr.txt", **subj_wildcards),
     group:
         "subj"
     shell:
         "antsRegistration {params.general_opts} --metric {params.metric} --convergence {params.convergence} "
         "  --smoothing-sigmas {params.smoothing_sigmas} --shrink-factors {params.shrink_factors}  "
         "  --transform {params.transform} "
-        " --output [ants_,{output.unwarped}]  --restrict-deformation 0x1x0 && "
+        " --output [ants_,{output.unwarped}]  --restrict-deformation {params.restrict_deformation} > {log} && "
         " mv ants_0Warp.nii.gz {output.fwd_xfm} "
 
 
