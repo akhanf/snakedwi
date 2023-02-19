@@ -88,10 +88,10 @@ parse_args:
     default: False
 
   --use_bedpost: 
-    help: 'Enable bedpost  (default: %(default)s)'
+    help: 'Enable bedpost  (disabled by default)'
     action: 'store_false'
     dest: 'no_bedpost'
-    default: False
+    default: True
 
     #  --no_bedpost:
     #    help: 'Disable bedpost  (default: %(default)s)'
