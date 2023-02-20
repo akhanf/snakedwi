@@ -22,6 +22,8 @@ rule synthstrip_b0:
     container:
         config["singularity"]["synthstrip"]
     threads: 8
+    shadow:
+        "minimal"
     group:
         "subj"
     shell:
