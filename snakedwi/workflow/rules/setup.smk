@@ -80,7 +80,6 @@ else:
     subj_zip_list = {"subject": list(subj_set_intersection)}
 
 # ------------------------------------------------------------------------------
-
 # if len(subj_set_difference) > 0:
 #    print(f'Skipping following (subjects/sessions) since they are missing one of the required bids inputs: {subj_set_difference}')
 #    print(subj_zip_list)
