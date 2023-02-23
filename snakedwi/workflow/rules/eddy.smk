@@ -101,6 +101,17 @@ def get_eddy_topup_fmap_input(wildcards):
                 **subj_wildcards,
             ).format(**wildcards),
         }
+    elif method == "synthsr":
+        return {
+            "fmap": bids(
+                root=work,
+                datatype="dwi",
+                suffix="fmap.nii.gz",
+                desc="b0",
+                method="synthSRsdc",
+                **subj_wildcards,
+            ).format(**wildcards)
+        }
     elif method == "syn":
         return {
             "fmap": bids(
@@ -130,6 +141,17 @@ def get_eddy_topup_fmap_opt(wildcards, input):
             root=work, suffix="topup", datatype="dwi", **subj_wildcards
         ).format(**wildcards)
         return f"--topup={topup_prefix}"
+    elif method == "synthsr":
+        fmap_prefix = bids(
+            root=work,
+            datatype="dwi",
+            suffix="fmap",
+            desc="b0",
+            method="synthSRsdc",
+            **subj_wildcards,
+        ).format(**wildcards)
+        return f"--field={fmap_prefix}"
+
     elif method == "syn":
         fmap_prefix = bids(
             root=work,

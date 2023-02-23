@@ -65,6 +65,13 @@ if len(set(phase_encoding_directions)) < 2:
             f"Opposing phase encoding directions not available, {phase_encoding_directions}, using syn for sdc"
         )
         shell("touch {snakemake.output}/sdc-syn")
+    elif snakemake.config["use_synthsr_sdc"]:
+
+        print(
+            f"Opposing phase encoding directions not available, {phase_encoding_directions}, using synthSR+Syn for sdc"
+        )
+        shell("touch {snakemake.output}/sdc-synthsr")
+
     else:
         print(
             f"Opposing phase encoding directions not available, {phase_encoding_directions}, skipping sdc"
@@ -82,3 +89,6 @@ if eddy_s2v:
 else:
     print("Disabling eddy s2v in the workflow")
     shell("touch {snakemake.output}/eddys2v-no")
+
+print("Writing phase encoding axis")
+shell("touch {snakemake.output}/PEaxis-{phase_encoding_axes[0]}")
