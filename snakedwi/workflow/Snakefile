@@ -35,7 +35,7 @@ rule all:
                 **subj_wildcards
             ),
             zip,
-            **input_zip_lists["dwi"]
+            **subj_zip_list
         ),
         reg_qc=expand(
             bids(
@@ -47,7 +47,7 @@ rule all:
                 **subj_wildcards
             ),
             zip,
-            **input_zip_lists["dwi"]
+            **subj_zip_list
         ),
         dtifit=expand(
             bids(
@@ -60,5 +60,5 @@ rule all:
                 **subj_wildcards
             ),
             zip,
-            **input_zip_lists["dwi"]
+            **subj_zip_list
         ),

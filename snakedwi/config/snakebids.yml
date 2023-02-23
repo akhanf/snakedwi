@@ -1,5 +1,5 @@
-bids_dir: 'test_data/bids_multishell_downsampled_notopup'
-output_dir: 'test_output/snakedwi_multishell_downsampled_notopup'
+bids_dir: 'test_data/bids_multishell_downsampled'
+output_dir: 'test_output/snakedwi_multishell_downsampled'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
