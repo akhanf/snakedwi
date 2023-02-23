@@ -349,6 +349,7 @@ rule syn_sdc:
     script:
         "../scripts/sdcflows_syn.py"
 
+
 rule run_synthSR:
     input:
         "{prefix}.nii.gz",
@@ -626,7 +627,7 @@ def get_dwi_ref(wildcards):
             suffix="b0.nii.gz",
             desc="unwarped",
             method="synthSRsdc",
-            **subj_wildcards
+            **subj_wildcards,
         )
 
     elif method == "syn":
