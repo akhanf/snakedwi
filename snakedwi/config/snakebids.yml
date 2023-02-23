@@ -162,11 +162,6 @@ parse_args:
     default: null
     # default: '/project/ctb-akhanf/akhanf/opt/grad/.coeff_AC84.grad'
 
-  --synthsr_sdc:
-    #help: "Enable SynthSR+SyN fieldmap-less distortion-correction. This uses SynthSR to transform T1w and b0 images to the same 1mm T1w contrast prior to non-linear registration to obtain a field-map. (default: %(default)s)"
-    #action: 'store_true'
-    #default: True
-
   --no_synthsr_sdc:
     help: "Disable SynthSR+SyN fieldmap-less distortion-correction (enabled by default)"
     action: 'store_false'
