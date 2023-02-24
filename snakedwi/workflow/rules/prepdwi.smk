@@ -20,6 +20,19 @@ checkpoint check_subj_dwi_metadata:
         "../scripts/check_subj_dwi_metadata.py"
 
 
+rule create_missing_subj_tsv:
+    """creates a tsv file containing subjects that are 
+    skipped because they either don't have T1w or don't have dwi data"""
+    params:
+        missing_subject_zip_list=missing_subj_zip_list,
+    output:
+        tsv=bids(root=root, suffix="missing.tsv"),
+    container:
+        config["singularity"]["python"]
+    script:
+        "../scripts/create_missing_subj_tsv.py"
+
+
 rule import_dwi:
     input:
         dwi=re.sub(".nii.gz", ".{ext}", input_path["dwi"]),

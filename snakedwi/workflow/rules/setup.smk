@@ -76,9 +76,14 @@ if "session" in zipl:
         "session": seszip,
     }  # create the new subj_zip_list
 
+    (msubzip, mseszip) = zip(*list(subj_set_difference))  # zip it up again
+    missing_zip_list = {
+        "subject": msubzip,
+        "session": mseszip,
+    }
 else:
     subj_zip_list = {"subject": list(subj_set_intersection)}
-
+    missing_subj_zip_list = {"subject": list(subj_set_difference)}
 # ------------------------------------------------------------------------------
 # if len(subj_set_difference) > 0:
 #    print(f'Skipping following (subjects/sessions) since they are missing one of the required bids inputs: {subj_set_difference}')

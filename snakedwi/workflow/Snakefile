@@ -62,3 +62,13 @@ rule all:
             zip,
             **subj_zip_list
         ),
+
+
+rule all_metacheck:
+    input:
+        workflowopts=expand(
+            bids(root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards),
+            zip,
+            **subj_zip_list
+        ),
+        missing_subj_tsv=bids(root=root, suffix="missing.tsv"),
