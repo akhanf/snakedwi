@@ -10,10 +10,17 @@ checkpoint check_subj_dwi_metadata:
             zip,
             **filter_list(input_zip_lists["dwi"], wildcards)
         ),
+    params:
+        index_col_value=bids(
+            **subj_wildcards, include_subject_dir=False, include_session_dir=False
+        ),
+        index_col_name="subj",
+
     output:
         workflowopts=directory(
             bids(root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards)
         ),
+        metadata=bids(root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards)
     group:
         "subj"
     script:

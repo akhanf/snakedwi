@@ -1,6 +1,7 @@
 import json
 import sys
 import re
+import pandas as pd
 from snakemake.shell import shell
 
 phase_encoding_directions = []
@@ -10,6 +11,15 @@ phenc_dirs = []
 
 eddy_s2v = snakemake.config["use_eddy_s2v"]
 
+df = pd.DataFrame()
+row = dict()
+
+
+# sets the index column as sub-{subject} or sub-{subject}_ses-{session}
+row[snakemake.params.index_col_name] = snakemake.params.index_col_value
+
+has_pedir=True
+has_slice_timing=True
 
 for json_file in snakemake.input:
 
@@ -18,6 +28,8 @@ for json_file in snakemake.input:
 
     if eddy_s2v and (snakemake.config["slspec_txt"] == False):
         if "SliceTiming" not in json_dwi:
+            has_slice_timing = False
+            
             print(f"WARNING: disabling s2v for {snakemake.wildcards}")
 
             eddy_s2v = False
@@ -38,6 +50,7 @@ for json_file in snakemake.input:
         print(f"ERROR: PhaseEncodingDirection not found in {json_file}")
         print("You must add the PhaseEncodingDirection field to your dwi JSON files")
         sys.exit(1)
+        has_pedir=False
 
     phenc_dirs.append(json_dwi["PhaseEncodingDirection"])
 
@@ -56,7 +69,7 @@ else:
 
 
 # make the output folder
-shell("mkdir -p {snakemake.output}")
+shell("mkdir -p {snakemake.output.workflowopts}")
 
 if len(set(phase_encoding_directions)) < 2:
     if snakemake.config["use_syn_sdc"]:
@@ -64,31 +77,38 @@ if len(set(phase_encoding_directions)) < 2:
         print(
             f"Opposing phase encoding directions not available, {phase_encoding_directions}, using syn for sdc"
         )
-        shell("touch {snakemake.output}/sdc-syn")
+        shell("touch {snakemake.output.workflowopts}/sdc-syn")
     elif snakemake.config["use_synthsr_sdc"]:
 
         print(
             f"Opposing phase encoding directions not available, {phase_encoding_directions}, using synthSR+Syn for sdc"
         )
-        shell("touch {snakemake.output}/sdc-synthsr")
+        shell("touch {snakemake.output.workflowopts}/sdc-synthsr")
 
     else:
         print(
             f"Opposing phase encoding directions not available, {phase_encoding_directions}, skipping sdc"
         )
-        shell("touch {snakemake.output}/sdc-none")
+        shell("touch {snakemake.output.workflowopts}/sdc-none")
 else:
     print(
         f"Opposing phase encoding directions are available, {phase_encoding_directions}, using topup for sdc"
     )
-    shell("touch {snakemake.output}/sdc-topup")
+    shell("touch {snakemake.output.workflowopts}/sdc-topup")
 
 if eddy_s2v:
     print("Enabling eddy s2v in the workflow")
-    shell("touch {snakemake.output}/eddys2v-yes")
+    shell("touch {snakemake.output.workflowopts}/eddys2v-yes")
 else:
     print("Disabling eddy s2v in the workflow")
-    shell("touch {snakemake.output}/eddys2v-no")
+    shell("touch {snakemake.output.workflowopts}/eddys2v-no")
 
 print("Writing phase encoding axis")
-shell("touch {snakemake.output}/PEaxis-{phase_encoding_axes[0]}")
+shell("touch {snakemake.output.workflowopts}/PEaxis-{phase_encoding_axes[0]}")
+
+row['has_slice_timing']=has_slice_timing
+row['pedirs']=','.join(phase_encoding_directions)
+
+df = pd.DataFrame.from_dict(row)
+# write to output file
+df.to_csv(snakemake.output.metadata, index=False)
