@@ -1,15 +1,18 @@
 rule get_eddy_index_txt:
     input:
-        dwi_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="degibbs",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    desc="degibbs",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     output:
         eddy_index_txt=bids(
@@ -32,16 +35,19 @@ if not config["slspec_txt"]:
 
     rule get_slspec_txt:
         input:
-            dwi_jsons=lambda wildcards: expand(
-                bids(
-                    root=work,
-                    suffix="dwi.json",
-                    desc="degibbs",
-                    datatype="dwi",
-                    **input_wildcards["dwi"]
+            dwi_jsons=lambda wildcards: get_dwi_indices(
+                expand(
+                    bids(
+                        root=work,
+                        suffix="dwi.json",
+                        desc="degibbs",
+                        datatype="dwi",
+                        **input_wildcards["dwi"]
+                    ),
+                    zip,
+                    **filter_list(input_zip_lists["dwi"], wildcards)
                 ),
-                zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                wildcards,
             ),
         output:
             eddy_slspec_txt=bids(

@@ -55,16 +55,19 @@ rule run_topup:
 # this is for equal positive and negative blipped data - method=lsr --unused currently (jac method can be applied more generally)
 rule apply_topup_lsr:
     input:
-        dwi_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="degibbs",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    desc="degibbs",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
         phenc_concat=bids(
             root=work,
@@ -236,17 +239,20 @@ rule cp_sidecars_topup_jac:
 
 rule concat_dwi_topup_jac:
     input:
-        dwi_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="topup",
-                method="jac",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    desc="topup",
+                    method="jac",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     output:
         dwi_concat=bids(
@@ -281,12 +287,18 @@ rule syn_sdc:
             desc="preproc",
             suffix="T1w.nii.gz"
         ),
-        json_file=lambda wildcards: expand(
-            bids(
-                root=work, suffix="dwi.json", datatype="dwi", **input_wildcards["dwi"]
+        json_file=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.json",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         )[0],
         mask_anat=bids(
             root=root,
@@ -525,22 +537,31 @@ rule displacement_field_to_fmap:
             datatype="transforms",
             **subj_wildcards
         ),
-        dwi_nii=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_nii=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         )[0],
-        dwi_json=lambda wildcards: expand(
-            bids(
-                root=work, suffix="dwi.json", datatype="dwi", **input_wildcards["dwi"]
+        dwi_json=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.json",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         )[0],
     params:
         demean=True,
