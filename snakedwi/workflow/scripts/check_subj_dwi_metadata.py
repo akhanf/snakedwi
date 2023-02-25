@@ -15,11 +15,8 @@ df = pd.DataFrame()
 row = dict()
 
 
-# sets the index column as sub-{subject} or sub-{subject}_ses-{session}
-row[snakemake.params.index_col_name] = snakemake.params.index_col_value
-
-has_pedir=True
-has_slice_timing=True
+has_pedir = True
+has_slice_timing = True
 
 for json_file in snakemake.input:
 
@@ -29,7 +26,7 @@ for json_file in snakemake.input:
     if eddy_s2v and (snakemake.config["slspec_txt"] == False):
         if "SliceTiming" not in json_dwi:
             has_slice_timing = False
-            
+
             print(f"WARNING: disabling s2v for {snakemake.wildcards}")
 
             eddy_s2v = False
@@ -50,7 +47,7 @@ for json_file in snakemake.input:
         print(f"ERROR: PhaseEncodingDirection not found in {json_file}")
         print("You must add the PhaseEncodingDirection field to your dwi JSON files")
         sys.exit(1)
-        has_pedir=False
+        has_pedir = False
 
     phenc_dirs.append(json_dwi["PhaseEncodingDirection"])
 
@@ -63,7 +60,7 @@ for json_file in snakemake.input:
 print(f"PhaseEncodingDirections: {phenc_dirs}")
 
 if len(set(phase_encoding_axes)) > 1:
-    print(f"ERROR: Multiple phase encoding axes used {phase_encoding_axes}")
+    print(f"WARNING: Multiple phase encoding axes used {phase_encoding_axes}")
 else:
     print(f"Phase encoding axes: {phase_encoding_axes}")
 
@@ -106,9 +103,18 @@ else:
 print("Writing phase encoding axis")
 shell("touch {snakemake.output.workflowopts}/PEaxis-{phase_encoding_axes[0]}")
 
-row['has_slice_timing']=has_slice_timing
-row['pedirs']=','.join(phase_encoding_directions)
+# sets the index column as sub-{subject} or sub-{subject}_ses-{session}
+row[snakemake.params.index_col_name] = [snakemake.params.index_col_value]
+row["has_slice_timing"] = [{True: "yes", False: "no"}[has_slice_timing]]
+row["pedirs"] = [
+    ",".join(
+        [
+            f"{peax}{pedir}"
+            for peax, pedir in zip(phase_encoding_axes, phase_encoding_directions)
+        ]
+    )
+]
 
 df = pd.DataFrame.from_dict(row)
 # write to output file
-df.to_csv(snakemake.output.metadata, index=False)
+df.to_csv(snakemake.output.metadata, sep="\t", index=False)

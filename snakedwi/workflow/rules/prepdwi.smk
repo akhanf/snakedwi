@@ -15,16 +15,32 @@ checkpoint check_subj_dwi_metadata:
             **subj_wildcards, include_subject_dir=False, include_session_dir=False
         ),
         index_col_name="subj",
-
     output:
         workflowopts=directory(
             bids(root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards)
         ),
-        metadata=bids(root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards)
+        metadata=bids(
+            root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards
+        ),
     group:
         "subj"
     script:
         "../scripts/check_subj_dwi_metadata.py"
+
+
+rule concat_subj_metadata:
+    input:
+        tsvs=expand(
+            bids(root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards),
+            zip,
+            **subj_zip_list
+        ),
+    output:
+        tsv=bids(root=root, suffix="metadata.tsv"),
+    container:
+        config["singularity"]["python"]
+    script:
+        "../scripts/concat_tsv.py"
 
 
 rule create_missing_subj_tsv:
