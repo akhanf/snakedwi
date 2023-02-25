@@ -28,7 +28,7 @@ for json_file in snakemake.input:
         if "SliceTiming" not in json_dwi:
             has_slice_timing = False
 
-            print(f"WARNING: disabling s2v for {snakemake.wildcards}")
+            # print(f"WARNING: disabling s2v for {snakemake.wildcards}")
 
             eddy_s2v = False
 
@@ -58,10 +58,10 @@ for json_file in snakemake.input:
     else:
         phase_encoding_directions.append("+")
 
-print(f"PhaseEncodingDirections: {phenc_dirs}")
+# print(f"PhaseEncodingDirections: {phenc_dirs}")
 
 if len(set(phase_encoding_axes)) > 1:
-    print(f"WARNING: Multiple phase encoding axes used {phase_encoding_axes}")
+    #    print(f"WARNING: Multiple phase encoding axes used {phase_encoding_axes}")
 
     # select indices to use
     # pick LR/RL *only* if it also has multiple directions
@@ -79,7 +79,6 @@ if len(set(phase_encoding_axes)) > 1:
         use_indices = ap_indices
 
 else:
-    print(f"Phase encoding axes: {phase_encoding_axes}")
     # use all indices
     use_indices = [i for i in range(len(snakemake.input))]
 
@@ -92,7 +91,7 @@ phase_encoding_directions = [phase_encoding_directions[i] for i in use_indices]
 # make the output folder
 shell("mkdir -p {snakemake.output.workflowopts}")
 
-print(use_indices)
+# print(use_indices)
 
 write_indices = ",".join([f"{ind}" for ind in use_indices])
 
@@ -100,38 +99,45 @@ write_indices = ",".join([f"{ind}" for ind in use_indices])
 shell("touch {snakemake.output.workflowopts}/indices-{write_indices}")
 
 if len(set(phase_encoding_directions)) < 2:
-    if snakemake.config["use_syn_sdc"]:
+    if phase_encoding_axes[0] == "i":
 
         print(
-            f"Opposing phase encoding directions not available, {phase_encoding_directions}, using syn for sdc"
+            "ERROR: Only one phase encoding direction with LR or RL - sdc will be inaccurate, so failing instead!"
         )
+        sys.exit(1)
+
+    if snakemake.config["use_syn_sdc"]:
+
+        # print(
+        #    f"Opposing phase encoding directions not available, {phase_encoding_directions}, using syn for sdc"
+        # )
         shell("touch {snakemake.output.workflowopts}/sdc-syn")
     elif snakemake.config["use_synthsr_sdc"]:
 
-        print(
-            f"Opposing phase encoding directions not available, {phase_encoding_directions}, using synthSR+Syn for sdc"
-        )
+        # print(
+        #    f"Opposing phase encoding directions not available, {phase_encoding_directions}, using synthSR+Syn for sdc"
+        # )
         shell("touch {snakemake.output.workflowopts}/sdc-synthsr")
 
     else:
-        print(
-            f"Opposing phase encoding directions not available, {phase_encoding_directions}, skipping sdc"
-        )
+        # print(
+        #    f"Opposing phase encoding directions not available, {phase_encoding_directions}, skipping sdc"
+        # )
         shell("touch {snakemake.output.workflowopts}/sdc-none")
 else:
-    print(
-        f"Opposing phase encoding directions are available, {phase_encoding_directions}, using topup for sdc"
-    )
+    # print(
+    #    f"Opposing phase encoding directions are available, {phase_encoding_directions}, using topup for sdc"
+    # )
     shell("touch {snakemake.output.workflowopts}/sdc-topup")
 
 if eddy_s2v:
-    print("Enabling eddy s2v in the workflow")
+    # print("Enabling eddy s2v in the workflow")
     shell("touch {snakemake.output.workflowopts}/eddys2v-yes")
 else:
-    print("Disabling eddy s2v in the workflow")
+    # print("Disabling eddy s2v in the workflow")
     shell("touch {snakemake.output.workflowopts}/eddys2v-no")
 
-print("Writing phase encoding axis")
+# print("Writing phase encoding axis")
 shell("touch {snakemake.output.workflowopts}/PEaxis-{phase_encoding_axes[0]}")
 
 # sets the index column as sub-{subject} or sub-{subject}_ses-{session}
