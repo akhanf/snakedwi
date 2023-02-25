@@ -76,7 +76,11 @@ if "session" in zipl:
         "session": seszip,
     }  # create the new subj_zip_list
 
-    (msubzip, mseszip) = zip(*list(subj_set_difference))  # zip it up again
+    if len(subj_set_difference) > 0:
+        (msubzip, mseszip) = zip(*list(subj_set_difference))  # zip it up again
+    else:
+        msubzip = []
+        mseszip = []
     missing_subj_zip_list = {
         "subject": msubzip,
         "session": mseszip,
