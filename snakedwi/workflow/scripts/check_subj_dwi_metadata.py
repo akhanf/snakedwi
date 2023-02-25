@@ -18,6 +18,7 @@ row = dict()
 has_pedir = True
 has_slice_timing = True
 
+
 for json_file in snakemake.input:
 
     with open(json_file, "r") as f:
@@ -61,12 +62,42 @@ print(f"PhaseEncodingDirections: {phenc_dirs}")
 
 if len(set(phase_encoding_axes)) > 1:
     print(f"WARNING: Multiple phase encoding axes used {phase_encoding_axes}")
+
+    # select indices to use
+    # pick LR/RL *only* if it also has multiple directions
+    #  otherwise pick AP/PA
+
+    # if we have LR+RL, use that axis:
+    lr_indices = [i for i, pe in enumerate(phase_encoding_axes) if pe == "i"]
+    ap_indices = [i for i, pe in enumerate(phase_encoding_axes) if pe == "j"]
+
+    if len(set([phase_encoding_directions[i] for i in lr_indices])) == 2:
+        # if we have lr+rl, use it
+        use_indices = lr_indices
+    else:
+        # otherwise we use ap (even if we don't have multiple pedirs for ap)
+        use_indices = ap_indices
+
 else:
     print(f"Phase encoding axes: {phase_encoding_axes}")
+    # use all indices
+    use_indices = [i for i in range(len(snakemake.input))]
+
+
+# select the indices
+phase_encoding_axes = [phase_encoding_axes[i] for i in use_indices]
+phase_encoding_directions = [phase_encoding_directions[i] for i in use_indices]
 
 
 # make the output folder
 shell("mkdir -p {snakemake.output.workflowopts}")
+
+print(use_indices)
+
+write_indices = ",".join([f"{ind}" for ind in use_indices])
+
+# write the indices to file
+shell("touch {snakemake.output.workflowopts}/indices-{write_indices}")
 
 if len(set(phase_encoding_directions)) < 2:
     if snakemake.config["use_syn_sdc"]:
