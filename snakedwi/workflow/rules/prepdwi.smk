@@ -3,59 +3,6 @@ wildcard_constraints:
     shell="[0-9]+",
 
 
-checkpoint check_subj_dwi_metadata:
-    input:
-        dwi_jsons=lambda wildcards: expand(
-            re.sub(".nii.gz", ".json", input_path["dwi"]),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
-        ),
-    params:
-        index_col_value=bids(
-            **subj_wildcards, include_subject_dir=False, include_session_dir=False
-        ),
-        index_col_name="subj",
-    output:
-        workflowopts=directory(
-            bids(root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards)
-        ),
-        metadata=bids(
-            root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards
-        ),
-    group:
-        "subj"
-    script:
-        "../scripts/check_subj_dwi_metadata.py"
-
-
-rule concat_subj_metadata:
-    input:
-        tsvs=expand(
-            bids(root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards),
-            zip,
-            **subj_zip_list
-        ),
-    output:
-        tsv=bids(root=root, suffix="metadata.tsv"),
-    container:
-        config["singularity"]["python"]
-    script:
-        "../scripts/concat_tsv.py"
-
-
-rule create_missing_subj_tsv:
-    """creates a tsv file containing subjects that are 
-    skipped because they either don't have T1w or don't have dwi data"""
-    params:
-        missing_subject_zip_list=missing_subj_zip_list,
-    output:
-        tsv=bids(root=root, suffix="missing.tsv"),
-    container:
-        config["singularity"]["python"]
-    script:
-        "../scripts/create_missing_subj_tsv.py"
-
-
 rule import_dwi:
     input:
         dwi=re.sub(".nii.gz", ".{ext}", input_path["dwi"]),
@@ -281,15 +228,6 @@ def get_concat_or_cp_cmd(wildcards, input, output):
         # no inputs
         cmd = None
     return cmd
-
-
-def get_dwi_indices(all_dwi, wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([indices_str],) = glob_wildcards(
-        os.path.join(checkpoint_output, "indices-{indices}")
-    )
-    indices = indices_str.split(",")
-    return [all_dwi[int(i)] for i in indices]
 
 
 rule concat_bzeros:
