@@ -15,9 +15,7 @@ df = pd.DataFrame()
 row = dict()
 
 
-has_pedir = True
 has_slice_timing = True
-
 
 for json_file in snakemake.input:
 
@@ -45,10 +43,24 @@ for json_file in snakemake.input:
             sys.exit(1)
 
     if "PhaseEncodingDirection" not in json_dwi:
-        print(f"ERROR: PhaseEncodingDirection not found in {json_file}")
-        print("You must add the PhaseEncodingDirection field to your dwi JSON files")
-        sys.exit(1)
-        has_pedir = False
+
+        if not config["default_phase_encoding_direction"] == "":
+            print(f"WARNING: setting default PhaseEncodingDirection")
+            json_dwi["PhaseEncodingDirection"] = config[
+                "default_phase_encoding_direction"
+            ]
+        else:
+            if "PhaseEncodingAxis" in json_dwi:
+                print(
+                    f"WARNING: assuming PhaseEncodingDirection from PhaseEncodingAxis"
+                )
+                json_dwi["PhaseEncodingDirection"] = json_dwi["PhaseEncodingAxis"]
+            else:
+                print(f"ERROR: PhaseEncodingDirection not found in {json_file}")
+                print(
+                    "You must add the PhaseEncodingDirection field to your dwi JSON files, or use the --default_phase_encoding_direction CLI option"
+                )
+                sys.exit(1)
 
     phenc_dirs.append(json_dwi["PhaseEncodingDirection"])
 
@@ -59,6 +71,7 @@ for json_file in snakemake.input:
         phase_encoding_directions.append("+")
 
 # print(f"PhaseEncodingDirections: {phenc_dirs}")
+
 
 if len(set(phase_encoding_axes)) > 1:
     #    print(f"WARNING: Multiple phase encoding axes used {phase_encoding_axes}")

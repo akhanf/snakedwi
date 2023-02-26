@@ -168,6 +168,16 @@ parse_args:
     dest: 'use_synthsr_sdc'
     default: True
 
+  --default_phase_encoding_direction:
+    help: "Sets the PhaseEncodingDirection to use for dwi acquisitions where it is not specified in the JSON file. By default, none will be assumed, and the workflow will fail for subjects where this JSON tag is missing (default: %(default)s)"
+    default: ''
+    choices:
+      - 'i'
+      - 'i-'
+      - 'j'
+      - 'j-'
+      - 'k'
+      - 'k-'
 
 #---- to update below this
 
@@ -311,3 +321,4 @@ eddy_no_quad: False
 no_topup: False
 use_syn_sdc: False
 use_synthsr_sdc: True 
+default_phase_encoding_direction: ''
