@@ -3,23 +3,6 @@ wildcard_constraints:
     shell="[0-9]+",
 
 
-checkpoint check_subj_dwi_metadata:
-    input:
-        dwi_jsons=lambda wildcards: expand(
-            re.sub(".nii.gz", ".json", input_path["dwi"]),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
-        ),
-    output:
-        workflowopts=directory(
-            bids(root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards)
-        ),
-    group:
-        "subj"
-    script:
-        "../scripts/check_subj_dwi_metadata.py"
-
-
 rule import_dwi:
     input:
         dwi=re.sub(".nii.gz", ".{ext}", input_path["dwi"]),
@@ -207,16 +190,19 @@ rule get_phase_encode_txt:
 
 rule concat_phase_encode_txt:
     input:
-        phenc_txts=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="phenc.txt",
-                datatype="dwi",
-                desc="degibbs",
-                **input_wildcards["dwi"]
+        phenc_txts=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="phenc.txt",
+                    datatype="dwi",
+                    desc="degibbs",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     output:
         phenc_concat=bids(
@@ -246,16 +232,19 @@ def get_concat_or_cp_cmd(wildcards, input, output):
 
 rule concat_bzeros:
     input:
-        bzero_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="b0.nii.gz",
-                datatype="dwi",
-                desc="degibbs",
-                **input_wildcards["dwi"]
+        bzero_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="b0.nii.gz",
+                    datatype="dwi",
+                    desc="degibbs",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     params:
         cmd=get_concat_or_cp_cmd,
@@ -279,16 +268,19 @@ rule concat_bzeros:
 
 rule concat_degibbs_dwi:
     input:
-        dwi_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="degibbs",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    desc="degibbs",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     params:
         cmd=get_concat_or_cp_cmd,
@@ -312,16 +304,19 @@ rule concat_degibbs_dwi:
 
 rule concat_runs_bvec:
     input:
-        lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.bvec",
-                desc="{{desc}}",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.bvec",
+                    desc="{{desc}}",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     output:
         bids(
@@ -341,16 +336,19 @@ rule concat_runs_bvec:
 
 rule concat_runs_bval:
     input:
-        lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.bval",
-                desc="{{desc}}",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.bval",
+                    desc="{{desc}}",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     output:
         bids(
@@ -371,16 +369,19 @@ rule concat_runs_bval:
 # combines json files from multiple scans -- for now as a hack just copying first json over..
 rule concat_runs_json:
     input:
-        lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.json",
-                desc="{{desc}}",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.json",
+                    desc="{{desc}}",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     output:
         bids(

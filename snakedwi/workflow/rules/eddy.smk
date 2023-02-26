@@ -1,15 +1,18 @@
 rule get_eddy_index_txt:
     input:
-        dwi_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="degibbs",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    desc="degibbs",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     output:
         eddy_index_txt=bids(
@@ -32,16 +35,19 @@ if not config["slspec_txt"]:
 
     rule get_slspec_txt:
         input:
-            dwi_jsons=lambda wildcards: expand(
-                bids(
-                    root=work,
-                    suffix="dwi.json",
-                    desc="degibbs",
-                    datatype="dwi",
-                    **input_wildcards["dwi"]
+            dwi_jsons=lambda wildcards: get_dwi_indices(
+                expand(
+                    bids(
+                        root=work,
+                        suffix="dwi.json",
+                        desc="degibbs",
+                        datatype="dwi",
+                        **input_wildcards["dwi"]
+                    ),
+                    zip,
+                    **filter_list(input_zip_lists["dwi"], wildcards)
                 ),
-                zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                wildcards,
             ),
         output:
             eddy_slspec_txt=bids(
@@ -79,12 +85,9 @@ else:
 
 
 def get_eddy_topup_fmap_input(wildcards):
-    # this gets the number of DWI scans for this subject(session)
-    filtered = filter_list(input_zip_lists["dwi"], wildcards)
-    num_scans = len(filtered["subject"])
 
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+    method = get_sdc_method(wildcards)
+    num_scans = get_dwi_num_scans(wildcards)
 
     if num_scans > 1 and method == "topup":
         return {
@@ -129,12 +132,8 @@ def get_eddy_topup_fmap_input(wildcards):
 
 def get_eddy_topup_fmap_opt(wildcards, input):
 
-    # this gets the number of DWI scans for this subject(session)
-    filtered = filter_list(input_zip_lists["dwi"], wildcards)
-    num_scans = len(filtered["subject"])
-
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+    method = get_sdc_method(wildcards)
+    num_scans = get_dwi_num_scans(wildcards)
 
     if num_scans > 1 and method == "topup":
         topup_prefix = bids(
@@ -168,10 +167,7 @@ def get_eddy_topup_fmap_opt(wildcards, input):
 
 def get_eddy_s2v_opts(wildcards, input):
 
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([s2v_is_enabled],) = glob_wildcards(
-        os.path.join(checkpoint_output, "eddys2v-{isenabled}")
-    )
+    s2v_is_enabled = get_enable_s2v(wildcards)
 
     options = []
     if s2v_is_enabled == "yes":
@@ -192,10 +188,7 @@ def get_eddy_s2v_opts(wildcards, input):
 
 def get_eddy_slspec_input(wildcards):
 
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([s2v_is_enabled],) = glob_wildcards(
-        os.path.join(checkpoint_output, "eddys2v-{isenabled}")
-    )
+    s2v_is_enabled = get_enable_s2v(wildcards)
 
     if s2v_is_enabled == "yes":
         return {
@@ -214,10 +207,7 @@ def get_eddy_slspec_input(wildcards):
 
 def get_eddy_slspec_opt(wildcards, input):
 
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([s2v_is_enabled],) = glob_wildcards(
-        os.path.join(checkpoint_output, "eddys2v-{isenabled}")
-    )
+    s2v_is_enabled = get_enable_s2v(wildcards)
 
     if s2v_is_enabled == "yes":
         return f"--slspec={input.eddy_slspec_txt}"

@@ -55,16 +55,19 @@ rule run_topup:
 # this is for equal positive and negative blipped data - method=lsr --unused currently (jac method can be applied more generally)
 rule apply_topup_lsr:
     input:
-        dwi_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="degibbs",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    desc="degibbs",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
         phenc_concat=bids(
             root=work,
@@ -114,17 +117,8 @@ rule apply_topup_lsr:
 
 def get_applytopup_inindex(wildcards):
 
-    # need to get index of the scan from the subject scans
-    # so first filter the ziplist to get the subject(+session)
-    subj_filter = {"subject": wildcards.subject}
-    if "session" in subj_wildcards.keys():
-        subj_filter["session"] = wildcards.session
-
-    zip_list_subj = filter_list(input_zip_lists["dwi"], subj_filter)
-
-    # now filter the subj ziplist using all wildcards to get the index of the scan
-    indices = filter_list(zip_list_subj, wildcards, return_indices_only=True)
-    return indices[0] + 1  # get first index, but adjust to start at 1 instead of 0
+    index = get_index_of_dwi_scan(wildcards)
+    return index + 1  # adjust to start at 1 instead of 0
 
 
 rule apply_topup_jac:
@@ -158,6 +152,9 @@ rule apply_topup_jac:
         ),
         topup_movpar=bids(
             root=work, suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
+        ),
+        workflowopts=bids(
+            root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards
         ),
     params:
         inindex=get_applytopup_inindex,
@@ -236,17 +233,20 @@ rule cp_sidecars_topup_jac:
 
 rule concat_dwi_topup_jac:
     input:
-        dwi_niis=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="topup",
-                method="jac",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    desc="topup",
+                    method="jac",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         ),
     output:
         dwi_concat=bids(
@@ -281,12 +281,18 @@ rule syn_sdc:
             desc="preproc",
             suffix="T1w.nii.gz"
         ),
-        json_file=lambda wildcards: expand(
-            bids(
-                root=work, suffix="dwi.json", datatype="dwi", **input_wildcards["dwi"]
+        json_file=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.json",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         )[0],
         mask_anat=bids(
             root=root,
@@ -443,8 +449,7 @@ rule rigid_reg_t1_to_b0_synthsr:
 
 
 def get_restrict_deformation(wildcards, input, output):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([peaxis],) = glob_wildcards(os.path.join(checkpoint_output, "PEaxis-{axis}"))
+    peaxis = get_pe_axis(wildcards)
     if peaxis == "i":
         return "1x0x0"
     elif peaxis == "j":
@@ -525,22 +530,31 @@ rule displacement_field_to_fmap:
             datatype="transforms",
             **subj_wildcards
         ),
-        dwi_nii=lambda wildcards: expand(
-            bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                datatype="dwi",
-                **input_wildcards["dwi"]
+        dwi_nii=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.nii.gz",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         )[0],
-        dwi_json=lambda wildcards: expand(
-            bids(
-                root=work, suffix="dwi.json", datatype="dwi", **input_wildcards["dwi"]
+        dwi_json=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="dwi.json",
+                    datatype="dwi",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
             ),
-            zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            wildcards,
         )[0],
     params:
         demean=True,
@@ -597,8 +611,7 @@ rule apply_unwarp_synthsr:
 
 
 def get_dwi_ref(wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+    method = get_sdc_method(wildcards)
 
     if config["gradcorrect_coeffs"]:
         # if using gradcorrect, then the checkpoint for sdc method will be
