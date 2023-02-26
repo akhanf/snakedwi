@@ -2,9 +2,9 @@ rule run_topup:
     input:
         bzero_concat=bids(
             root=work,
-            suffix="concatb0.nii.gz",
+            suffix="b0s.nii.gz",
             datatype="dwi",
-            desc="degibbs",
+            desc="mocoavgb0",
             **subj_wildcards
         ),
         phenc_concat=bids(

@@ -105,11 +105,18 @@ rule n4_t1_withmask:
 
 rule reg_dwi_to_t1:
     input:
-        t1w=bids(
+        t1wsynth=bids(
             root=root,
-            suffix="T1w.nii.gz",
+            suffix="T1wSynthSR.nii.gz",
             desc="preproc",
             datatype="anat",
+            **subj_wildcards
+        ),
+        avgb0synth=bids(
+            root=work,
+            suffix="b0SynthSR.nii.gz",
+            desc="dwiref",
+            datatype="dwi",
             **subj_wildcards
         ),
         avgb0=bids(
@@ -121,7 +128,7 @@ rule reg_dwi_to_t1:
         ),
     params:
         general_opts="-d 3",
-        rigid_opts="-m NMI -a -dof 6 -ia-{rigid_dwi_t1_init} -n {rigid_dwi_t1_iters}".format(
+        rigid_opts="-m SSD -a -dof 6 -ia-{rigid_dwi_t1_init} -n {rigid_dwi_t1_iters}".format(
             rigid_dwi_t1_init=config["rigid_dwi_t1_init"],
             rigid_dwi_t1_iters=config["rigid_dwi_t1_iters"],
         ),
@@ -151,8 +158,8 @@ rule reg_dwi_to_t1:
         bids(root="logs", suffix="reg_b0_to_t1.txt", datatype="dwi", **subj_wildcards),
     threads: 8
     shell:
-        "greedy -threads {threads} {params.general_opts} {params.rigid_opts}  -i {input.t1w} {input.avgb0} -o {output.xfm_ras}  &> {log}  && "
-        "greedy -threads {threads} {params.general_opts} -rf {input.t1w} -rm {input.avgb0} {output.warped_avgb0}  -r {output.xfm_ras} &>> {log}"
+        "greedy -threads {threads} {params.general_opts} {params.rigid_opts}  -i {input.t1wsynth} {input.avgb0synth} -o {output.xfm_ras}  &> {log}  && "
+        "greedy -threads {threads} {params.general_opts} -rf {input.t1wsynth} -rm {input.avgb0} {output.warped_avgb0}  -r {output.xfm_ras} &>> {log}"
 
 
 rule qc_reg_dwi_t1:

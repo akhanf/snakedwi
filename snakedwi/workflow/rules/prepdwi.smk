@@ -101,7 +101,7 @@ rule mrdegibbs:
         "cp {input[3]} {output[3]}"
 
 
-rule moco_bzeros:
+rule moco_bzeros_4d:
     """ run motion-correction (rigid reg to init volume) on the bzeros """
     input:
         nii_4d=bids(
@@ -152,6 +152,63 @@ rule moco_bzeros:
         " mkdir -p {output.affine_dir} && cp affine_xfm_ras_*.txt {output.affine_dir} && "
         " echo -e '1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1' > {output.affine_dir}/affine_xfm_ras_000.txt && "
         " mrcat dwi_000.nii warped_*.nii {output.nii_4d} && "
+        " mrmath {output.nii_4d} mean {output.nii_avg3d} -axis 3"
+
+
+rule moco_avg_bzeros:
+    input:
+        b0s=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="b0.nii.gz",
+                    datatype="dwi",
+                    desc="degibbs",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
+            ),
+            wildcards,
+        ),
+    params:
+        flo_indices=lambda wildcards, input: " ".join(
+            [f"{i}" for i in range(1, len(input.b0s))]
+        ),
+        flo_imgs=lambda wildcards, input: " ".join(input.b0s[1:]),
+    output:
+        affine_dir=directory(
+            bids(
+                root=work,
+                suffix="transforms",
+                desc="mocoavgb0",
+                datatype="dwi",
+                **subj_wildcards
+            )
+        ),
+        nii_4d=bids(
+            root=work,
+            suffix="b0s.nii.gz",
+            desc="mocoavgb0",
+            datatype="dwi",
+            **subj_wildcards
+        ),
+        nii_avg3d=bids(
+            root=work,
+            suffix="b0.nii.gz",
+            desc="mocoavgb0",
+            datatype="dwi",
+            **subj_wildcards
+        ),
+    group:
+        "subj"
+    shell:
+        "parallel --eta --jobs {threads} "
+        "reg_aladin -flo {{2}}  -ref {input.b0s[0]} -res warped_{{1}}.nii -aff affine_xfm_ras_{{1}}.txt "
+        " ::: {params.flo_indices} ::: {params.flo_imgs}  && "
+        " mkdir -p {output.affine_dir} && cp affine_xfm_ras_*.txt {output.affine_dir} && "
+        " echo -e '1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1' > {output.affine_dir}/affine_xfm_ras_000.txt && "
+        " mrcat {input.b0s[0]} warped_*.nii {output.nii_4d} && "
         " mrmath {output.nii_4d} mean {output.nii_avg3d} -axis 3"
 
 
