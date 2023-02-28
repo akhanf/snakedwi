@@ -62,6 +62,17 @@ for json_file in snakemake.input:
                 )
                 sys.exit(1)
 
+    if "EffectiveEchoSpacing" in json_dwi:
+        eff_echo=json_dwi["EffectiveEchoSpacing"]
+    elif "EstimatedEffectiveEchoSpacing" in json_dwi:
+        eff_echo=json_dwi["EstimatedEffectiveEchoSpacing"]
+    else:
+        print("EffectiveEchoSpacing not defined in JSON, using default value")
+        eff_echo = snakemake.config[
+            "default_effective_echo_spacing"
+        ]
+
+
     phenc_dirs.append(json_dwi["PhaseEncodingDirection"])
 
     phase_encoding_axes.append(json_dwi["PhaseEncodingDirection"][0])
