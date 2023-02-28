@@ -52,69 +52,6 @@ rule run_topup:
         " --out={params.out_prefix} --iout={output.bzero_corrected} --fout={output.fieldmap} -v 2> {log}"
 
 
-# this is for equal positive and negative blipped data - method=lsr --unused currently (jac method can be applied more generally)
-rule apply_topup_lsr:
-    input:
-        dwi_niis=lambda wildcards: get_dwi_indices(
-            expand(
-                bids(
-                    root=work,
-                    suffix="dwi.nii.gz",
-                    desc="degibbs",
-                    datatype="dwi",
-                    **input_wildcards["dwi"]
-                ),
-                zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
-            ),
-            wildcards,
-        ),
-        phenc_concat=bids(
-            root=work,
-            suffix="phenc.txt",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        topup_fieldcoef=bids(
-            root=work,
-            suffix="topup_fieldcoef.nii.gz",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        topup_movpar=bids(
-            root=work, suffix="topup_movpar.txt", datatype="dwi", **subj_wildcards
-        ),
-    params:
-        #create comma-seperated list of dwi nii
-        imain=lambda wildcards, input: ",".join(input.dwi_niis),
-        # create comma-sep list of indices 1-N
-        inindex=lambda wildcards, input: ",".join(
-            [str(i) for i in range(1, len(input.dwi_niis) + 1)]
-        ),
-        topup_prefix=bids(root=work, suffix="topup", datatype="dwi", **subj_wildcards),
-        out_prefix="dwi_topup",
-    output:
-        dwi_topup=bids(
-            root=work,
-            suffix="dwi.nii.gz",
-            desc="topup",
-            method="lsr",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-    container:
-        config["singularity"]["fsl"]
-    shadow:
-        "minimal"
-    group:
-        "subj"
-    shell:
-        "applytopup --verbose --datain={input.phenc_concat} --imain={params.imain} --inindex={params.inindex} "
-        " -t {params.topup_prefix} -o {params.out_prefix} && "
-        " fslmaths {params.out_prefix}.nii.gz {output.dwi_topup}"
-
-
 def get_applytopup_inindex(wildcards):
 
     index = get_index_of_dwi_scan(wildcards)
@@ -125,8 +62,8 @@ rule apply_topup_jac:
     input:
         nii=bids(
             root=work,
-            suffix="dwi.nii.gz",
-            desc="degibbs",
+            suffix="b0.nii.gz",
+            desc="moco",
             datatype="dwi",
             **input_wildcards["dwi"]
         ),
@@ -162,7 +99,7 @@ rule apply_topup_jac:
     output:
         nii=bids(
             root=work,
-            suffix="dwi.nii.gz",
+            suffix="b0.nii.gz",
             desc="topup",
             method="jac",
             datatype="dwi",
@@ -179,65 +116,16 @@ rule apply_topup_jac:
         " -t {params.topup_prefix} -o dwi_topup --method=jac && mv dwi_topup.nii.gz {output.nii}"
 
 
-# topup-corrected data is only used for brainmasking..
-# here, use the jac method by default (later can decide if lsr approach can be used based on headers)
-# with jac approach, the jac images need to be concatenated, then avgshell extracted
-
-"""
-rule cp_sidecars_topup_lsr:
-    #TODO: BEST WAY TO TO EXEMPLAR DWI? 
-    input: multiext(bids(root='work',suffix='dwi',desc='degibbs',datatype='dwi',**config['subj_wildcards'],**dwi_exemplar_dict),\
-                '.bvec','.bval','.json')
-    output: multiext(bids(root='work',suffix='dwi',desc='topup',method='lsr',datatype='dwi',**config['subj_wildcards']),\
-                '.bvec','.bval','.json')
-    run:
-        for in_file,out_file in zip(input,output):
-            shell('cp -v {in_file} {out_file}')
-"""
+ruleorder: avg_b0s_topup_jac > get_shell_avg
 
 
-rule cp_sidecars_topup_jac:
+rule avg_b0s_topup_jac:
     input:
-        multiext(
-            bids(
-                root=work,
-                suffix="dwi",
-                desc="degibbs",
-                datatype="dwi",
-                **subj_wildcards
-            ),
-            ".bvec",
-            ".bval",
-            ".json",
-        ),
-    output:
-        multiext(
-            bids(
-                root=work,
-                suffix="dwi",
-                desc="topup",
-                method="jac",
-                datatype="dwi",
-                **subj_wildcards
-            ),
-            ".bvec",
-            ".bval",
-            ".json",
-        ),
-    group:
-        "subj"
-    run:
-        for in_file, out_file in zip(input, output):
-            shell("cp -v {in_file} {out_file}")
-
-
-rule concat_dwi_topup_jac:
-    input:
-        dwi_niis=lambda wildcards: get_dwi_indices(
+        b0_niis=lambda wildcards: get_dwi_indices(
             expand(
                 bids(
                     root=work,
-                    suffix="dwi.nii.gz",
+                    suffix="b0.nii.gz",
                     desc="topup",
                     method="jac",
                     datatype="dwi",
@@ -249,9 +137,9 @@ rule concat_dwi_topup_jac:
             wildcards,
         ),
     output:
-        dwi_concat=bids(
+        b0=bids(
             root=work,
-            suffix="dwi.nii.gz",
+            suffix="b0.nii.gz",
             desc="topup",
             method="jac",
             datatype="dwi",
@@ -259,10 +147,13 @@ rule concat_dwi_topup_jac:
         ),
     container:
         config["singularity"]["mrtrix"]
+    shadow:
+        "minimal"
     group:
         "subj"
     shell:
-        "mrcat {input} {output}"
+        "mrcat {input} b0_concat.nii && "
+        "mrmath b0_concat.nii mean {output} -axis 3"
 
 
 rule syn_sdc:
