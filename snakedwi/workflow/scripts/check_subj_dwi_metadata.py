@@ -44,9 +44,9 @@ for json_file in snakemake.input:
 
     if "PhaseEncodingDirection" not in json_dwi:
 
-        if not config["default_phase_encoding_direction"] == "":
+        if not snakemake.config["default_phase_encoding_direction"] == "":
             print(f"WARNING: setting default PhaseEncodingDirection")
-            json_dwi["PhaseEncodingDirection"] = config[
+            json_dwi["PhaseEncodingDirection"] = snakemake.config[
                 "default_phase_encoding_direction"
             ]
         else:
