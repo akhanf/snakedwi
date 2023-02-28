@@ -19,14 +19,10 @@ if "PhaseEncodingDirection" in json_dwi:
 else:
     if not snakemake.config["default_phase_encoding_direction"] == "":
         print(f"WARNING: setting default PhaseEncodingDirection")
-        phenc_dir = snakemake.config[
-            "default_phase_encoding_direction"
-        ]
+        phenc_dir = snakemake.config["default_phase_encoding_direction"]
     else:
         if "PhaseEncodingAxis" in json_dwi:
-            print(
-                f"WARNING: assuming PhaseEncodingDirection from PhaseEncodingAxis"
-            )
+            print(f"WARNING: assuming PhaseEncodingDirection from PhaseEncodingAxis")
             phenc_dir = json_dwi["PhaseEncodingAxis"]
         else:
             print(f"ERROR: PhaseEncodingDirection not found in {json_file}")
@@ -36,15 +32,12 @@ else:
             sys.exit(1)
 
 if "EffectiveEchoSpacing" in json_dwi:
-    eff_echo=json_dwi["EffectiveEchoSpacing"]
+    eff_echo = json_dwi["EffectiveEchoSpacing"]
 elif "EstimatedEffectiveEchoSpacing" in json_dwi:
-    eff_echo=json_dwi["EstimatedEffectiveEchoSpacing"]
+    eff_echo = json_dwi["EstimatedEffectiveEchoSpacing"]
 else:
     print("EffectiveEchoSpacing not defined in JSON, using default value")
-    eff_echo = snakemake.config[
-        "default_effective_echo_spacing"
-    ]
-
+    eff_echo = snakemake.config["default_effective_echo_spacing"]
 
 
 phenc_axis = phenc_dir[0]
@@ -67,9 +60,7 @@ if len(phenc_dir) == 2:
         vec[np.where(vec > 0)] = -1
 
 
-phenc_line = np.hstack(
-    [vec, np.array(eff_echo * numPhaseEncodes)]
-)
+phenc_line = np.hstack([vec, np.array(eff_echo * numPhaseEncodes)])
 
 
 # replicate to the number of volumes, if it is 4d
