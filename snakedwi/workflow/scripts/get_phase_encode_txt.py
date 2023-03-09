@@ -15,13 +15,33 @@ with open(snakemake.input.json) as f:
 imsize = np.array(bzero.header.get_data_shape())
 
 if "PhaseEncodingDirection" in json_dwi:
-    phenc_axis = json_dwi["PhaseEncodingDirection"][0]
-    phenc_string = "PhaseEncodingDirection"
+    phenc_dir = json_dwi["PhaseEncodingDirection"]
+else:
+    if not snakemake.config["default_phase_encoding_direction"] == "":
+        print(f"WARNING: setting default PhaseEncodingDirection")
+        phenc_dir = snakemake.config["default_phase_encoding_direction"]
+    else:
+        if "PhaseEncodingAxis" in json_dwi:
+            print(f"WARNING: assuming PhaseEncodingDirection from PhaseEncodingAxis")
+            phenc_dir = json_dwi["PhaseEncodingAxis"]
+        else:
+            print(f"ERROR: PhaseEncodingDirection not found in {json_file}")
+            print(
+                "You must add the PhaseEncodingDirection field to your dwi JSON files, or use the --default_phase_encoding_direction CLI option"
+            )
+            sys.exit(1)
 
-# NOTE: PhaseEncodingAxis doesn't encode + or -, so if this is used then you cannot use rev phase encoding distortion correction (but it can still be used if there is just a single scan)
-elif "PhaseEncodingAxis" in json_dwi:
-    phenc_axis = json_dwi["PhaseEncodingAxis"][0]  # either i, j, k
-    phenc_string = "PhaseEncodingAxis"
+if "EffectiveEchoSpacing" in json_dwi:
+    eff_echo = json_dwi["EffectiveEchoSpacing"]
+elif "EstimatedEffectiveEchoSpacing" in json_dwi:
+    eff_echo = json_dwi["EstimatedEffectiveEchoSpacing"]
+else:
+    print("EffectiveEchoSpacing not defined in JSON, using default value")
+    eff_echo = snakemake.config["default_effective_echo_spacing"]
+
+
+phenc_axis = phenc_dir[0]
+
 
 if phenc_axis == "i":
     vec = np.array([1, 0, 0])
@@ -30,41 +50,18 @@ elif phenc_axis == "j":
 elif phenc_axis == "k":
     vec = np.array([0, 0, 1])
 
-# print(f'vec: {vec}')
-# print(f'imsize: {imsize}')f
 
 numPhaseEncodes = imsize[np.where(vec > 0)]
 
-# print(f'numPhaseEncodes: {numPhaseEncodes}')
 
 # check for i-, j-, k-; flip to -1 if so..
-if len(json_dwi[phenc_string]) == 2:
-    if json_dwi[phenc_string][1] == "-":
+if len(phenc_dir) == 2:
+    if phenc_dir[1] == "-":
         vec[np.where(vec > 0)] = -1
 
-if "EffectiveEchoSpacing" in json_dwi:
-    phenc_line = np.hstack(
-        [vec, np.array(json_dwi["EffectiveEchoSpacing"] * numPhaseEncodes)]
-    )
-elif "EstimatedEffectiveEchoSpacing" in json_dwi:
-    print("Estimtated Effective Echo Spacing found, using that")
-    phenc_line = np.hstack(
-        [vec, np.array(json_dwi["EstimatedEffectiveEchoSpacing"] * numPhaseEncodes)]
-    )
-else:
-    print("EffectiveEchoSpacing not defined in JSON, using default value")
-    json_dwi["EffectiveEchoSpacing"] = snakemake.config[
-        "default_effective_echo_spacing"
-    ]
-    phenc_line = np.hstack(
-        [vec, np.array(json_dwi["EffectiveEchoSpacing"] * numPhaseEncodes)]
-    )
 
+phenc_line = np.hstack([vec, np.array(eff_echo * numPhaseEncodes)])
 
-# create the phenc_line row
-# phenc_line = np.hstack(
-#    [vec, np.array(json_dwi["EffectiveEchoSpacing"] * numPhaseEncodes)]
-# )
 
 # replicate to the number of volumes, if it is 4d
 if len(imsize) == 4:

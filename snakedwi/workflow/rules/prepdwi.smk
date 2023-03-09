@@ -101,60 +101,6 @@ rule mrdegibbs:
         "cp {input[3]} {output[3]}"
 
 
-rule moco_bzeros:
-    """ run motion-correction (rigid reg to init volume) on the bzeros """
-    input:
-        nii_4d=bids(
-            root=work,
-            suffix="b0s.nii.gz",
-            datatype="dwi",
-            desc="degibbs",
-            **subj_wildcards
-        ),
-    output:
-        affine_dir=directory(
-            bids(
-                root=work,
-                suffix="transforms",
-                desc="moco",
-                datatype="dwi",
-                **subj_wildcards
-            )
-        ),
-        nii_4d=bids(
-            root=work,
-            suffix="b0s.nii.gz",
-            desc="moco",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        nii_avg3d=bids(
-            root=work,
-            suffix="b0.nii.gz",
-            desc="moco",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-    threads: 8  #doesn't need to be more than the number of bzeros 
-    resources:
-        mem_mb=32000,
-    shadow:
-        "minimal"
-    container:
-        config["singularity"]["prepdwi"]  #-- this rule needs niftyreg, c3d and mrtrix
-    group:
-        "subj"
-    shell:
-        "c4d {input.nii_4d} -slice w 0:-1 -oo dwi_%03d.nii && "
-        "parallel --eta --jobs {threads} "
-        "reg_aladin -flo dwi_{{1}}.nii  -ref dwi_000.nii -res warped_{{1}}.nii -aff affine_xfm_ras_{{1}}.txt "
-        " ::: `ls dwi_???.nii | tail -n +2 | grep -Po '(?<=dwi_)[0-9]+'` && "
-        " mkdir -p {output.affine_dir} && cp affine_xfm_ras_*.txt {output.affine_dir} && "
-        " echo -e '1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1' > {output.affine_dir}/affine_xfm_ras_000.txt && "
-        " mrcat dwi_000.nii warped_*.nii {output.nii_4d} && "
-        " mrmath {output.nii_4d} mean {output.nii_avg3d} -axis 3"
-
-
 # now have nii with just the b0's, want to create the topup phase-encoding text files for each one:
 rule get_phase_encode_txt:
     input:

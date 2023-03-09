@@ -44,9 +44,9 @@ for json_file in snakemake.input:
 
     if "PhaseEncodingDirection" not in json_dwi:
 
-        if not config["default_phase_encoding_direction"] == "":
+        if not snakemake.config["default_phase_encoding_direction"] == "":
             print(f"WARNING: setting default PhaseEncodingDirection")
-            json_dwi["PhaseEncodingDirection"] = config[
+            json_dwi["PhaseEncodingDirection"] = snakemake.config[
                 "default_phase_encoding_direction"
             ]
         else:
@@ -61,6 +61,14 @@ for json_file in snakemake.input:
                     "You must add the PhaseEncodingDirection field to your dwi JSON files, or use the --default_phase_encoding_direction CLI option"
                 )
                 sys.exit(1)
+
+    if "EffectiveEchoSpacing" in json_dwi:
+        eff_echo = json_dwi["EffectiveEchoSpacing"]
+    elif "EstimatedEffectiveEchoSpacing" in json_dwi:
+        eff_echo = json_dwi["EstimatedEffectiveEchoSpacing"]
+    else:
+        print("EffectiveEchoSpacing not defined in JSON, using default value")
+        eff_echo = snakemake.config["default_effective_echo_spacing"]
 
     phenc_dirs.append(json_dwi["PhaseEncodingDirection"])
 

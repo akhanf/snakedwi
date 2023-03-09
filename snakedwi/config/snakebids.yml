@@ -1,5 +1,7 @@
-bids_dir: 'test_data/bids_multishell_downsampled'
-output_dir: 'test_output/snakedwi_multishell_downsampled'
+bids_dir: 'test_data/bids_downsampled_1bzero' #for testing topup workflow
+#bids_dir: 'test_data/bids_downsampled_1bzero_1scan' #for testing synthsrsdc workflow
+
+output_dir: 'test_output/snakedwi_downsampled_1bzero'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
