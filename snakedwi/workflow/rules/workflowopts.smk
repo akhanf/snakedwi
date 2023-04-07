@@ -7,26 +7,36 @@ checkpoint check_subj_dwi_metadata:
         ),
     params:
         index_col_value=bids(
-            **subj_wildcards, include_subject_dir=False, include_session_dir=False
+            include_subject_dir=False, 
+            include_session_dir=False,
+            **subj_wildcards
         ),
         index_col_name="subj",
     output:
         workflowopts=directory(
-            bids(root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards)
+            bids(
+                root=root, 
+                datatype="dwi", 
+                suffix="workflowopts", 
+                **subj_wildcards
+            )
         ),
         metadata=bids(
-            root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards
+            root=root, 
+            datatype="dwi", 
+            suffix="metadata.tsv", 
+            **subj_wildcards
         ),
     group:
         "subj"
     script:
-        "../scripts/check_subj_dwi_metadata.py"
+        "../scripts/metadata/check_subj_dwi_metadata.py"
 
 
 rule concat_subj_metadata:
     input:
         tsvs=expand(
-            bids(root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards),
+            rules.check_subj_dwi_metadata.output.metadata,
             zip,
             **subj_zip_list
         ),
@@ -34,21 +44,34 @@ rule concat_subj_metadata:
         tsv=bids(root=root, suffix="metadata.tsv"),
     container:
         config["singularity"]["python"]
-    script:
-        "../scripts/concat_tsv.py"
+    run:
+        import pandas as pd 
+
+        pd.concat(
+            [pd.read_csv(tsv, sep="\t") for tsv in input.tsvs]
+        ).to_csv(
+            output.tsv, sep="\t", index=False
+        )
 
 
 rule create_missing_subj_tsv:
-    """creates a tsv file containing subjects that are 
-    skipped because they either don't have T1w or don't have dwi data"""
+    """Create tsv file of skipped subjects due to missing T1w / dwi data"""
     params:
         missing_subject_zip_list=missing_subj_zip_list,
     output:
         tsv=bids(root=root, suffix="missing.tsv"),
     container:
         config["singularity"]["python"]
-    script:
-        "../scripts/create_missing_subj_tsv.py"
+    run:
+        import pandas as pd
+
+        df = pd.DataFrame()
+        df["participant_id"] = params.missing_subject_zip_list["subject"]
+
+        if "session" in params.missing_subject_zip_list:
+            df["session"] = params.missing_subject_zip_list["session"]
+        
+        df.to_csv(output.tsv, sep="\t", index=False)
 
 
 def get_dwi_indices(all_dwi, wildcards):

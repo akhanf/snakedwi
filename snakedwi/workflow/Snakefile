@@ -20,7 +20,8 @@ include: "rules/masking_b0_synthstrip.smk"
 
 if config["use_eddy_s2v"] and not config["use_eddy_gpu"]:
     print(
-        "ERROR: Eddy Slice-to-volume correction (--use-eddy-s2v) must be used with eddy GPU (--use-eddy-gpu)"
+        "ERROR: Eddy Slice-to-volume correction (--use-eddy-s2v) must be used "
+        "with eddy GPU (--use-eddy-gpu)."
     )
     sys.exit(1)
 

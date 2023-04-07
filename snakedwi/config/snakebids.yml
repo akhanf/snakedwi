@@ -84,11 +84,6 @@ parse_args:
           participants can be specified with a space separated list.
     nargs: '+'
 
-  --no_topup:
-    help: 'Disable topup  (default: %(default)s)'
-    action: 'store_true'
-    default: False
-
   --use_bedpost: 
     help: 'Enable bedpost  (disabled by default)'
     action: 'store_false'
@@ -100,12 +95,50 @@ parse_args:
     #    action: 'store_true'
     #    default: True
 
-   
+  # SDC Options
+  --sdc_method:
+    help: 'Set the susceptibility distortion correction (SDC) method to be used. 
+          By default, opposite phase encoding directions are assumed and the 
+          TOPUP method is used. To skip SDC, set method to "none". (default: 
+          %(default)s)'
+    default: 'topup'
+    choices:
+      - 'topup'
+      - 'sdcflow'
+      - 'synb0'
+      - 'synthsr'
+      - 'none'
+          
+  # Eddy options
   --use_eddy_s2v:
-    help: 'Enable slice-to-volume in eddy.  Your dwi json must either include
-        SliceTiming information, or you must specify it with the --slspec-txt CLI. If any subjects do not have this information, they will be run without slice-to-volume enabled. You must also use the --use_eddy_gpu option. (default: %(default)s)'
+    help: 'Enable slice-to-volume correction in Eddy. Your dwi json must either 
+          include SliceTiming information, or you must specify it with the 
+          --slspec-txt flag. If any subjects do not have this information, 
+          they will be run without slice-to-volume enabled. You must also use 
+          the --use_eddy_gpu option. (default: %(default)s)'
     action: 'store_true'
     default: False
+  
+  # Metadata options
+  --slspec_txt:
+    help: 'Path to custom slspec txt file for use with eddy. Must use this if 
+          SliceTiming does not exist in the JSON (default: %(default)s)'
+    default: False
+    type: Path
+
+  --default_phase_encoding_direction:
+    help: 'Sets the PhaseEncodingDirection to use for dwi acquisitions where it 
+          is not specified in the JSON file. By default, none will be assumed, 
+          and the workflow will fail for subjects where this JSON tag is 
+          missing (default: %(default)s)'
+    default: ''
+    choices:
+      - 'i'
+      - 'i-'
+      - 'j'
+      - 'j-'
+      - 'k'
+      - 'k-'
 
   --eddy_no_quad:
     help: 'Disables eddy_quad QC report (default: %(default)s)'
@@ -124,11 +157,6 @@ parse_args:
   --b0_bet_frac:
     help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
     default: 0.5
-
-  --slspec_txt:
-    help: 'Path to custom slspec txt file for use with eddy. Must use this if SliceTiming does not exist in the JSON (default: %(default)s)'
-    default: False
-    type: Path
 
 
   --use_eddy_gpu:
@@ -169,17 +197,6 @@ parse_args:
     action: 'store_false'
     dest: 'use_synthsr_sdc'
     default: True
-
-  --default_phase_encoding_direction:
-    help: "Sets the PhaseEncodingDirection to use for dwi acquisitions where it is not specified in the JSON file. By default, none will be assumed, and the workflow will fail for subjects where this JSON tag is missing (default: %(default)s)"
-    default: ''
-    choices:
-      - 'i'
-      - 'i-'
-      - 'j'
-      - 'j-'
-      - 'k'
-      - 'k-'
 
 #---- to update below this
 
