@@ -1,21 +1,17 @@
-!snakedwi/config
-!snakedwi/config/*
-!snakedwi/resources
-!snakedwi/resources/*
-!snakedwi/workflow
-!snakedwi/workflow/**
+# Git related files
 .gitignore
-!.gitattributes
-!.editorconfig
-!.travis.yml
-!.test
-!LICENSE
-!README.md
+
+# Directories
+__pycache__/
+.snakemake/
+
+# Results files
+snakedwi/logs/
+snakedwi/qc/
+snakedwi/results/
+snakedwi/work/
+test_out/
+
+# Misc files
 .*.swp
-__pycache__
-.snakemake
 report.html
-snakedwi/logs
-snakedwi/qc
-snakedwi/results
-snakedwi/work
