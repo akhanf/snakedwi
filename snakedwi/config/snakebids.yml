@@ -84,17 +84,6 @@ parse_args:
           participants can be specified with a space separated list.
     nargs: '+'
 
-  --use_bedpost: 
-    help: 'Enable bedpost  (disabled by default)'
-    action: 'store_false'
-    dest: 'no_bedpost'
-    default: True
-
-    #  --no_bedpost:
-    #    help: 'Disable bedpost  (default: %(default)s)'
-    #    action: 'store_true'
-    #    default: True
-
   # SDC Options
   --sdc_method:
     help: 'Set the susceptibility distortion correction (SDC) method to be used. 
@@ -118,7 +107,12 @@ parse_args:
           the --use_eddy_gpu option. (default: %(default)s)'
     action: 'store_true'
     default: False
-  
+
+  --use_eddy_gpu:
+    help: 'Use GPU-based version of eddy (must set container path in config)'
+    action: 'store_true'
+    default: False
+
   # Metadata options
   --slspec_txt:
     help: 'Path to custom slspec txt file for use with eddy. Must use this if 
@@ -140,6 +134,19 @@ parse_args:
       - 'k'
       - 'k-'
 
+  # Bedpost options:
+  --use_bedpost: 
+    help: 'Enable bedpost (disabled by default)'
+    action: 'store_false'
+    dest: 'no_bedpost'
+    default: True
+
+  --use_bedpost_gpu:
+    help: 'Use GPU-based version of bedpost (must set container path in config)'
+    action: 'store_true'
+    default: False
+
+  # QC options:
   --eddy_no_quad:
     help: 'Disables eddy_quad QC report (default: %(default)s)'
     action: 'store_true'
@@ -157,18 +164,6 @@ parse_args:
   --b0_bet_frac:
     help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
     default: 0.5
-
-
-  --use_eddy_gpu:
-    help: 'Use GPU-based version of eddy (must set container path in config)'
-    action: 'store_true'
-    default: False
-
-
-  --use_bedpost_gpu:
-    help: 'Use GPU-based version of bedpost (must set container path in config)'
-    action: 'store_true'
-    default: False
 
   --rigid_dwi_t1_init:
     help: 'Type of initialization to use for dwi to t1 rigid registration. (default: %(default)s)'
