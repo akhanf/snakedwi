@@ -1,8 +1,8 @@
 rule run_synthSR:
     input:
-        "{prefix}.nii.gz",
+        nii="{prefix}.nii.gz",
     output:
-        "{prefix}SynthSR.nii.gz",
+        out_nii="{prefix}SynthSR.nii.gz",
     threads: 8
     group:
         "subj"
@@ -49,7 +49,7 @@ rule rigid_reg_t1_to_b0_synthsr:
             datatype="anat",
             desc="preproc",
             suffix="T1wSynthSR.nii.gz",
-            ** subj_wildcards,
+            **subj_wildcards,
         ),
         ref=rules.reslice_synthSR_b0.output.synthsr,
     output:
@@ -110,7 +110,7 @@ rule reg_b0_to_t1_synthsr:
         smoothing_sigmas="2x1x0vox",
         shrink_factors="4x2x1",
         restrict_deformation=get_restrict_deformation,
-    # "0x1x0", should be set to the phase encode dir - can read json for this.
+        # "0x1x0", should be set to phase encode dir (can read from JSON)
     output:
         unwarped=bids(
             root=work,

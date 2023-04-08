@@ -11,7 +11,7 @@ def vis_regqc(
     ref: str,
     out_html: str,
     out_png: str,
-    smk_wildcards: List(str),
+    smk_wildcards: List[str],
 ) -> None:
 
     matplotlib.use("Agg")

@@ -52,8 +52,8 @@ rule ants_b0_to_template:
             shrink_factors=config["ants"]["deform"]["shrink_factors"],
             smoothing_factors=config["ants"]["deform"]["smoothing_factors"],
         ),
-        deform_metric=(
-            lambda wildcards, input: "-m {metric}[{template},{target},1,4]"
+        deform_metric=lambda wildcards, input: (
+            "-m {metric}[{template},{target},1,4]"
         ).format(
             metric=config["ants"]["deform"]["sim_metric"],
             template=input.ref,

@@ -5,7 +5,7 @@ import nibabel as nib
 import numpy as np
 
 
-def get_eddy_index_txt(in_niis: List(str), out_txt: str) -> None:
+def get_eddy_index_txt(in_niis: List[str], out_txt: str) -> None:
     # Get each nifti's imsize
     imsizes = [nib.load(nii).header.get_data_shape() for nii in in_niis]
 

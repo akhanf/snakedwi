@@ -8,7 +8,10 @@ rule import_t1:
         )[0],
     output:
         nii=bids(
-            root=work, datatype="anat", suffix="T1w.nii.gz", **subj_wildcards, 
+            root=work,
+            datatype="anat",
+            suffix="T1w.nii.gz",
+            **subj_wildcards,
         ),
     group:
         "subj"
@@ -27,7 +30,10 @@ def get_input_for_synthstrip(wildcards):
         )
     else:
         return bids(
-            root=work, datatype="anat", suffix="T1w.nii.gz", **subj_wildcards,
+            root=work,
+            datatype="anat",
+            suffix="T1w.nii.gz",
+            **subj_wildcards,
         )
 
 
@@ -58,7 +64,7 @@ rule synthstrip_t1:
 rule fixheader_synthstrip:
     input:
         t1=rules.import_t1.output.nii,
-        mask=rules.synthstrip_t1.output.mask
+        mask=rules.synthstrip_t1.output.mask,
     output:
         mask=bids(
             root=root,
@@ -78,7 +84,7 @@ rule fixheader_synthstrip:
 rule n4_t1_withmask:
     input:
         t1=rules.import_t1.output.nii,
-        mask=rules.fixheader_synthstrip.output.mask
+        mask=rules.fixheader_synthstrip.output.mask,
     output:
         t1=bids(
             root=root,

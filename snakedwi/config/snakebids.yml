@@ -141,6 +141,12 @@ parse_args:
     action: 'store_true'
     default: False
 
+  --skip_eddy_quad:
+    help: 'Disables eddy_quad QC report (default: %(default)s)'
+    action: 'store_true'
+    dest: 'eddy_no_quad'
+    default: False
+
   # Metadata options
   --slspec_txt:
     help: 'Path to custom slspec txt file for use with eddy. Must use this if 
@@ -174,14 +180,10 @@ parse_args:
     action: 'store_true'
     default: False
 
-  # QC options:
-  --eddy_no_quad:
-    help: 'Disables eddy_quad QC report (default: %(default)s)'
-    action: 'store_true'
-    default: False
-
+  # Registration options
   --rigid_dwi_t1_init:
-    help: 'Type of initialization to use for dwi to t1 rigid registration. (default: %(default)s)'
+    help: 'Type of initialization to use for dwi to t1 rigid registration. 
+          (default: %(default)s)'
     nargs: '?'
     choices: 
       - 'identity'
@@ -189,7 +191,8 @@ parse_args:
     default: 'identity'
 
   --rigid_dwi_t1_iters:
-    help: 'Number of iterations to use at each multi-resolution stage for dwi to t1 rigid registration. (default: %(default)s)'
+    help: 'Number of iterations to use at each multi-resolution stage for dwi 
+          to t1 rigid registration. (default: %(default)s)'
     default: '50x50'
 
 #---- to update below this
@@ -318,23 +321,3 @@ eddy:
 
 
 default_effective_echo_spacing: 0.0001 #if not defined in JSON files
-
-#for test data
-root: 'results'
-participant_label: 
-exclude_participant_label:
-masking_method: b0_synthstrip
-b0_bet_frac: 0.5
-slspec_txt: False
-use_eddy_s2v: False
-no_bedpost: True
-use_eddy_gpu: False
-use_bedpost_gpu: False
-rigid_dwi_t1_init: 'identity'
-rigid_dwi_t1_iters: '50x50'
-gradcorrect_coeffs: null
-eddy_no_quad: False
-no_topup: False
-use_syn_sdc: False
-use_synthsr_sdc: True 
-default_phase_encoding_direction: ''

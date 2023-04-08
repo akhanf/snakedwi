@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 
 
-def concat_bv(bv_files: List(str), out_bv: str) -> None:
+def concat_bv(bv_files: List[str], out_bv: str) -> None:
     stacked_bv = np.hstack(
         [np.loadtxt(bv_file, ndmin=2) for bv_file in bv_files]
     )

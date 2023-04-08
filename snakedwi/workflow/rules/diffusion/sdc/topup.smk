@@ -58,7 +58,7 @@ rule apply_topup_jac:
         phenc_scan=rules.get_phase_encode_txt.output.phenc_txt,
         phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
         topup_fieldcoef=rules.run_topup.output.topup_fieldcoef,
-        topup_movpar=rules.run_topup.output.top_movpar,
+        topup_movpar=rules.run_topup.output.topup_movpar,
         workflowopts=bids(
             root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards
         ),

@@ -14,7 +14,7 @@ rule reg_dwi_to_t1:
             suffix="b0SynthSR.nii.gz",
             **subj_wildcards
         ),
-        avgb0=rules.import_avg_b0.output.dwiref,
+        avgb0=rules.cp_dwi_ref.output.dwi_ref,
     params:
         general_opts="-d 3",
         rigid_opts=(
@@ -96,7 +96,7 @@ rule qc_reg_dwi_t1:
 
 rule convert_xfm_ras2itk:
     input:
-        xfm_ras=rules.reg_dwi_to_t1.output.xfm_itk,
+        xfm_ras=rules.reg_dwi_to_t1.output.xfm_ras,
     output:
         xfm_itk=bids(
             root=root,
@@ -171,14 +171,8 @@ rule write_nii_resolution_to_txt:
         "subj"
     container:
         config["singularity"]["python"]
-    run:
-        import numpy as np
-        import nibabel as nib
-
-        res_mm = nib.load(input.nii).header.get_zooms()
-
-        with open(output.txt_fname, "w") as f:
-            f.write("x".join([str(vox) for vox in res_mm]) + "mm")
+    script:
+        "../scripts/metadata/write_nii_resolution_to_txt.py"
 
 
 # rules for creating reference image for each resampling scheme
@@ -205,7 +199,9 @@ rule create_cropped_ref_t1_resolution:
 
 rule create_cropped_ref_dwi_resolution:
     input:
-        cropped=rules.create_cropped_ref_t1_resolution.cropped,
+        cropped=(
+            rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample
+        ),
         res_txt=bids(
             root=work,
             datatype="dwi",
@@ -229,7 +225,7 @@ rule create_cropped_ref_dwi_resolution:
     group:
         "subj"
     shell:
-        "c3d {input.cropped} -resample-mm `cat {input.res_txt_orig}` {output}"
+        "c3d {input.cropped} -resample-mm `cat {input.res_txt}` {output}"
 
 
 rule create_cropped_ref_custom_resolution:
@@ -319,7 +315,7 @@ rule resample_brainmask_to_t1w:
             if config["gradcorrect_coeffs"]
             else {}
         ),
-        ref=rules.resample_dwi_t1w.input.ref,
+        ref=rules.resample_dwi_to_t1w.input.ref,
         brainmask=get_b0_mask(),
         xfm_itk=rules.convert_xfm_ras2itk.output.xfm_itk,
     params:

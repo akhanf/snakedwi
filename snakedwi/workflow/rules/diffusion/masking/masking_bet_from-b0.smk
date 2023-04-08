@@ -1,24 +1,7 @@
-rule import_avg_b0:
-    input:
-        dwiref=rules.cp_dwi_ref.output.dwi_ref,
-    output:
-        dwiref=bids(
-            root=work,
-            suffix="b0.nii.gz",
-            desc="dwiref",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-    group:
-        "subj"
-    shell:
-        "cp {input.dwiref} {output.dwiref}"
-
-
 # n4
 rule n4_avg_b0:
     input:
-        dwiref=rules.import_avg_b0.output.dwiref,
+        dwiref=rules.cp_dwi_ref.output.dwi_ref,
     output:
         n4_avgb0=bids(
             root=work,
@@ -57,7 +40,7 @@ rule rescale_avg_b0:
 
 rule bet_avg_b0:
     input:
-        rescale_b0=rules.rescale_avg_b0.rescale_b0,
+        rescale_b0=rules.rescale_avg_b0.output.rescale_b0,
     params:
         bet_frac=config["b0_bet_frac"],
     output:
@@ -78,7 +61,7 @@ rule bet_avg_b0:
 
 rule binarize_avg_b0:
     input:
-        rules.bet_avg_b0.output.b0_brain
+        rules.bet_avg_b0.output.b0_brain,
     output:
         mask=bids(
             root=work,

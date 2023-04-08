@@ -45,8 +45,9 @@ quality_check = [
     "flake8",
     "snakefmt-check",
 ]
-test_topup = { shell = "snakedwi snakedwi/test_data/bids_AP_PA test_out participant -np" }
-test = ["test_topup"]
+test_multishell_topup = { shell = "mkdir -p test_out/topup_multishell && snakedwi snakedwi/test_data/bids_AP_PA test_out/topup_multishell participant -np && rm -rf test_out/topup_multishell" }
+test_singleshell_topup = { shell = "mkdir -p test_out/topup_singleshell && snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell participant -np && rm -rf test_out/topup_singleshell" }
+test = ["test_multishell_topup", "test_singleshell_topup"]
 
 [tool.isort]
 profile = "black"

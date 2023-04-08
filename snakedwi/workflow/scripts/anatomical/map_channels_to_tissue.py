@@ -21,9 +21,9 @@ def compute_iou(
 
 
 def map_channels_to_tissue(
-    tissue_priors: List(str),
+    tissue_priors: List[str],
     seg_channels: str,
-    tissue_segs: List(str),
+    tissue_segs: List[str],
     mapping_json: str,
     smk_config: dict,
 ) -> None:

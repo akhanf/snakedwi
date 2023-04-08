@@ -202,7 +202,7 @@ def get_eddy_slspec_input(wildcards):
                 **subj_wildcards,
             )
         }
-        if s2v_is - enabled == "yes"
+        if s2v_is_enabled == "yes"
         else {}
     )
 

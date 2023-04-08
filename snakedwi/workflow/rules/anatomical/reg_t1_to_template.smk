@@ -235,7 +235,13 @@ rule mask_template_t1w:
 rule mask_subject_t1w:
     input:
         t1=rules.n4biasfield.output.t1,
-        mask=rules.brainmask_from_tissue.output.mask,
+        mask=bids(
+            root="work/seg_t1_brain_tissue",
+            **subj_wildcards,
+            suffix="mask.nii.gz",
+            from_="atropos3seg",
+            desc="brain"
+        ),
     output:
         t1=bids(
             root=work,
@@ -511,7 +517,14 @@ rule dilate_atlas_labels:
 rule resample_mask_to_dwi:
     input:
         mask=rules.warp_brainmask_from_template.output.mask,
-        ref=rules.avg_b0s_topup_jac.output.b0,
+        ref=bids(
+            root=work,
+            desc="topup",
+            datatype="dwi",
+            method="jac",
+            **subj_wildcards,
+            suffix="b0.nii.gz"
+        ),
     params:
         interpolation="NearestNeighbor",
     output:

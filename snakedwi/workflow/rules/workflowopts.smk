@@ -41,12 +41,8 @@ rule concat_subj_metadata:
         tsv=bids(root=root, suffix="metadata.tsv"),
     container:
         config["singularity"]["python"]
-    run:
-        import pandas as pd
-
-        pd.concat([pd.read_csv(tsv, sep="\t") for tsv in input.tsvs]).to_csv(
-            output.tsv, sep="\t", index=False
-        )
+    shell:
+        "../scripts/metadata/concat_subj_metadata.py"
 
 
 rule create_missing_subj_tsv:
@@ -57,16 +53,8 @@ rule create_missing_subj_tsv:
         tsv=bids(root=root, suffix="missing.tsv"),
     container:
         config["singularity"]["python"]
-    run:
-        import pandas as pd
-
-        df = pd.DataFrame()
-        df["participant_id"] = params.missing_subject_zip_list["subject"]
-
-        if "session" in params.missing_subject_zip_list:
-            df["session"] = params.missing_subject_zip_list["session"]
-
-        df.to_csv(output.tsv, sep="\t", index=False)
+    script:
+        "../scripts/metadata/create_missing_subj_tsv.py"
 
 
 def get_dwi_indices(all_dwi, wildcards):

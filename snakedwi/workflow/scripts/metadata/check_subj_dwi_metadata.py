@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import json
 import sys
-from typing import List, tuple
+from typing import List, Tuple
 
 import pandas as pd
-from snakemake.shell import shell  # CHECK
+from snakemake.shell import shell
 
 
 def check_eddy_s2v(
@@ -71,7 +71,7 @@ def check_echo_spacing(json_dwi: dict, default_echo_spacing: str) -> str:
 
 
 def get_pe_info(
-    json_dwi: dict, pe_axes: List(str), pe_dirs: List(str)
+    json_dwi: dict, pe_axes: List[str], pe_dirs: List[str]
 ) -> None:
     """Extract phase encoding information"""
     pe_axes.append(json_dwi["PhaseEncodingDirection"][0])
@@ -83,8 +83,8 @@ def get_pe_info(
 
 
 def get_pe_indices(
-    pe_axes: List(str), pe_dirs: List(str), json_files: List[str]
-) -> tuple(List(int), List(str), List(str)):
+    pe_axes: List[str], pe_dirs: List[str], json_files: List[str]
+) -> Tuple[List[int], List[str], List[str]]:
     """Extract indices to be used in processing"""
     # If multiple PE axes use LR/RL if available, otherwise AP otherwise
     if len(set(pe_axes)) > 1:
@@ -109,9 +109,9 @@ def get_pe_indices(
 
 def check_subj_dwi_metadata(
     json_files: List[str],
-    index_col: tuple(str, str),
+    index_col: Tuple[str, str],
     workflowopts: str,
-    metadata: str,
+    metadata: dict,
     smk_config: dict,
 ) -> None:
     bool_map = {True: "yes", False: "no"}
@@ -128,7 +128,7 @@ def check_subj_dwi_metadata(
         # Slice-to-volume
         check_eddy_s2v(
             eddy_s2v=eddy_s2v,
-            slspec_txt=smk_config["slspec_txt"],
+            slspec_txt=slspec_txt,
             has_slice_timing=has_slice_timing,
             json_dwi=json_dwi,
             json_file=json_file,
@@ -153,6 +153,7 @@ def check_subj_dwi_metadata(
     )
 
     # Write workflow opts (as workflow trigger):
+    shell(f"mkdir -p {workflowopts}")
     # Indices
     write_indices = ",".join([f"{idx}" for idx in use_indices])
     shell(f"touch {workflowopts}/indices-{write_indices}")
@@ -164,7 +165,7 @@ def check_subj_dwi_metadata(
     shell(f"touch {workflowopts}/PEaxis-{pe_axes[0]}")
 
     # Write metadata dict
-    metadata = {
+    metadata_dict = {
         index_col[0]: [index_col[1]],
         "has_slice_timing": [bool_map[has_slice_timing]],
         "pedirs": [
@@ -173,13 +174,13 @@ def check_subj_dwi_metadata(
             )
         ],
     }
-    df = pd.DataFrame.from_dict(metadata)
+    df = pd.DataFrame.from_dict(metadata_dict)
     df.to_csv(metadata, sep="\t", index=False)
 
 
 if __name__ == "__main__":
     check_subj_dwi_metadata(
-        json_files=snakemake.input.dwi.jsons,  # noqa: F821
+        json_files=snakemake.input.dwi_jsons,  # noqa: F821
         index_col=(
             snakemake.params.index_col_value,  # noqa: F821
             snakemake.params.index_col_name,  # noqa: F821
