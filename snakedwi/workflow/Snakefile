@@ -1,6 +1,6 @@
 configfile: "config/snakebids.yml"
 
-# Workflow setup rules
+# Workflow setup
 include: "rules/setup.smk"
 include: "rules/common.smk"
 include: "rules/workflowopts.smk"
@@ -8,29 +8,29 @@ include: "rules/workflowopts.smk"
 include: "rules/anatomical/anatomical.smk"
 include: "rules/anatomical/reg_t1_to_template.smk"
 include: "rules/anatomical/seg_t1_brain_tissue.smk"
-# Pre-SDC rules
+# Pre-SDC
 include: "rules/diffusion/prepdwi.smk"
 include: "rules/diffusion/motioncorr.smk"
-# B0 Masking rules
+# B0 Masking
 include: "rules/diffusion/masking/masking_bet_from-b0.smk"
 include: "rules/diffusion/masking/masking_b0_to_template.smk"
 include: "rules/diffusion/masking/masking_b0_synthstrip.smk"
-# SDC rules
+# SDC
 include: "rules/gradcorrect.smk"
 include: "rules/sdc.smk"
 include: "rules/diffusion/sdc/topup.smk"
 include: "rules/diffusion/sdc/sdcflows.smk"
 include: "rules/diffusion/sdc/synthsr.smk
+# Post-SDC
+include: "rules/diffusion/eddy.smk"
 # Registration
 include: "rules/diffusion/reg_dwi_to_t1.smk"
 
-include: "rules/eddy.smk"
 include: "rules/bedpost.smk"
 # Currently unused
 # include: rules/other.smk
 # include: rules/templateflow.smk
 # include: rules/visqc.smk
-
 
 
 # Incompatible config options

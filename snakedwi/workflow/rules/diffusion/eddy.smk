@@ -27,10 +27,11 @@ rule get_eddy_index_txt:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/get_eddy_index_txt.py"
+        "../scripts/diffusion/eddy/get_eddy_index_txt.py"
 
 
-# if the --slspec_txt option is not used, use the SliceTiming json, otherwise just get from the file supplied at command-line
+# if the --slspec_txt option is not used, use the SliceTiming json,
+# otherwise just get from the file supplied at command-line
 if not config["slspec_txt"]:
 
     rule get_slspec_txt:
@@ -62,7 +63,7 @@ if not config["slspec_txt"]:
         container:
             config["singularity"]["python"]
         script:
-            "../scripts/get_slspec_txt.py"
+            "../scripts/diffusion/eddy/get_slspec_txt.py"
 
 
 else:
@@ -85,10 +86,10 @@ else:
 
 
 def get_eddy_topup_fmap_input(wildcards):
-
     method = get_sdc_method(wildcards)
     num_scans = get_dwi_num_scans(wildcards)
 
+    # Topup
     if num_scans > 1 and method == "topup":
         return {
             "topup_fieldcoef": bids(
@@ -104,6 +105,7 @@ def get_eddy_topup_fmap_input(wildcards):
                 **subj_wildcards,
             ).format(**wildcards),
         }
+    # SynthSR
     elif method == "synthsr":
         return {
             "fmap": bids(
@@ -115,6 +117,7 @@ def get_eddy_topup_fmap_input(wildcards):
                 **subj_wildcards,
             ).format(**wildcards)
         }
+    # SDCFlow Syn
     elif method == "syn":
         return {
             "fmap": bids(
@@ -126,20 +129,21 @@ def get_eddy_topup_fmap_input(wildcards):
                 **subj_wildcards,
             ).format(**wildcards)
         }
+    # None
     else:
         return {}
 
 
 def get_eddy_topup_fmap_opt(wildcards, input):
-
     method = get_sdc_method(wildcards)
     num_scans = get_dwi_num_scans(wildcards)
-
+    # Topup
     if num_scans > 1 and method == "topup":
         topup_prefix = bids(
             root=work, suffix="topup", datatype="dwi", **subj_wildcards
         ).format(**wildcards)
         return f"--topup={topup_prefix}"
+    # SynthSR
     elif method == "synthsr":
         fmap_prefix = bids(
             root=work,
@@ -150,7 +154,7 @@ def get_eddy_topup_fmap_opt(wildcards, input):
             **subj_wildcards,
         ).format(**wildcards)
         return f"--field={fmap_prefix}"
-
+    # SDCFlow Syn
     elif method == "syn":
         fmap_prefix = bids(
             root=work,
@@ -166,7 +170,6 @@ def get_eddy_topup_fmap_opt(wildcards, input):
 
 
 def get_eddy_s2v_opts(wildcards, input):
-
     s2v_is_enabled = get_enable_s2v(wildcards)
 
     options = []
@@ -187,11 +190,10 @@ def get_eddy_s2v_opts(wildcards, input):
 
 
 def get_eddy_slspec_input(wildcards):
-
     s2v_is_enabled = get_enable_s2v(wildcards)
 
-    if s2v_is_enabled == "yes":
-        return {
+    return (
+        {
             "eddy_slspec_txt": bids(
                 root=work,
                 suffix="dwi.eddy_slspec.txt",
@@ -200,19 +202,17 @@ def get_eddy_slspec_input(wildcards):
                 **subj_wildcards,
             )
         }
-
-    else:
-        return {}
+        if s2v_is - enabled == "yes"
+        else {}
+    )
 
 
 def get_eddy_slspec_opt(wildcards, input):
-
     s2v_is_enabled = get_enable_s2v(wildcards)
 
-    if s2v_is_enabled == "yes":
-        return f"--slspec={input.eddy_slspec_txt}"
-    else:
-        return ""
+    return (
+        f"--slspec={input.eddy_slspec_txt}" if s2v_is_enabled == "yes" else ""
+    )
 
 
 if config["use_eddy_gpu"]:
@@ -221,27 +221,9 @@ if config["use_eddy_gpu"]:
         input:
             unpack(get_eddy_slspec_input),
             unpack(get_eddy_topup_fmap_input),
-            dwi_concat=bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="degibbs",
-                datatype="dwi",
-                **subj_wildcards
-            ),
-            phenc_concat=bids(
-                root=work,
-                suffix="phenc.txt",
-                desc="degibbs",
-                datatype="dwi",
-                **subj_wildcards
-            ),
-            eddy_index_txt=bids(
-                root=work,
-                suffix="dwi.eddy_index.txt",
-                desc="degibbs",
-                datatype="dwi",
-                **subj_wildcards
-            ),
+            dwi_concat=rules.concat_degibbs_dwi.output.dwi_concat,
+            phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
+            eddy_index_txt=rules.get_eddy_index_txt.output.eddy_index_txt,
             brainmask=get_b0_mask(),
             bvals=bids(
                 root=work,
@@ -259,7 +241,9 @@ if config["use_eddy_gpu"]:
             ),
         params:
             #set eddy output prefix to 'dwi' inside the output folder
-            out_prefix=lambda wildcards, output: os.path.join(output.out_folder, "dwi"),
+            out_prefix=lambda wildcards, output: (
+                os.path.join(output.out_folder, "dwi")
+            ),
             flags=" ".join(
                 [
                     f"--{key}"
@@ -274,14 +258,20 @@ if config["use_eddy_gpu"]:
         output:
             #eddy creates many files, so write them to a eddy subfolder instead
             out_folder=directory(
-                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards)
+                bids(
+                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
+                )
             ),
             dwi=os.path.join(
-                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+                bids(
+                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
+                ),
                 "dwi.nii.gz",
             ),
             bvec=os.path.join(
-                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+                bids(
+                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
+                ),
                 "dwi.eddy_rotated_bvecs",
             ),
         threads: 16  #this needs to be set in order to avoid multiple gpus from executing
@@ -292,14 +282,15 @@ if config["use_eddy_gpu"]:
         group:
             "subj"
         shell:
-            "singularity exec --nv --home $PWD -e {params.container} eddy_cuda9.1 "
-            " --imain={input.dwi_concat} --mask={input.brainmask} "
-            " --acqp={input.phenc_concat} --index={input.eddy_index_txt} "
-            " --bvecs={input.bvecs} --bvals={input.bvals} "
-            " --out={params.out_prefix} "
-            " {params.s2v_opts} "
-            " {params.slspec_opt} "
-            " {params.topup_opt} "
+            "singularity exec --nv --home $PWD"
+            " -e {params.container} eddy_cuda9.1"
+            " --imain={input.dwi_concat} --mask={input.brainmask}"
+            " --acqp={input.phenc_concat} --index={input.eddy_index_txt}"
+            " --bvecs={input.bvecs} --bvals={input.bvals}"
+            " --out={params.out_prefix}"
+            " {params.s2v_opts}"
+            " {params.slspec_opt}"
+            " {params.topup_opt}"
             " {params.flags}"
 
 
@@ -309,27 +300,9 @@ else:
         input:
             unpack(get_eddy_slspec_input),
             unpack(get_eddy_topup_fmap_input),
-            dwi_concat=bids(
-                root=work,
-                suffix="dwi.nii.gz",
-                desc="degibbs",
-                datatype="dwi",
-                **subj_wildcards
-            ),
-            phenc_concat=bids(
-                root=work,
-                suffix="phenc.txt",
-                desc="degibbs",
-                datatype="dwi",
-                **subj_wildcards
-            ),
-            eddy_index_txt=bids(
-                root=work,
-                suffix="dwi.eddy_index.txt",
-                desc="degibbs",
-                datatype="dwi",
-                **subj_wildcards
-            ),
+            dwi_concat=rules.concat_degibbs_dwi.output.dwi_concat,
+            phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
+            eddy_index_txt=rules.get_eddy_index_txt.output.eddy_index_txt,
             brainmask=get_b0_mask(),
             bvals=bids(
                 root=work,
@@ -347,7 +320,9 @@ else:
             ),
         params:
             #set eddy output prefix to 'dwi' inside the output folder
-            out_prefix=lambda wildcards, output: os.path.join(output.out_folder, "dwi"),
+            out_prefix=lambda wildcards, output: (
+                os.path.join(output.out_folder, "dwi")
+            ),
             flags=" ".join(
                 [
                     f"--{key}"
@@ -361,19 +336,25 @@ else:
         output:
             #eddy creates many files, so write them to a eddy subfolder instead
             out_folder=directory(
-                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards)
+                bids(
+                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
+                )
             ),
             dwi=os.path.join(
-                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+                bids(
+                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
+                ),
                 "dwi.nii.gz",
             ),
             bvec=os.path.join(
-                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+                bids(
+                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
+                ),
                 "dwi.eddy_rotated_bvecs",
             ),
-        threads: 16  #this needs to be set in order to avoid multiple gpus from executing
+        threads: 16  #needs to be set to avoid multiple gpus from executing
         resources:
-            time=360,  #6 hours (this is a conservative estimate, may be shorter)
+            time=360,  #6 hours (conservative estimate, may be shorter)
             mem_mb=32000,
         log:
             bids(root="logs", suffix="run_eddy.log", **subj_wildcards),
@@ -382,15 +363,15 @@ else:
         group:
             "subj"
         shell:
-            "eddy_openmp "
-            " --imain={input.dwi_concat} --mask={input.brainmask} "
-            " --acqp={input.phenc_concat} --index={input.eddy_index_txt} "
-            " --bvecs={input.bvecs} --bvals={input.bvals} "
-            " --out={params.out_prefix} "
-            " {params.s2v_opts} "
-            " {params.slspec_opt} "
-            " {params.topup_opt} "
-            " {params.flags}  &> {log}"
+            "eddy_openmp"
+            " --imain={input.dwi_concat} --mask={input.brainmask}"
+            " --acqp={input.phenc_concat} --index={input.eddy_index_txt}"
+            " --bvecs={input.bvecs} --bvals={input.bvals}"
+            " --out={params.out_prefix}"
+            " {params.s2v_opts}"
+            " {params.slspec_opt}"
+            " {params.topup_opt}"
+            " {params.flags} &> {log}"
 
 
 rule cp_eddy_outputs:
@@ -415,7 +396,11 @@ rule cp_eddy_outputs:
     output:
         multiext(
             bids(
-                root=root, suffix="dwi", desc="eddy", datatype="dwi", **subj_wildcards
+                root=root,
+                suffix="dwi",
+                desc="eddy",
+                datatype="dwi",
+                **subj_wildcards
             ),
             ".nii.gz",
             ".bvec",
@@ -440,20 +425,8 @@ rule cp_eddy_outputs:
 rule eddy_quad:
     input:
         unpack(get_eddy_slspec_input),
-        phenc_concat=bids(
-            root=work,
-            suffix="phenc.txt",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        ),
-        eddy_index_txt=bids(
-            root=work,
-            suffix="dwi.eddy_index.txt",
-            desc="degibbs",
-            datatype="dwi",
-            **subj_wildcards
-        ),
+        phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
+        eddy_index_txt=rules.get_eddy_index_txt.output.eddy_index_txt,
         brainmask=get_b0_mask(),
         bvals=bids(
             root=work,
@@ -469,9 +442,13 @@ rule eddy_quad:
             datatype="dwi",
             **subj_wildcards
         ),
-        eddy_dir=bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
+        eddy_dir=bids(
+            root=work, suffix="eddy", datatype="dwi", **subj_wildcards
+        ),
     params:
-        eddy_prefix=lambda wildcards, input: os.path.join(input.eddy_dir, "dwi"),
+        eddy_prefix=lambda wildcards, input: (
+            os.path.join(input.eddy_dir, "dwi")
+        ),
         slspec_opt=get_eddy_slspec_opt,
     output:
         out_dir=directory(
@@ -486,6 +463,6 @@ rule eddy_quad:
         "subj"
     shell:
         "rmdir {output.out_dir} && "
-        "eddy_quad {params.eddy_prefix} -idx {input.eddy_index_txt} -par {input.phenc_concat} "
-        " -m {input.brainmask} -b {input.bvals} -g {input.bvecs} -o {output.out_dir} "
-        " {params.slspec_opt} -v"
+        "eddy_quad {params.eddy_prefix} -idx {input.eddy_index_txt} "
+        "-par {input.phenc_concat} -m {input.brainmask} -b {input.bvals} "
+        "-g {input.bvecs} -o {output.out_dir} {params.slspec_opt} -v"
