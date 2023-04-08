@@ -437,13 +437,7 @@ def get_b0_mask():
 
 rule qc_b0_brainmask:
     input:
-        img=bids(
-            root=work,
-            suffix="b0.nii.gz",
-            desc="dwiref",
-            datatype="dwi",
-            **subj_wildcards
-        ),
+        img=rules.cp_dwi_ref.output.dwi_ref,
         seg=get_b0_mask(),
     output:
         png=report(
