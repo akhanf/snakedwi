@@ -1,15 +1,6 @@
-
-
-
 rule affine_to_template:
     input:
-        flo=bids(
-            root=root,
-            suffix="T1w.nii.gz",
-            desc="preproc",
-            datatype="anat",
-            **subj_wildcards
-        ),
+        flo=rules.n4_t1_withmask.output.t1,
         ref=lambda wildcards: os.path.join(
             workflow.basedir, "..", config["template_t1w"]
         ).format(**wildcards),
@@ -44,7 +35,8 @@ rule affine_to_template:
     group:
         "subj"
     shell:
-        "reg_aladin -flo {input.flo} -ref {input.ref} -res {output.warped_subj} -aff {output.xfm_ras} > {log}"
+        "reg_aladin -flo {input.flo} -ref {input.ref} "
+        "-res {output.warped_subj} -aff {output.xfm_ras} > {log}"
 
 
 rule convert_template_xfm_ras2itk:
@@ -75,7 +67,7 @@ rule convert_template_xfm_ras2itk:
     group:
         "subj"
     shell:
-        "c3d_affine_tool {input}  -oitk {output}"
+        "c3d_affine_tool {input} -oitk {output}"
 
 
 rule invert_subj_to_template_xfm:
@@ -114,7 +106,9 @@ rule warp_brainmask_from_template_affine:
         mask=lambda wildcards: workflow.source_path(
             os.path.join("..", "..", config["template_mask"])
         ).format(**wildcards),
-        ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        ref=bids(
+            root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"
+        ),
         xfm=bids(
             root=root,
             datatype="transforms",
@@ -149,7 +143,7 @@ rule warp_tissue_probseg_from_template_affine:
         probseg=lambda wildcards: workflow.source_path(
             os.path.join("..", "..", config["template_tissue_probseg"])
         ).format(**wildcards),
-        ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        ref=rules.import_t1.output.nii,
         xfm=bids(
             root=root,
             datatype="transforms",
@@ -179,13 +173,14 @@ rule warp_tissue_probseg_from_template_affine:
         mem_mb=16000,
     shell:
         "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} "
-        "antsApplyTransforms -d 3 --interpolation Linear -i {input.probseg} -o {output.probseg} -r {input.ref} "
-        " -t [{input.xfm},1]"
+        "antsApplyTransforms -d 3 --interpolation Linear "
+        "-i {input.probseg} -o {output.probseg} -r {input.ref} "
+        "-t [{input.xfm},1]"
 
 
 rule n4biasfield:
     input:
-        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        t1=rules.import_t1.output.nii,
         mask=bids(
             root=work,
             datatype="anat",
@@ -239,20 +234,8 @@ rule mask_template_t1w:
 
 rule mask_subject_t1w:
     input:
-        t1=bids(
-            root=work,
-            datatype="anat",
-            **subj_wildcards,
-            desc="n4",
-            suffix="T1w.nii.gz"
-        ),
-        mask=bids(
-            root="work/seg_t1_brain_tissue",
-            **subj_wildcards,
-            suffix="mask.nii.gz",
-            from_="atropos3seg",
-            desc="brain"
-        ),
+        t1=rules.n4biasfield.output.t1,
+        mask=rules.brainmask_from_tissue.output.mask,
     output:
         t1=bids(
             root=work,
@@ -272,21 +255,8 @@ rule mask_subject_t1w:
 
 rule ants_syn_affine_init:
     input:
-        flo=bids(
-            root=work,
-            datatype="anat",
-            **subj_wildcards,
-            suffix="T1w.nii.gz",
-            from_="atropos3seg",
-            desc="masked"
-        ),
-        ref=bids(
-            root=work,
-            datatype="anat",
-            prefix="tpl-{template}/tpl-{template}",
-            desc="masked",
-            suffix="T1w.nii.gz",
-        ),
+        flo=rules.mask_subject_t1w.output.t1,
+        ref=rules.mask_template_t1w.output.t1,
         init_xfm=bids(
             root=root,
             datatype="transforms",
@@ -310,24 +280,36 @@ rule ants_syn_affine_init:
             dim=config["ants"]["dim"]
         ),
         intensity_opts=config["ants"]["intensity_opts"],
-        init_transform=lambda wildcards, input: "-r {xfm}".format(xfm=input.init_xfm),
-        linear_multires="-c [{reg_iterations},1e-6,10] -f {shrink_factors} -s {smoothing_factors}".format(
+        init_transform=lambda wildcards, input: "-r {xfm}".format(
+            xfm=input.init_xfm
+        ),
+        linear_multires=(
+            "-c [{reg_iterations},1e-6,10] "
+            "-f {shrink_factors} "
+            "-s {smoothing_factors}"
+        ).format(
             reg_iterations=config["ants"]["linear"]["reg_iterations"],
             shrink_factors=config["ants"]["linear"]["shrink_factors"],
             smoothing_factors=config["ants"]["linear"]["smoothing_factors"],
         ),
-        linear_metric=lambda wildcards, input: "-m MI[{template},{target},1,32,Regular,0.25]".format(
-            template=input.ref, target=input.flo
-        ),
+        linear_metric=lambda wildcards, input: (
+            "-m MI[{template},{target},1,32,Regular,0.25]"
+        ).format(template=input.ref, target=input.flo),
         deform_model="-t {deform_model}".format(
             deform_model=config["ants"]["deform"]["transform_model"]
         ),
-        deform_multires="-c [{reg_iterations},1e-9,10] -f {shrink_factors} -s {smoothing_factors}".format(
+        deform_multires=(
+            "-c [{reg_iterations},1e-9,10] "
+            "-f {shrink_factors} "
+            "-s {smoothing_factors}"
+        ).format(
             reg_iterations=config["ants"]["deform"]["reg_iterations"],
             shrink_factors=config["ants"]["deform"]["shrink_factors"],
             smoothing_factors=config["ants"]["deform"]["smoothing_factors"],
         ),
-        deform_metric=lambda wildcards, input: "-m {metric}[{template},{target},1,4]".format(
+        deform_metric=lambda wildcards, input: (
+            "-m {metric}[{template},{target},1,4]"
+        ).format(
             metric=config["ants"]["deform"]["sim_metric"],
             template=input.ref,
             target=input.flo,
@@ -378,15 +360,8 @@ rule warp_dseg_from_template:
         dseg=lambda wildcards: workflow.source_path(
             os.path.join("..", "..", config["template_atlas_dseg"])
         ).format(**wildcards),
-        ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
-        inv_composite=bids(
-            root=work,
-            datatype="anat",
-            suffix="InverseComposite.h5",
-            from_="subject",
-            to="{template}",
-            **subj_wildcards
-        ),
+        ref=rules.import_t1.output.nii,
+        inv_composite=rules.ants_syn_affine_init.output.out_inv_composite,
     output:
         dseg=bids(
             root=work,
@@ -407,8 +382,9 @@ rule warp_dseg_from_template:
     shell:
         #use inverse xfm (going from template to subject)
         "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} "
-        "antsApplyTransforms -d 3 --interpolation NearestNeighbor -i {input.dseg} -o {output.dseg} -r {input.ref} "
-        " -t {input.inv_composite} "
+        "antsApplyTransforms -d 3 --interpolation NearestNeighbor "
+        "-i {input.dseg} -o {output.dseg} -r {input.ref} "
+        "-t {input.inv_composite} "
 
 
 rule warp_tissue_probseg_from_template:
@@ -416,15 +392,8 @@ rule warp_tissue_probseg_from_template:
         probseg=lambda wildcards: workflow.source_path(
             os.path.join("..", "..", config["template_tissue_probseg"])
         ).format(**wildcards),
-        ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
-        inv_composite=bids(
-            root=work,
-            datatype="anat",
-            suffix="InverseComposite.h5",
-            from_="subject",
-            to="{template}",
-            **subj_wildcards
-        ),
+        ref=rules.import_t1.output.nii,
+        inv_composite=rules.ants_syn_affine_init.output.out_inv_composite,
     output:
         probseg=bids(
             root=work,
@@ -445,8 +414,9 @@ rule warp_tissue_probseg_from_template:
     shell:
         #use inverse xfm (going from template to subject)
         "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} "
-        "antsApplyTransforms -d 3 --interpolation Linear -i {input.probseg} -o {output.probseg} -r {input.ref} "
-        " -t {input.inv_composite} "
+        "antsApplyTransforms -d 3 --interpolation Linear "
+        "-i {input.probseg} -o {output.probseg} -r {input.ref} "
+        "-t {input.inv_composite} "
 
 
 rule warp_brainmask_from_template:
@@ -454,15 +424,8 @@ rule warp_brainmask_from_template:
         mask=lambda wildcards: workflow.source_path(
             os.path.join("..", "..", config["template_mask"])
         ).format(**wildcards),
-        ref=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
-        inv_composite=bids(
-            root=work,
-            datatype="anat",
-            suffix="InverseComposite.h5",
-            from_="subject",
-            to="{template}",
-            **subj_wildcards
-        ),
+        ref=rules.import_t1.output.nii,
+        inv_composite=rules.ants_syn_affine_init.output.out_inv_composite,
     output:
         mask=bids(
             root=work,
@@ -483,8 +446,9 @@ rule warp_brainmask_from_template:
     shell:
         #use inverse xfm (going from template to subject)
         "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS={threads} "
-        "antsApplyTransforms -d 3 --interpolation NearestNeighbor -i {input.mask} -o {output.mask} -r {input.ref} "
-        " -t {input.inv_composite} "
+        "antsApplyTransforms -d 3 --interpolation NearestNeighbor "
+        "-i {input.mask} -o {output.mask} -r {input.ref} "
+        "-t {input.inv_composite} "
 
 
 rule dilate_brainmask:
@@ -499,7 +463,9 @@ rule dilate_brainmask:
             desc="brain"
         ),
     params:
-        dil_opt=" ".join(["-dilD" for i in range(config["n_init_mask_dilate"])]),
+        dil_opt=" ".join(
+            ["-dilD" for i in range(config["n_init_mask_dilate"])]
+        ),
     output:
         mask=bids(
             root=work,
@@ -518,17 +484,10 @@ rule dilate_brainmask:
         "fslmaths {input} {params.dil_opt} {output}"
 
 
-# dilate labels N times to provide more of a fudge factor when assigning GM labels
+# dilate labels N times to provide more fudge factor when assigning GM labels
 rule dilate_atlas_labels:
     input:
-        dseg=bids(
-            root=work,
-            datatype="anat",
-            **subj_wildcards,
-            suffix="dseg.nii.gz",
-            atlas="{atlas}",
-            from_="{template}"
-        ),
+        dseg=rules.warp_dseg_from_template.output.dseg,
     params:
         dil_opt=" ".join(["-dilD" for i in range(config["n_atlas_dilate"])]),
     output:
@@ -551,23 +510,8 @@ rule dilate_atlas_labels:
 
 rule resample_mask_to_dwi:
     input:
-        mask=bids(
-            root=work,
-            datatype="anat",
-            **subj_wildcards,
-            suffix="mask.nii.gz",
-            from_="{template}",
-            reg="SyN",
-            desc="brain"
-        ),
-        ref=bids(
-            root=work,
-            desc="topup",
-            datatype="dwi",
-            method="jac",
-            **subj_wildcards,
-            suffix="b0.nii.gz"
-        ),
+        mask=rules.warp_brainmask_from_template.output.mask,
+        ref=rules.avg_b0s_topup_jac.output.b0,
     params:
         interpolation="NearestNeighbor",
     output:
@@ -586,4 +530,7 @@ rule resample_mask_to_dwi:
     group:
         "subj"
     shell:
-        "antsApplyTransforms -d 3 --input-image-type 0 --input {input.mask} --reference-image {input.ref}  --interpolation {params.interpolation} --output {output.mask} --verbose"
+        "antsApplyTransforms -d 3 --input-image-type 0 "
+        "--input {input.mask} --reference-image {input.ref} "
+        "--interpolation {params.interpolation} --output {output.mask} "
+        "--verbose"

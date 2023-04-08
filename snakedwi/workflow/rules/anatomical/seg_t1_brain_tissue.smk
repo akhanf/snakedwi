@@ -11,18 +11,18 @@ rule tissue_seg_kmeans_init:
         t1=bids(
             root=work,
             datatype="reg_t1_to_template",
-            **subj_wildcards,
             desc="n4",
-            suffix="T1w.nii.gz"
+            suffix="T1w.nii.gz",
+            **subj_wildcards,
         ),
         mask=bids(
             root=work,
             datatype="reg_t1_to_template",
-            **subj_wildcards,
-            suffix="mask.nii.gz",
             from_="{template}".format(template=config["template"]),
             reg="affine",
-            desc="braindilated"
+            desc="braindilated",
+            suffix="mask.nii.gz",
+            **subj_wildcards,
         ),
     params:
         k=get_k_tissue_classes,
@@ -50,8 +50,10 @@ rule tissue_seg_kmeans_init:
     group:
         "subj"
     shell:
-        #merge posteriors into a 4d file (intermediate files will be removed b/c shadow)
-        "Atropos -d 3 -a {input.t1} -i KMeans[{params.k}] -x {input.mask} -o [{output.seg},{params.posterior_fmt}] && "
+        #merge posteriors into a 4d file 
+        #(intermediate files will be removed b/c shadow)
+        "Atropos -d 3 -a {input.t1} -i KMeans[{params.k}] -x {input.mask} "
+        "-o [{output.seg},{params.posterior_fmt}] && "
         "fslmerge -t {output.posteriors} {params.posterior_glob} "
 
 
@@ -69,13 +71,7 @@ rule map_channels_to_tissue:
             tissue=config["tissue_labels"],
             allow_missing=True,
         ),
-        seg_channels_4d=bids(
-            root=work,
-            datatype="seg_t1_brain_tissue",
-            **subj_wildcards,
-            suffix="probseg.nii.gz",
-            desc="atroposKseg"
-        ),
+        seg_channels_4d=rules.tissue_seg_kmeans_init.output.posteriors,
     output:
         mapping_json=bids(
             root=work,
@@ -101,23 +97,12 @@ rule map_channels_to_tissue:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/map_channels_to_tissue.py"
+        "../scripts/anatomical/map_channels_to_tissue.py"
 
 
 rule tissue_seg_to_4d:
     input:
-        tissue_segs=expand(
-            bids(
-                root=work,
-                datatype="seg_t1_brain_tissue",
-                **subj_wildcards,
-                suffix="probseg.nii.gz",
-                label="{tissue}",
-                desc="atropos3seg"
-            ),
-            tissue=config["tissue_labels"],
-            allow_missing=True,
-        ),
+        tissue_segs=rules.map_channels_to_tissue.output.tissue_segs,
     output:
         tissue_seg=bids(
             root=work,
@@ -136,13 +121,7 @@ rule tissue_seg_to_4d:
 
 rule brainmask_from_tissue:
     input:
-        tissue_seg=bids(
-            root=work,
-            datatype="seg_t1_brain_tissue",
-            **subj_wildcards,
-            suffix="probseg.nii.gz",
-            desc="atropos3seg"
-        ),
+        tissue_seg=rules.tissue_seg_to_4d.output.tissue_seg,
     params:
         threshold=0.5,
     output:
@@ -163,4 +142,5 @@ rule brainmask_from_tissue:
         "fslmaths {input} -Tmax -thr {params.threshold} -bin -fillh {output}"
 
 
-# TODO: make lesion mask from the holes in the brainmask (instead of just filling them..) -- could be a nice way to exclude contrast enhanced vessels
+# TODO: make lesion mask from holes in the brainmask (instead filling them.)
+# could be a nice way to exclude contrast enhanced vessels
