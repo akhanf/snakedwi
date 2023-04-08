@@ -45,25 +45,12 @@ rule all:
         **get_eddy_quad_all(),
         **get_bedpost_all(),
         mask_qc=expand(
-            bids(
-                root=root,
-                datatype="qc",
-                suffix="mask.png",
-                desc="brain",
-                **subj_wildcards
-            ),
+            rules.qc_b0_brainmask.output.png,
             zip,
             **subj_zip_list
         ),
         reg_qc=expand(
-            bids(
-                root=root,
-                datatype="qc",
-                suffix="reg.png",
-                from_="dwiref",
-                to="T1w",
-                **subj_wildcards
-            ),
+            rules.qc_reg_dwi_t1.output.png,
             zip,
             **subj_zip_list
         ),
@@ -84,5 +71,5 @@ rule all:
 
 rule all_metacheck:
     input:
-        missing_subj_tsv=bids(root=root, suffix="missing.tsv"),
-        metadata_subj_tsv=bids(root=root, suffix="metadata.tsv"),
+        missing_subj_tsv=rules.create_missing_subj_tsv.output.tsv,
+        metadata_subj_tsv=rules.concat_subj_metadata.output.tsv,
