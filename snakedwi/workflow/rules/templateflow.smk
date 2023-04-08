@@ -6,5 +6,10 @@ rule get_templateflow_files:
         mask=config["template_mask"],
     container:
         config["singularity"]["python"]
-    script:
-        "../scripts/get_templates.py"
+    run:
+        import os
+
+        from templateflow import api as tflow
+
+        os.environ["TEMPLATEFLOW_HOME"] = params.templateflow_home
+        str(tflow.get(wildcards.template))
