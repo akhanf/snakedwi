@@ -1,5 +1,10 @@
 from pathlib import Path
-from snakebids import bids, generate_inputs, filter_list, get_wildcard_constraints
+from snakebids import (
+    bids,
+    generate_inputs,
+    filter_list,
+    get_wildcard_constraints,
+)
 
 # from snakeboost import PipEnv
 

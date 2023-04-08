@@ -84,6 +84,23 @@ parse_args:
           participants can be specified with a space separated list.
     nargs: '+'
 
+  # B0 masking options
+  --masking_method:
+    help: 'Brain masking method to use for b0 (default: %(default)s)'
+    nargs: '?'
+    choices: 
+      - 'b0_BET'
+      - 'b0_SyN'
+      - 'b0_synthstrip'
+    default: 'b0_synthstrip'
+
+  --skip_denoise:
+    help: 'Skip the denoising step of the workflow. By default, denoising is 
+          performed if input diffusion data was acquired with at least 30 
+          drections. (default: %(default)s)'
+    action: 'store_true'
+    default: False 
+
   # SDC Options
   --sdc_method:
     help: 'Set the susceptibility distortion correction (SDC) method to be used. 
@@ -152,15 +169,6 @@ parse_args:
     action: 'store_true'
     default: False
 
-  --masking_method:
-    help: 'Brain masking method to use (default: %(default)s)'
-    nargs: '?'
-    choices: 
-      - 'b0_BET'
-      - 'b0_SyN'
-      - 'b0_synthstrip'
-    default: 'b0_synthstrip'
-
   --b0_bet_frac:
     help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
     default: 0.5
@@ -196,6 +204,7 @@ parse_args:
 #---- to update below this
 
 singularity:
+  python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'
   prepdwi: 'docker://khanlab/prepdwi:latest' 
   mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'
   fsl: 'docker://brainlife/fsl:6.0.4-patched2' 
@@ -205,7 +214,6 @@ singularity:
   itksnap: 'docker://khanlab/itksnap:latest' 
   ants: 'docker://kaczmarj/ants:2.3.4'  
   niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
-  python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'  
   synthstrip: 'docker://freesurfer/synthstrip:1.3'
   sdcflows: 'docker://nipreps/fmriprep:22.1.1' #can't currently just use sdcflows docker as it is missing freesurfer's mri_robust_template
   gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'

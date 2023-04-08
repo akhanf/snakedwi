@@ -155,6 +155,16 @@ rule avg_b0s_topup_jac:
         "mrcat {input} b0_concat.nii && "
         "mrmath b0_concat.nii mean {output} -axis 3"
 
+def get_b0_init_mask():
+    return bids(
+        root=work,
+        suffix="mask.nii.gz",
+        desc="brain",
+        method="synthstrip",
+        from_="mocob0",
+        datatype="dwi",
+        **subj_wildcards,
+    )
 
 rule syn_sdc:
     input:

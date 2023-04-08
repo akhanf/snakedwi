@@ -22,7 +22,12 @@ rule import_dwi:
 rule dwidenoise:
     input:
         multiext(
-            bids(root=work, suffix="dwi", datatype="dwi", **input_wildcards["dwi"]),
+            bids(
+                root=work,
+                suffix="dwi",
+                datatype="dwi",
+                **input_wildcards["dwi"]
+            ),
             ".nii.gz",
             ".bvec",
             ".bval",
@@ -56,17 +61,23 @@ rule dwidenoise:
 
 
 def get_degibbs_inputs(wildcards):
-    # if input dwi at least 30 dirs, then grab denoised as input
-    # else grab without denoising
+    # Denoise as input if at least 30 dirs or not skipped
     import numpy as np
 
-    in_dwi_bval = re.sub(".nii.gz", ".bval", input_path["dwi"].format(**wildcards))
+    in_dwi_bval = re.sub(
+        ".nii.gz", ".bval", input_path["dwi"].format(**wildcards)
+    )
     bvals = np.loadtxt(in_dwi_bval)
-    if bvals.size < 30:
+
+    if bvals.size < 30 or config["skip_denoise"]:
         prefix = bids(root=work, suffix="dwi", datatype="dwi", **wildcards)
     else:
         prefix = bids(
-            root=work, suffix="dwi", datatype="dwi", desc="denoise", **wildcards
+            root=work,
+            suffix="dwi",
+            datatype="dwi",
+            desc="denoise",
+            **wildcards
         )
     return multiext(prefix, ".nii.gz", ".bvec", ".bval", ".json")
 
@@ -101,71 +112,8 @@ rule mrdegibbs:
         "cp {input[3]} {output[3]}"
 
 
-# now have nii with just the b0's, want to create the topup phase-encoding text files for each one:
-rule get_phase_encode_txt:
-    input:
-        bzero_nii=bids(
-            root=work,
-            suffix="b0.nii.gz",
-            datatype="dwi",
-            desc="degibbs",
-            **input_wildcards["dwi"]
-        ),
-        json=bids(
-            root=work,
-            suffix="dwi.json",
-            datatype="dwi",
-            desc="degibbs",
-            **input_wildcards["dwi"]
-        ),
-    output:
-        phenc_txt=bids(
-            root=work,
-            suffix="phenc.txt",
-            datatype="dwi",
-            desc="degibbs",
-            **input_wildcards["dwi"]
-        ),
-    group:
-        "subj"
-    container:
-        config["singularity"]["python"]
-    script:
-        "../scripts/get_phase_encode_txt.py"
-
-
-rule concat_phase_encode_txt:
-    input:
-        phenc_txts=lambda wildcards: get_dwi_indices(
-            expand(
-                bids(
-                    root=work,
-                    suffix="phenc.txt",
-                    datatype="dwi",
-                    desc="degibbs",
-                    **input_wildcards["dwi"]
-                ),
-                zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
-            ),
-            wildcards,
-        ),
-    output:
-        phenc_concat=bids(
-            root=work,
-            suffix="phenc.txt",
-            datatype="dwi",
-            desc="degibbs",
-            **subj_wildcards
-        ),
-    group:
-        "subj"
-    shell:
-        "cat {input} > {output}"
-
-
-# function for either concatenating (if multiple inputs) or copying
 def get_concat_or_cp_cmd(wildcards, input, output):
+    """Concatenate (if multiple inputs) or copy"""
     if len(input) > 1:
         cmd = f"mrcat {input} {output}"
     elif len(input) == 1:
@@ -174,42 +122,6 @@ def get_concat_or_cp_cmd(wildcards, input, output):
         # no inputs
         cmd = None
     return cmd
-
-
-rule concat_bzeros:
-    input:
-        bzero_niis=lambda wildcards: get_dwi_indices(
-            expand(
-                bids(
-                    root=work,
-                    suffix="b0.nii.gz",
-                    datatype="dwi",
-                    desc="degibbs",
-                    **input_wildcards["dwi"]
-                ),
-                zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
-            ),
-            wildcards,
-        ),
-    params:
-        cmd=get_concat_or_cp_cmd,
-    output:
-        bzero_concat=bids(
-            root=work,
-            suffix="concatb0.nii.gz",
-            datatype="dwi",
-            desc="degibbs",
-            **subj_wildcards
-        ),
-    container:
-        config["singularity"]["mrtrix"]
-    log:
-        bids(root="logs", suffix="concat_bzeros.log", **subj_wildcards),
-    group:
-        "subj"
-    shell:
-        "{params.cmd} 2> {log}"
 
 
 rule concat_degibbs_dwi:
@@ -250,7 +162,7 @@ rule concat_degibbs_dwi:
 
 rule concat_runs_bvec:
     input:
-        lambda wildcards: get_dwi_indices(
+        bv_files=lambda wildcards: get_dwi_indices(
             expand(
                 bids(
                     root=work,
@@ -265,7 +177,7 @@ rule concat_runs_bvec:
             wildcards,
         ),
     output:
-        bids(
+        out_fname=bids(
             root=work,
             suffix="dwi.bvec",
             desc="{desc}",
@@ -277,12 +189,12 @@ rule concat_runs_bvec:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/concat_bv.py"
+        "../scripts/diffusion/concat_bv.py"
 
 
 rule concat_runs_bval:
     input:
-        lambda wildcards: get_dwi_indices(
+        bv_files=lambda wildcards: get_dwi_indices(
             expand(
                 bids(
                     root=work,
@@ -297,7 +209,7 @@ rule concat_runs_bval:
             wildcards,
         ),
     output:
-        bids(
+        out_fname=bids(
             root=work,
             suffix="dwi.bval",
             desc="{desc}",
@@ -309,13 +221,13 @@ rule concat_runs_bval:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/concat_bv.py"
+        "../scripts/diffusion/concat_bv.py"
 
 
-# combines json files from multiple scans -- for now as a hack just copying first json over..
+# Combine multiple json from multiple scans (currently only copying first)
 rule concat_runs_json:
     input:
-        lambda wildcards: get_dwi_indices(
+        jsons=lambda wildcards: get_dwi_indices(
             expand(
                 bids(
                     root=work,
@@ -330,7 +242,7 @@ rule concat_runs_json:
             wildcards,
         ),
     output:
-        bids(
+        json=bids(
             root=work,
             suffix="dwi.json",
             desc="{desc}",
@@ -340,26 +252,23 @@ rule concat_runs_json:
     group:
         "subj"
     shell:
-        "cp {input[0]} {output}"
-
-
-#    script: '../scripts/concat_json.py'
+        "cp {input.jsons[0]} {output.json}"
 
 
 rule get_shells_from_bvals:
     input:
-        "{dwi_prefix}.bval",
+        bval="{dwi_prefix}.bval",
     output:
-        "{dwi_prefix}.shells.json",
+        json="{dwi_prefix}.shells.json",
     group:
         "subj"
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/get_shells_from_bvals.py"
+        "../scripts/diffusion/get_shells_from_bvals.py"
 
 
-# writes 4d file
+# Write 4D dwi_file with average shells
 rule get_shell_avgs:
     input:
         dwi="{dwi_prefix}.nii.gz",
@@ -371,10 +280,10 @@ rule get_shell_avgs:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/get_shell_avgs.py"
+        "../scripts/diffusion/get_shell_avgs.py"
 
 
-# this gets a particular shell (can use to get b0)
+# Extract individual shell (e.g. B0)
 rule get_shell_avg:
     input:
         dwi="{dwi_prefix}_dwi.nii.gz",
@@ -388,10 +297,10 @@ rule get_shell_avg:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/get_shell_avg.py"
+        "../scripts/diffusion/get_shell_avg.py"
 
 
-# this gets vols from a a particular shell (can use to get b0s)
+# Extract vols from particular shell (e.g. B0)
 rule get_shell_vols:
     input:
         dwi="{dwi_prefix}_dwi.nii.gz",
@@ -399,47 +308,133 @@ rule get_shell_vols:
     params:
         bval="{shell}",
     output:
-        avgshell="{dwi_prefix}_b{shell}s.nii.gz",
+        shell_vols="{dwi_prefix}_b{shell}s.nii.gz",
     group:
         "subj"
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/get_shell_vols.py"
+        "../scripts/diffusion/get_shell_vols.py"
 
 
-def get_b0_init_mask():
-    return bids(
-        root=work,
-        suffix="mask.nii.gz",
-        desc="brain",
-        method="synthstrip",
-        from_="mocob0",
-        datatype="dwi",
-        **subj_wildcards,
-    )
+# now have nii with just the b0's, want to create the topup phase-encoding text files for each one:
+rule get_phase_encode_txt:
+    input:
+        bzero_nii=bids(
+            root=work,
+            suffix="b0.nii.gz",
+            datatype="dwi",
+            desc="degibbs",
+            **input_wildcards["dwi"]
+        ),
+        json=bids(
+            root=work,
+            suffix="dwi.json",
+            datatype="dwi",
+            desc="degibbs",
+            **input_wildcards["dwi"]
+        ),
+    output:
+        phenc_txt=bids(
+            root=work,
+            suffix="phenc.txt",
+            datatype="dwi",
+            desc="degibbs",
+            **input_wildcards["dwi"]
+        ),
+    group:
+        "subj"
+    container:
+        config["singularity"]["python"]
+    script:
+        "../scripts/diffusion/get_phase_encode_txt.py"
+
+
+rule concat_phase_encode_txt:
+    input:
+        phenc_txts=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="phenc.txt",
+                    datatype="dwi",
+                    desc="degibbs",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
+            ),
+            wildcards,
+        ),
+    output:
+        phenc_concat=bids(
+            root=work,
+            suffix="phenc.txt",
+            datatype="dwi",
+            desc="degibbs",
+            **subj_wildcards
+        ),
+    group:
+        "subj"
+    shell:
+        "cat {input} > {output}"
+
+
+rule concat_bzeros:
+    input:
+        bzero_niis=lambda wildcards: get_dwi_indices(
+            expand(
+                bids(
+                    root=work,
+                    suffix="b0.nii.gz",
+                    datatype="dwi",
+                    desc="degibbs",
+                    **input_wildcards["dwi"]
+                ),
+                zip,
+                **filter_list(input_zip_lists["dwi"], wildcards)
+            ),
+            wildcards,
+        ),
+    params:
+        cmd=get_concat_or_cp_cmd,
+    output:
+        bzero_concat=bids(
+            root=work,
+            suffix="concatb0.nii.gz",
+            datatype="dwi",
+            desc="degibbs",
+            **subj_wildcards
+        ),
+    container:
+        config["singularity"]["mrtrix"]
+    log:
+        bids(root="logs", suffix="concat_bzeros.log", **subj_wildcards),
+    group:
+        "subj"
+    shell:
+        "{params.cmd} 2> {log}"
 
 
 def get_b0_mask():
-    if config["masking_method"] == "b0_BET":
-        method = "bet_from-b0"
-    elif config["masking_method"] == "b0_SyN":
-        method = f"b0SyN_from-{config['template']}"
-    elif config["masking_method"] == "b0_synthstrip":
-        method = "synthstrip_from-dwirefb0"
+    # Method options
+    methods = {
+        "b0_BET": "bet_from-b0",
+        "b0_SyN": f"b0SyN_from-{config['template']}",
+        "b0_synthstrip": "synthstrip_from-dwirefb0",
+    }
 
-    # then get bids name of file
+    # Get BIDS name of file
     return bids(
         root=work,
         suffix="mask.nii.gz",
         desc="brain",
-        method=method,
+        method=methods.get(config["masking_method"]),
         datatype="dwi",
         **subj_wildcards,
     )
 
 
-# generate qc snapshot for brain  mask
 rule qc_b0_brainmask:
     input:
         img=bids(
@@ -474,4 +469,4 @@ rule qc_b0_brainmask:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/vis_qc_dseg.py"
+        "../scripts/qc/vis_qc_dseg.py"

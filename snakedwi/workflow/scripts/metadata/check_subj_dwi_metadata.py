@@ -1,9 +1,18 @@
 #!/usr/bin/env python
+import json
+import sys
 from typing import List, tuple
+
+import pandas as pd
+from snakemake.shell import shell  # CHECK
 
 
 def check_eddy_s2v(
-    eddy_s2v: bool, slspec_txt: bool, has_slice_timing: bool, json_dwi: dict
+    eddy_s2v: bool,
+    slspec_txt: bool,
+    has_slice_timing: bool,
+    json_dwi: dict,
+    json_file: str,
 ) -> None:
     """Check if slice-to-volume correction can be performed"""
     if eddy_s2v and not slspec_txt:
@@ -21,10 +30,12 @@ def check_eddy_s2v(
             sys.exit(1)
 
 
-def check_pe_direction(json_dwi: dict, default_pe_dir: str) -> None:
+def check_pe_direction(
+    json_dwi: dict, default_pe_dir: str, json_file: str
+) -> None:
     """Check if phase encoding direction is defined"""
     if "PhaseEncodingDirection" not in json_dwi:
-        if not smk.config["default_phase_encoding_direction"] == "":
+        if not default_pe_dir == "":
             print("WARNING: setting default PhaseEncodingDirection")
             json_dwi["PhaseEncodingDirection"] = default_pe_dir
         else:
@@ -38,10 +49,10 @@ def check_pe_direction(json_dwi: dict, default_pe_dir: str) -> None:
                 ]
             else:
                 print(
-                    f"ERROR: PhaseEncodingDirection not found in {json_file}.\n"
-                    "You must add the PhaseEncodingDirection field to your dwi "
-                    "JSON files, or use the --default_phase_encoding_direction "
-                    "CLI option"
+                    f"ERROR: PhaseEncodingDirection not found in {json_file}."
+                    "\nYou must add the PhaseEncodingDirection field to your "
+                    "dwi JSON files, or use the "
+                    "--default_phase_encoding_direction CLI option"
                 )
                 sys.exit(1)
 
@@ -105,8 +116,8 @@ def check_subj_dwi_metadata(
 ) -> None:
     bool_map = {True: "yes", False: "no"}
     pe_axes, pe_dirs = [], []
-    eddy_s2v = smk_config["use_eddy_s2v"]
-    slspec_txt = smk_config["slspec_txt"]
+    eddy_s2v = smk_config["use_eddy_s2v"]  # noqa: F841
+    slspec_txt = smk_config["slspec_txt"]  # noqa: F841
 
     for json_file in json_files:
         with open(json_file, "r") as fname:
@@ -115,14 +126,21 @@ def check_subj_dwi_metadata(
         has_slice_timing = True if "SliceTiming" in json_dwi else False
 
         # Slice-to-volume
-        check_eddy_s2v(eddy_s2v=eddy_s2v, slspec_txt=smk_config["slspec_txt"])
+        check_eddy_s2v(
+            eddy_s2v=eddy_s2v,
+            slspec_txt=smk_config["slspec_txt"],
+            has_slice_timing=has_slice_timing,
+            json_dwi=json_dwi,
+            json_file=json_file,
+        )
         # Phase encoding direction
         check_pe_direction(
             json_dwi=json_dwi,
             default_pe_dir=smk_config["default_phase_encoding_direction"],
+            json_file=json_file,
         )
-        # Effective echo spacing
-        eff_echo = check_echo_spacing(
+        # Effective echo spacing (not used)
+        eff_echo = check_echo_spacing(  # noqa: F841
             json_dwi=json_dwi,
             default_echo_spacing=smk_config["default_effective_echo_spacing"],
         )
@@ -139,7 +157,7 @@ def check_subj_dwi_metadata(
     write_indices = ",".join([f"{idx}" for idx in use_indices])
     shell(f"touch {workflowopts}/indices-{write_indices}")
     # SDC
-    shell(f"touch {workflowopts}/sdc-{config['sdc_method']}")
+    shell(f"touch {workflowopts}/sdc-{smk_config['sdc_method']}")
     # Slice-to-volume correction
     shell(f"touch {workflowopts}/eddys2v-{bool_map[eddy_s2v]}")
     # PE Axis
@@ -161,12 +179,12 @@ def check_subj_dwi_metadata(
 
 if __name__ == "__main__":
     check_subj_dwi_metadata(
-        json_files=snakemake.input.dwi.jsons,
+        json_files=snakemake.input.dwi.jsons,  # noqa: F821
         index_col=(
-            snakemake.params.index_col_value,
-            snakemake.params.index_col_name,
+            snakemake.params.index_col_value,  # noqa: F821
+            snakemake.params.index_col_name,  # noqa: F821
         ),
-        workflowopts=snakemake.output.workflowopts,
-        metadata=snakemake.output.metadata,
-        smk_config=snakemake.config,
+        workflowopts=snakemake.output.workflowopts,  # noqa: F821
+        metadata=snakemake.output.metadata,  # noqa: F821
+        smk_config=snakemake.config,  # noqa: F821
     )

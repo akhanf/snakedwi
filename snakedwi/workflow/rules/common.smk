@@ -5,10 +5,7 @@ def get_eddy_quad_all():
         return {
             "eddy_qc": expand(
                 bids(
-                    root=root, 
-                    datatype="qc", 
-                    suffix="eddyqc", 
-                    **subj_wildcards
+                    root=root, datatype="qc", suffix="eddyqc", **subj_wildcards
                 ),
                 zip,
                 **subj_zip_list
