@@ -23,10 +23,8 @@ include: "rules/diffusion/sdc/sdcflows.smk"
 include: "rules/diffusion/sdc/synthsr.smk
 # Post-SDC
 include: "rules/diffusion/eddy.smk"
-# Registration
 include: "rules/diffusion/reg_dwi_to_t1.smk"
-
-include: "rules/bedpost.smk"
+include: "rules/diffusion/bedpost.smk"
 # Currently unused
 # include: rules/other.smk
 # include: rules/templateflow.smk
