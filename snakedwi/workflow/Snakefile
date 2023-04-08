@@ -7,6 +7,10 @@ include: "rules/workflowopts.smk"
 # Pre-SDC rules
 include: "rules/diffusion/prepdwi.smk"
 include: "rules/diffusion/motioncorr.smk"
+# B0 Masking rules
+include: "rules/diffusion/masking/masking_bet_from-b0.smk"
+include: "rules/diffusion/masking/masking_b0_to_template.smk"
+include: "rules/diffusion/masking/masking_b0_synthstrip.smk"
 # SDC rules
 include: "rules/gradcorrect.smk"
 include: "rules/diffusion/sdc/topup.smk"
@@ -17,9 +21,6 @@ include: "rules/sdc.smk"
 include: "rules/eddy.smk"
 include: "rules/bedpost.smk"
 include: "rules/reg_dwi_to_t1.smk"
-include: "rules/masking_bet_from-b0.smk"
-include: "rules/masking_b0_to_template.smk"
-include: "rules/masking_b0_synthstrip.smk"
 include: "rules/reg_t1_to_template.smk"
 include: "rules/seg_t1_brain_tissue.smk"
 

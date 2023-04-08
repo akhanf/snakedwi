@@ -1,18 +1,8 @@
-# input: bids(root='work',suffix='b0.nii.gz',desc='dwiref',datatype='dwi',**config['subj_wildcards'])
-# output: bids(root='work',desc='brain',method='bet_from-b0',suffix='mask.nii.gz',datatype='dwi',**config['subj_wildcards'])
-
-
 rule import_avg_b0:
     input:
-        bids(
-            root=work,
-            suffix="b0.nii.gz",
-            desc="dwiref",
-            datatype="dwi",
-            **subj_wildcards
-        ),
+        dwiref=rules.cp_dwi_ref.output.dwi_ref,
     output:
-        bids(
+        dwiref=bids(
             root=work,
             suffix="b0.nii.gz",
             desc="dwiref",
@@ -22,21 +12,21 @@ rule import_avg_b0:
     group:
         "subj"
     shell:
-        "cp {input} {output}"
+        "cp {input.dwiref} {output.dwiref}"
 
 
 # n4
 rule n4_avg_b0:
     input:
-        bids(
+        dwiref=rules.import_avg_b0.output.dwiref,
+    output:
+        n4_avgb0=bids(
             root=work,
             suffix="b0.nii.gz",
-            desc="dwiref",
+            desc="n4",
             datatype="dwi",
             **subj_wildcards
         ),
-    output:
-        bids(root=work, suffix="b0.nii.gz", desc="n4", datatype="dwi", **subj_wildcards),
     container:
         config["singularity"]["ants"]
     group:
@@ -45,12 +35,12 @@ rule n4_avg_b0:
         "N4BiasFieldCorrection -i {input} -o {output}"
 
 
-# rescale intensities, clip off first/last 5% of intensities, then rescale to 0-2000
+# rescale intensities - clip first/last 5% of intensities -> rescale to 0-2000
 rule rescale_avg_b0:
     input:
-        bids(root=work, suffix="b0.nii.gz", desc="n4", datatype="dwi", **subj_wildcards),
+        n4_avgb0=rules.n4_avg_b0.output.n4_avgb0,
     output:
-        bids(
+        rescale_b0=bids(
             root=work,
             suffix="b0.nii.gz",
             desc="rescale",
@@ -67,18 +57,16 @@ rule rescale_avg_b0:
 
 rule bet_avg_b0:
     input:
-        bids(
-            root=work,
-            suffix="b0.nii.gz",
-            desc="rescale",
-            datatype="dwi",
-            **subj_wildcards
-        ),
+        rescale_b0=rules.rescale_avg_b0.rescale_b0,
     params:
         bet_frac=config["b0_bet_frac"],
     output:
-        bids(
-            root=work, suffix="b0.nii.gz", desc="bet", datatype="dwi", **subj_wildcards
+        b0_brain=bids(
+            root=work,
+            suffix="b0.nii.gz",
+            desc="bet",
+            datatype="dwi",
+            **subj_wildcards
         ),
     container:
         config["singularity"]["fsl"]
@@ -90,11 +78,9 @@ rule bet_avg_b0:
 
 rule binarize_avg_b0:
     input:
-        bids(
-            root=work, suffix="b0.nii.gz", desc="bet", datatype="dwi", **subj_wildcards
-        ),
+        rules.bet_avg_b0.output.b0_brain
     output:
-        bids(
+        mask=bids(
             root=work,
             suffix="mask.nii.gz",
             desc="brain",

@@ -9,7 +9,9 @@ checkpoint split_shell_avgs:
             **subj_wildcards
         ),
     params:
-        out_prefix=lambda wildcards, output: os.path.join(output.nii_dir, "dwi."),
+        out_prefix=(
+            lambda wildcards, output: os.path.join(output.nii_dir, "dwi.")
+        ),
     output:
         nii_dir=directory(
             bids(
@@ -23,7 +25,8 @@ checkpoint split_shell_avgs:
     container:
         config["singularity"]["fsl"]
     shell:
-        "mkdir -p {output}; fslsplit {input} {params.out_prefix}"
+        "mkdir -p {output} && "
+        "fslsplit {input} {params.out_prefix}"
 
 
 # n4 on each shell
@@ -50,7 +53,7 @@ rule n4_shell_avg:
         "N4BiasFieldCorrection -i {input} -o {output}"
 
 
-# rescale intensities, clip off first/last 5% of intensities, then rescale to 0-2000
+# rescale intensities, clip first/last 5% of intensities, then rescale to 0-2000
 rule rescale_shell_avg:
     input:
         in_nii="{infile}.{shell}.nii.gz",
@@ -87,7 +90,10 @@ rule smooth_binarize_shell_avg:
     container:
         config["singularity"]["itksnap"]
     shell:
-        "c3d {input} -binarize -sdt -smooth {params.smoothing} -threshold {params.sdt_thresh} inf 0 1 -o {output}"
+        "c3d {input} -binarize -sdt "
+        "-smooth {params.smoothing} "
+        "-threshold {params.sdt_thresh} inf 0 1 "
+        "-o {output}"
 
 
 # now, run n4 using mask from b0 processing, with many more iterations
@@ -118,7 +124,8 @@ rule n4_shell_avg_withb0mask:
     container:
         config["singularity"]["ants"]
     shell:
-        "N4BiasFieldCorrection -i {input.avg_nii} -o {output} -x {input.mask_nii} --convergence [200x200x200x200] "
+        "N4BiasFieldCorrection -i {input.avg_nii} -o {output} "
+        "-x {input.mask_nii} --convergence [200x200x200x200]"
 
 
 def get_diffweighted_shells_for_tissue_seg(wildcards):
@@ -133,9 +140,9 @@ def get_diffweighted_shells_for_tissue_seg(wildcards):
                 **subj_wildcards
             ),
             **wildcards,
-            shell=glob_wildcards(os.path.join(checkpoint_output, "dwi.{i}.nii.gz")).i[
-                1:
-            ]
+            shell=glob_wildcards(
+                os.path.join(checkpoint_output, "dwi.{i}.nii.gz")
+            ).i[1:]
         )
     )
 
@@ -178,8 +185,10 @@ rule tissue_seg_kmeans_init:
     container:
         config["singularity"]["prepdwi"]
     shell:
-        #merge posteriors into a 4d file (intermediate files will be removed b/c shadow) - TODO: update this so just requires ants
-        "Atropos -d 3  {params.intensity_images} -i KMeans[{params.k}] -x {input.mask} -o [{output.seg},{params.posterior_fmt}] && "
+        # merge posteriors to a 4d file (intermediate files removed b/c shadow) 
+        # TODO: update this so just requires ants
+        "Atropos -d 3  {params.intensity_images} -i KMeans[{params.k}] "
+        "-x {input.mask} -o [{output.seg},{params.posterior_fmt}] && "
         "fslmerge -t {output.posteriors} {params.posterior_glob} "
 
 
@@ -261,4 +270,5 @@ rule smooth_threshold_refined_mask:
     container:
         config["singularity"]["itksnap"]
     shell:
-        "c3d {input.mask} -smooth {params.smooth} -threshold 0.5 Inf 1 0 -o {output.mask}"
+        "c3d {input.mask} -smooth {params.smooth} "
+        "-threshold 0.5 Inf 1 0 -o {output.mask}"
