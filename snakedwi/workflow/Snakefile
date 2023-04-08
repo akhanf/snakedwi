@@ -26,6 +26,10 @@ include: "rules/diffusion/reg_dwi_to_t1.smk"
 
 include: "rules/eddy.smk"
 include: "rules/bedpost.smk"
+# Currently unused
+# include: rules/other.smk
+# include: rules/templateflow.smk
+# include: rules/visqc.smk
 
 
 
