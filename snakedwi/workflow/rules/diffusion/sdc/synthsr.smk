@@ -48,7 +48,8 @@ rule rigid_reg_t1_to_b0_synthsr:
             root=root,
             datatype="anat",
             desc="preproc",
-            suffix="T1wSynthSR.nii.gz" ** subj_wildcards,
+            suffix="T1wSynthSR.nii.gz",
+            ** subj_wildcards,
         ),
         ref=rules.reslice_synthSR_b0.output.synthsr,
     output:
