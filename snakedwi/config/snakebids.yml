@@ -84,6 +84,13 @@ parse_args:
           participants can be specified with a space separated list.
     nargs: '+'
 
+  --skip_denoise:
+    help: 'Skip the denoising step of the workflow. By default, denoising is 
+          performed if input diffusion data was acquired with at least 30 
+          drections. (default: %(default)s)'
+    action: 'store_true'
+    default: False 
+
   # B0 masking options
   --masking_method:
     help: 'Brain masking method to use for b0 (default: %(default)s)'
@@ -94,14 +101,19 @@ parse_args:
       - 'b0_synthstrip'
     default: 'b0_synthstrip'
 
-  --skip_denoise:
-    help: 'Skip the denoising step of the workflow. By default, denoising is 
-          performed if input diffusion data was acquired with at least 30 
-          drections. (default: %(default)s)'
-    action: 'store_true'
-    default: False 
+  --b0_bet_frac:
+    help: 'BET fractional intensity threshold for b0 masking 
+          (default: %(default)s)'
+    default: 0.5
 
   # SDC Options
+  --gradcorrect_coeffs:
+    help: 'Path to file containing scanner specific gradient correction 
+          coefficients. Use this to enable gradient non-linearity correction. 
+          (default: %(default)s)'
+    default: null
+    # default: '/project/ctb-akhanf/akhanf/opt/grad/.coeff_AC84.grad'
+
   --sdc_method:
     help: 'Set the susceptibility distortion correction (SDC) method to be used. 
           By default, opposite phase encoding directions are assumed and the 
@@ -111,7 +123,6 @@ parse_args:
     choices:
       - 'topup'
       - 'sdcflow'
-      - 'synb0'
       - 'synthsr'
       - 'none'
           
@@ -169,10 +180,6 @@ parse_args:
     action: 'store_true'
     default: False
 
-  --b0_bet_frac:
-    help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
-    default: 0.5
-
   --rigid_dwi_t1_init:
     help: 'Type of initialization to use for dwi to t1 rigid registration. (default: %(default)s)'
     nargs: '?'
@@ -184,22 +191,6 @@ parse_args:
   --rigid_dwi_t1_iters:
     help: 'Number of iterations to use at each multi-resolution stage for dwi to t1 rigid registration. (default: %(default)s)'
     default: '50x50'
-
-  --use_syn_sdc:
-    help: "Use SyN fieldmap-less distortion-correction (warning: experimental!). (default: %(default)s)"
-    action: 'store_true'
-    default: False
-
-  --gradcorrect_coeffs:
-    help: "Path to file containing scanner specific gradient correction coefficients. Use this to enable gradient non-linearity correction. (default: %(default)s)"
-    default: null
-    # default: '/project/ctb-akhanf/akhanf/opt/grad/.coeff_AC84.grad'
-
-  --no_synthsr_sdc:
-    help: "Disable SynthSR+SyN fieldmap-less distortion-correction (enabled by default)"
-    action: 'store_false'
-    dest: 'use_synthsr_sdc'
-    default: True
 
 #---- to update below this
 

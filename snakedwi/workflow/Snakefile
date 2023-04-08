@@ -1,15 +1,21 @@
 configfile: "config/snakebids.yml"
 
-
+# Workflow setup rules
 include: "rules/setup.smk"
 include: "rules/common.smk"
 include: "rules/workflowopts.smk"
+# Pre-SDC rules
 include: "rules/diffusion/prepdwi.smk"
 include: "rules/diffusion/motioncorr.smk"
+# SDC rules
+include: "rules/gradcorrect.smk"
+include: "rules/diffusion/sdc/topup.smk"
+include: "rules/diffusion/sdc/sdcflows.smk"
+include: "rules/diffusion/sdc/synthsr.smk"
+
 include: "rules/sdc.smk"
 include: "rules/eddy.smk"
 include: "rules/bedpost.smk"
-include: "rules/gradcorrect.smk"
 include: "rules/reg_dwi_to_t1.smk"
 include: "rules/masking_bet_from-b0.smk"
 include: "rules/masking_b0_to_template.smk"
@@ -18,6 +24,7 @@ include: "rules/reg_t1_to_template.smk"
 include: "rules/seg_t1_brain_tissue.smk"
 
 
+# Incompatible config options
 if config["use_eddy_s2v"] and not config["use_eddy_gpu"]:
     print(
         "ERROR: Eddy Slice-to-volume correction (--use-eddy-s2v) must be used "

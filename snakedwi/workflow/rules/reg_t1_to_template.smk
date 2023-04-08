@@ -91,7 +91,7 @@ rule invert_subj_to_template_xfm:
             type_="ras"
         ),
     output:
-        bids(
+        xfm=bids(
             root=work,
             datatype="transforms",
             from_=config["template"],
