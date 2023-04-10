@@ -91,7 +91,7 @@ rule qc_reg_dwi_t1:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/qc/vis_regqc.py"
+        "../../scripts/qc/vis_regqc.py"
 
 
 rule convert_xfm_ras2itk:
@@ -172,7 +172,7 @@ rule write_nii_resolution_to_txt:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/metadata/write_nii_resolution_to_txt.py"
+        "../../scripts/metadata/write_nii_resolution_to_txt.py"
 
 
 # rules for creating reference image for each resampling scheme

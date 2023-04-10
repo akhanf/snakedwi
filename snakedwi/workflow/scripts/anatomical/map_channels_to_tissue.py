@@ -4,13 +4,13 @@ from typing import List
 
 import nibabel as nib
 import numpy as np
-from numpy import NDArray
+from numpy import ndarray
 
 
 def compute_iou(
-    tissue_prob_vol: NDArray,
-    tissue_k_seg: NDArray,
-    sim_prior: NDArray,
+    tissue_prob_vol: ndarray,
+    tissue_k_seg: ndarray,
+    sim_prior: ndarray,
     thresh: float,
 ) -> None:
     s1 = tissue_prob_vol > thresh

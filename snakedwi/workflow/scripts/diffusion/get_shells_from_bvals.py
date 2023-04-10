@@ -2,10 +2,10 @@
 import json
 
 import numpy as np
-from numpy import NDArray
+from numpy import ndarray
 
 
-def find_shells(bvals: NDArray):
+def find_shells(bvals: ndarray):
     """Use histogram method to find number of shells, with anywhere from 10 to
     100 bins. Want to use the highest number of bins that doesn't split up the
     shell, such that the bin centers can be used as the shell bvalues."""
@@ -66,5 +66,5 @@ def get_shells_from_bvals(bval_fname: str, out_json: str) -> None:
 if __name__ == "__main__":
     get_shells_from_bvals(
         bval_fname=snakemake.input.bval,  # noqa: F821
-        out_json=snakemake.output.json[0],  # noqa: F821
+        out_json=snakemake.output.json,  # noqa: F821
     )

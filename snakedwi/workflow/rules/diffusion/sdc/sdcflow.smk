@@ -71,4 +71,4 @@ rule syn_sdc:
     container:
         config["singularity"]["sdcflows"]
     script:
-        "../scripts/diffusion/sdc/sdcflows_syn.py"
+        "../../../scripts/diffusion/sdc/sdcflows_syn.py"

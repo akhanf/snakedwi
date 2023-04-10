@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 import matplotlib
 from nilearn import plotting
-from numpy import NDArray
+from numpy import ndarray
 
 
 def vis_qc_dseg(
-    dseg: str, bg_img: NDArray, out_html: str, out_png: str, wildcards: dict
+    dseg: str, bg_img: ndarray, out_html: str, out_png: str, wildcards: dict
 ) -> None:
-
     matplotlib.use("Agg")
 
     # Create HTML

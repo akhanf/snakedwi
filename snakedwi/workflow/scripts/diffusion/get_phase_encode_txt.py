@@ -20,7 +20,7 @@ def get_phase_encode_txt(
 
     # Check metadata
     if "PhaseEncodingDirection" in json_dwi:
-        phenc_dir = json["PhaseEncodingDirection"]
+        phenc_dir = json_dwi["PhaseEncodingDirection"]
     else:
         if not smk_config["default_phase_encoding_direction"] == "":
             print("WARNING: setting default PhaseEncodingDirection")

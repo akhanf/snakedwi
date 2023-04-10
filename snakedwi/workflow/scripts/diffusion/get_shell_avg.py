@@ -40,7 +40,7 @@ def get_avg_shell(dwi: str, shells: str, bval: str, out_nii: str) -> None:
 if __name__ == "__main__":
     get_avg_shell(
         dwi=snakemake.input.dwi,  # noqa: F821
-        shells=snakemake.innput.shells,  # noqa: F821
+        shells=snakemake.input.shells,  # noqa: F821
         bval=snakemake.params.bval,  # noqa: F821
-        out_nii=snakemake.output.avgshell[0],  # noqa: F821
+        out_nii=snakemake.output.avgshell,  # noqa: F821
     )

@@ -14,5 +14,5 @@ def concat_bv(bv_files: List[str], out_bv: str) -> None:
 if __name__ == "__main__":
     concat_bv(
         bv_files=snakemake.input.bv_files,  # noqa: F821
-        out_bv=snakemake.output.out_fname[0],  # noqa: F821
+        out_bv=snakemake.output.out_fname,  # noqa: F821
     )

@@ -189,7 +189,7 @@ rule concat_runs_bvec:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/concat_bv.py"
+        "../../scripts/diffusion/concat_bv.py"
 
 
 rule concat_runs_bval:
@@ -221,7 +221,7 @@ rule concat_runs_bval:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/concat_bv.py"
+        "../../scripts/diffusion/concat_bv.py"
 
 
 # Combine multiple json from multiple scans (currently only copying first)
@@ -265,7 +265,7 @@ rule get_shells_from_bvals:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/get_shells_from_bvals.py"
+        "../../scripts/diffusion/get_shells_from_bvals.py"
 
 
 # Write 4D dwi_file with average shells
@@ -280,7 +280,7 @@ rule get_shell_avgs:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/get_shell_avgs.py"
+        "../../scripts/diffusion/get_shell_avgs.py"
 
 
 # Extract individual shell (e.g. B0)
@@ -297,7 +297,7 @@ rule get_shell_avg:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/get_shell_avg.py"
+        "../../scripts/diffusion/get_shell_avg.py"
 
 
 # Extract vols from particular shell (e.g. B0)
@@ -314,7 +314,7 @@ rule get_shell_vols:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/get_shell_vols.py"
+        "../../scripts/diffusion/get_shell_vols.py"
 
 
 # now have nii with just the b0's, want to create the topup phase-encoding text files for each one:
@@ -347,7 +347,7 @@ rule get_phase_encode_txt:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/get_phase_encode_txt.py"
+        "../../scripts/diffusion/get_phase_encode_txt.py"
 
 
 rule concat_phase_encode_txt:
@@ -463,4 +463,4 @@ rule qc_b0_brainmask:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/qc/vis_qc_dseg.py"
+        "../../scripts/qc/vis_qc_dseg.py"

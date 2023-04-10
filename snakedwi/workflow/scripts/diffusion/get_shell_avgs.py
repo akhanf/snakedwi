@@ -36,6 +36,6 @@ def get_shell_avgs(dwi: str, shells: str, out_nii: str) -> None:
 if __name__ == "__main__":
     get_shell_avgs(
         dwi=snakemake.input.dwi,  # noqa: F821
-        shells=snakemake.innput.shells,  # noqa: F821
-        out_nii=snakemake.output.avgshells[0],  # noqa: F821
+        shells=snakemake.input.shells,  # noqa: F821
+        out_nii=snakemake.output.avgshells,  # noqa: F821
     )

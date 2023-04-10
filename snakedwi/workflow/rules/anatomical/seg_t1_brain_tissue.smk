@@ -97,7 +97,7 @@ rule map_channels_to_tissue:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/anatomical/map_channels_to_tissue.py"
+        "../../scripts/anatomical/map_channels_to_tissue.py"
 
 
 rule tissue_seg_to_4d:

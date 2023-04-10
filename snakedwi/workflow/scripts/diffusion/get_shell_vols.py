@@ -43,5 +43,5 @@ if __name__ == "__main__":
         dwi=snakemake.input.dwi,  # noqa: F821
         shells=snakemake.input.shells,  # noqa: F821
         bval=snakemake.params.bval,  # noqa: F821
-        out_nii=snakemake.output.shell_vols[0],  # noqa: F821
+        out_nii=snakemake.output.shell_vols,  # noqa: F821
     )

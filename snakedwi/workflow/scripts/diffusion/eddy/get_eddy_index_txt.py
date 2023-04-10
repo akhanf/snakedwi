@@ -19,11 +19,11 @@ def get_eddy_index_txt(in_niis: List[str], out_txt: str) -> None:
                 eddy_idxes.append(index)
 
     # Save to file
-    np.savetxt(out_txt, np.array(eddy_idxes, fmt="%d"))
+    np.savetxt(out_txt, np.array(eddy_idxes), fmt="%d")
 
 
 if __name__ == "__main__":
     get_eddy_index_txt(
-        in_niis=snakemake.input.dwi.niis,  # noqa: F821
-        out_txt=snakemake.output.eddy_index.txt,  # noqa: F821
+        in_niis=snakemake.input.dwi_niis,  # noqa: F821
+        out_txt=snakemake.output.eddy_index_txt,  # noqa: F821
     )

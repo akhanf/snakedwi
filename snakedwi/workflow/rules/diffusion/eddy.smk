@@ -17,7 +17,7 @@ rule get_eddy_index_txt:
     output:
         eddy_index_txt=bids(
             root=work,
-            suffix="dwi.eddy_index.txt",
+            suffix="dwi_eddy_index.txt",
             desc="degibbs",
             datatype="dwi",
             **subj_wildcards
@@ -27,7 +27,7 @@ rule get_eddy_index_txt:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/eddy/get_eddy_index_txt.py"
+        "../../scripts/diffusion/eddy/get_eddy_index_txt.py"
 
 
 # if the --slspec_txt option is not used, use the SliceTiming json,
@@ -63,7 +63,7 @@ if not config["slspec_txt"]:
         container:
             config["singularity"]["python"]
         script:
-            "../scripts/diffusion/eddy/get_slspec_txt.py"
+            "../../scripts/diffusion/eddy/get_slspec_txt.py"
 
 
 else:

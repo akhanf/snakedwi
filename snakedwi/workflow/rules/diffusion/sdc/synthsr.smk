@@ -191,7 +191,7 @@ rule displacement_field_to_fmap:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/diffusion/sdc/displacement_field_to_fmap.py"
+        "../../../scripts/diffusion/sdc/displacement_field_to_fmap.py"
 
 
 rule apply_unwarp_synthsr:
