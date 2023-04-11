@@ -45,9 +45,12 @@ quality_check = [
     "flake8",
     "snakefmt-check",
 ]
-test_multishell_topup = { shell = "mkdir -p test_out/topup_multishell && snakedwi snakedwi/test_data/bids_AP_PA test_out/topup_multishell participant -np && rm -rf test_out/topup_multishell" }
-test_singleshell_topup = { shell = "mkdir -p test_out/topup_singleshell && snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell participant -np && rm -rf test_out/topup_singleshell" }
-test = ["test_multishell_topup", "test_singleshell_topup"]
+test_dryrun = { shell = "mkdir -p test_out/topup_multishell && snakedwi snakedwi/test_data/bids_AP_PA test_out/topup_multishell participant -np && rm -rf test_out/topup_multishell" }
+test_nosdc = { shell = "mkdir -p test_out/nosdc && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/nosdc participant --sdc_method none && rm -rf test_out/nosdc" }
+test_singleshell_topup = { shell = "mkdir -p test_out/topup_singleshell && snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell participant && rm -rf test_out/topup_singleshell" }
+test_sdcflow = { shell = "mkdir -p test_out/sdcflow && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdcflow participant --sdc_method sdcflow && rm -rf test_out/sdcflow" }
+test_synthsr = { shell = "mkdir -p test_out/synthsr && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/synthsr participant --sdc_method synthsr && rm -rf test_out/synthsr" }
+test = ["test_dryrun", "test_nosdc", "test_singleshell_topup", "test_sdcflow", "test_synthsr"]
 
 [tool.isort]
 profile = "black"
