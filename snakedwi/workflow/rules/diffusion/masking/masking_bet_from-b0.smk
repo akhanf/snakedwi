@@ -52,7 +52,7 @@ rule bet_avg_b0:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     group:
         "subj"
     shell:

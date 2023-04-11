@@ -198,31 +198,28 @@ parse_args:
 #---- to update below this
 
 singularity:
-  python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'
-  prepdwi: 'docker://khanlab/prepdwi:latest' 
-  mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'
-  fsl: 'docker://brainlife/fsl:6.0.4-patched2' 
-  fsl_cpu: '/project/6050199/akhanf/singularity/bids-apps/brainlife_fsl_6.0.4-patched2.sif' #fsl_cpu and fsl_gpu must have absolute paths instead of docker uri - since they are used for rules where we explicitly include singularity exec in the command (eddy, bedpost)
-  eddy_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif' #note: 6.0.3_cuda9.1 seems to be missing imcp, so it doesn't work for bedpost
-  bedpost_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif' 
-  itksnap: 'docker://khanlab/itksnap:latest' 
-  ants: 'docker://kaczmarj/ants:2.3.4'  
-  niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
-  synthstrip: 'docker://freesurfer/synthstrip:1.3'
-  sdcflows: 'docker://nipreps/fmriprep:22.1.1' #can't currently just use sdcflows docker as it is missing freesurfer's mri_robust_template
-  gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
+  ants: 'docker://kaczmarj/ants:2.3.4'
   connectome_workbench: 'docker://khanlab/autotop_deps:v0.4.2'
-  synthsr: 'docker://akhanf/synthsr:main'
+  # fsl_cpu and fsl_gpu must have absolute paths (used to explicity singularitys
+  # exec calls in command (e.g. eddy, bedpost)
+  fsl_cpu: '/project/6050199/akhanf/singularity/bids-apps/brainlife_fsl_6.0.4-patched2.sif' # docker://brainlife/fsl:6.0.4-patched2
+  fsl_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif' # docker://fnndsc/fsl:6.0.4-cuda9.1.sif
+  gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
+  itksnap: 'docker://khanlab/itksnap:latest' 
+  mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'
+  niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
+  prepdwi: 'docker://khanlab/prepdwi:latest' 
+  python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'
+  sdcflows: 'docker://nipreps/fmriprep:22.1.1' #can't currently just use sdcflows docker as it is missing freesurfer's mri_robust_template
   synthmorph: 'docker://freesurfer/synthmorph:1'
-
-
-
+  synthsr: 'docker://akhanf/synthsr:main'
+  synthstrip: 'docker://freesurfer/synthstrip:1.3'
+  
 
 # Options for resampling dwi in T1w space
 #  1. can resample as T1w resolution
 #  2. can resample as original dwi resolution 
 #  3. can resample as specified resolution
-
 resample_dwi:
   resample_scheme: 'orig' # should be one of: ['T1w', 'orig', 'custom']
   custom_resolution: #only needed if the 'custom' 

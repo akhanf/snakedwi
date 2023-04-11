@@ -23,7 +23,7 @@ checkpoint split_shell_avgs:
             )
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     shell:
         "mkdir -p {output} && "
         "fslsplit {input} {params.out_prefix}"
@@ -74,7 +74,7 @@ rule bet_shell_avg:
     output:
         bet_nii="{infile}_bet.{shell}.nii.gz",
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     shell:
         "bet {input} {output} -f {params.frac}"
 
@@ -211,7 +211,7 @@ rule extract_posterior_bgnd:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     shell:
         "fslroi {input} {output} 0 1"
 
@@ -242,7 +242,7 @@ rule refine_mask_with_tissue_prob:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     shell:
         "fslmaths {input.mask} -sub {input.posterior_bgnd} {output.mask}"
 

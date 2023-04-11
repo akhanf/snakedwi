@@ -251,7 +251,7 @@ if config["use_eddy_gpu"]:
                     if value == True
                 ]
             ),
-            container=config["singularity"]["eddy_gpu"],
+            container=config["singularity"]["fsl_gpu"],
             topup_opt=get_eddy_topup_fmap_opt,
             s2v_opts=get_eddy_s2v_opts,
             slspec_opt=get_eddy_slspec_opt,
@@ -359,7 +359,7 @@ else:
         log:
             bids(root="logs", suffix="run_eddy.log", **subj_wildcards),
         container:
-            config["singularity"]["fsl"]
+            config["singularity"]["fsl_cpu"]
         group:
             "subj"
         shell:
@@ -458,7 +458,7 @@ rule eddy_quad:
             root=root, suffix="eddyqc/qc.pdf", datatype="qc", **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     group:
         "subj"
     shell:

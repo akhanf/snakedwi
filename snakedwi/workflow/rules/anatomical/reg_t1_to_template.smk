@@ -225,7 +225,7 @@ rule mask_template_t1w:
             suffix="T1w.nii.gz",
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     group:
         "subj"
     shell:
@@ -252,7 +252,7 @@ rule mask_subject_t1w:
             desc="masked"
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     group:
         "subj"
     shell:
@@ -483,7 +483,7 @@ rule dilate_brainmask:
             desc="braindilated"
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     group:
         "subj"
     shell:
@@ -507,7 +507,7 @@ rule dilate_atlas_labels:
             desc="dilated"
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     group:
         "subj"
     shell:

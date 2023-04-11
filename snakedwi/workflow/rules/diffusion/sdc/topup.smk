@@ -36,7 +36,7 @@ rule run_topup:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     log:
         bids(root="logs", suffix="topup.log", **subj_wildcards),
     group:
@@ -77,7 +77,7 @@ rule apply_topup_jac:
             **input_wildcards["dwi"]
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     shadow:
         "minimal"
     group:

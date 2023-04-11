@@ -384,7 +384,7 @@ rule rotate_bvecs_to_t1w:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     group:
         "subj"
     shell:
@@ -431,7 +431,7 @@ rule dtifit_resampled_t1w:
             "dti_FA.nii.gz",
         ),
     container:
-        config["singularity"]["fsl"]
+        config["singularity"]["fsl_cpu"]
     group:
         "subj"
     shell:

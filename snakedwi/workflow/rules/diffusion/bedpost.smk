@@ -86,7 +86,7 @@ if config["use_bedpost_gpu"]:
             bvec=rules.copy_inputs_for_bedpost.output.bvec,
             brainmask=rules.copy_inputs_for_bedpost.output.brainmask,
         params:
-            container=config["singularity"]["bedpost_gpu"],
+            container=config["singularity"]["fsl_gpu"],
         output:
             bedpost_dir=directory(
                 bids(
