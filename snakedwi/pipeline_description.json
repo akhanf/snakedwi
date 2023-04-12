@@ -5,11 +5,10 @@
     "GeneratedBy": [
         {
             "Name": "snakedwi",
-            "Version": "0.2.0-alpha",
+            "Version": "0.2.0",
             "CodeURL": "http://github.com/akhanf/snakedwi",
             "Author": "Ali R. Khan",
             "AuthorEmail": "alik@robarts.ca"
- 
         }
     ]
 }
