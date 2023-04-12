@@ -127,6 +127,15 @@ parse_args:
       - 'sdcflow'
       - 'synthsr'
       - 'none'
+
+  --sdc_method_alternate:
+    help: 'Set alternate method to be used for single phase encoding SDC when 
+          "--sdc_method" is set to "optimal", otherwise this flag is ignored.
+          (default: %(default)s)'
+    default: 'synthsr'
+    choices:
+      - 'sdcflow'
+      - 'synthsr'
           
   # Eddy options
   --use_eddy_s2v:
