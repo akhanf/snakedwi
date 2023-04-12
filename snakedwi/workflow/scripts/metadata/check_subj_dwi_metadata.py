@@ -109,7 +109,7 @@ def set_sdc_method(
         if len(set(pe_dirs)) >= 2:  # Opp PE
             shell(f"touch {workflowopts}/sdc-topup")
         else:  # Single PE
-            shell(f"touch {workflowopts}/sdc-synthsr")
+            shell(f"touch {workflowopts}/" f"sdc-{smk_config['sdc_method_alternate']}")
 
     else:
         shell(f"touch {workflowopts}/sdc-{smk_config['sdc_method']}")
