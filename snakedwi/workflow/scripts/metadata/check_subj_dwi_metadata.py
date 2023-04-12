@@ -11,7 +11,6 @@ def check_eddy_s2v(
     eddy_s2v: bool,
     slspec_txt: bool,
     has_slice_timing: bool,
-    json_dwi: dict,
     json_file: str,
 ) -> None:
     """Check if slice-to-volume correction can be performed"""
@@ -107,6 +106,22 @@ def get_pe_indices(
     return use_indices, pe_axes, pe_dirs
 
 
+def set_sdc_method(
+    workflowopts: str,
+    pe_dirs: List[str],
+    smk_config: dict,
+) -> None:
+    # if using "optimal" option vs user choice (e.g. topup, synthsr)
+    if smk_config["sdc_method"] == "optimal":
+        if len(set(pe_dirs)) >= 2:  # Opp PE
+            shell(f"touch {workflowopts}/sdc-topup")
+        else:  # Single PE
+            shell(f"touch {workflowopts}/sdc-synthsr")
+
+    else:
+        shell(f"touch {workflowopts}/sdc-{smk_config['sdc_method']}")
+
+
 def check_subj_dwi_metadata(
     json_files: List[str],
     index_col: Tuple[str, str],
@@ -116,8 +131,8 @@ def check_subj_dwi_metadata(
 ) -> None:
     bool_map = {True: "yes", False: "no"}
     pe_axes, pe_dirs = [], []
-    eddy_s2v = smk_config["use_eddy_s2v"]  # noqa: F841
-    slspec_txt = smk_config["slspec_txt"]  # noqa: F841
+    eddy_s2v = smk_config["use_eddy_s2v"]
+    slspec_txt = smk_config["slspec_txt"]
 
     for json_file in json_files:
         with open(json_file, "r") as fname:
@@ -130,7 +145,6 @@ def check_subj_dwi_metadata(
             eddy_s2v=eddy_s2v,
             slspec_txt=slspec_txt,
             has_slice_timing=has_slice_timing,
-            json_dwi=json_dwi,
             json_file=json_file,
         )
         # Phase encoding direction
@@ -157,8 +171,10 @@ def check_subj_dwi_metadata(
     # Indices
     write_indices = ",".join([f"{idx}" for idx in use_indices])
     shell(f"touch {workflowopts}/indices-{write_indices}")
-    # SDC
-    shell(f"touch {workflowopts}/sdc-{smk_config['sdc_method']}")
+    # Set SDC method
+    set_sdc_method(
+        workflowopts=workflowopts, pe_dirs=pe_dirs, smk_config=smk_config
+    )
     # Slice-to-volume correction
     shell(f"touch {workflowopts}/eddys2v-{bool_map[eddy_s2v]}")
     # PE Axis

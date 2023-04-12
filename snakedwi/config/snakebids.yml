@@ -116,11 +116,13 @@ parse_args:
 
   --sdc_method:
     help: 'Set the susceptibility distortion correction (SDC) method to be used. 
-          By default, opposite phase encoding directions are assumed and the 
-          TOPUP method is used. To skip SDC, set method to "none". (default: 
-          %(default)s)'
-    default: 'topup'
+          By default, the optimal correction method is chosen based on the data 
+          available ("topup" if 2+ phase encoding directions or "synthsr" if 
+          single phase encoding direction). To skip SDC, set method to "none". 
+          (default: %(default)s)'
+    default: 'optimal'
     choices:
+      - 'optimal'
       - 'topup'
       - 'sdcflow'
       - 'synthsr'
