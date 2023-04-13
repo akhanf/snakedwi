@@ -117,6 +117,26 @@ def get_eddy_topup_fmap_input(wildcards):
                 **subj_wildcards,
             ).format(**wildcards)
         }
+    # Synb0
+    elif method == "synb0":
+        return {
+            "topup_fieldcoef": bids(
+                root=work,
+                method="synb0",
+                desc="topup",
+                suffix="fieldcoef.nii.gz",
+                datatype="dwi",
+                **subj_wildcards
+            ).format(**wildcards),
+            "topup_movpar": bids(
+                root=work,
+                method="synb0",
+                desc="topup",
+                suffix="movpar.txt",
+                datatype="dwi",
+                **subj_wildcards,
+            ).format(**wildcards),
+        }
     # SDCFlow Syn
     elif method == "sdcflow":
         return {
@@ -154,6 +174,16 @@ def get_eddy_topup_fmap_opt(wildcards, input):
             **subj_wildcards,
         ).format(**wildcards)
         return f"--field={fmap_prefix}"
+    # synb0
+    elif method == "synb0":
+        topup_prefix = bids(
+            root=work, 
+            desc="topup",
+            method="synb0", 
+            datatype="dwi", 
+            **subj_wildcards,
+        ).format(**wildcards)
+        return f"--topup={topup_prefix}"
     # SDCFlow Syn
     elif method == "sdcflow":
         fmap_prefix = bids(
@@ -215,14 +245,31 @@ def get_eddy_slspec_opt(wildcards, input):
     )
 
 
+def get_eddy_phenc(wildcards):
+    method = get_sdc_method(wildcards)
+
+    return bids(
+        root=work,
+        datatype="dwi",
+        desc="synb0",
+        suffix="phenc.txt",
+        **subj_wildcards
+    ) if method == "synb0" else bids(
+        root=work,
+        suffix="phenc.txt",
+        datatype="dwi",
+        desc="degibbs",
+        **subj_wildcards
+    )
+
 if config["use_eddy_gpu"]:
 
     rule run_eddy_gpu:
         input:
             unpack(get_eddy_slspec_input),
             unpack(get_eddy_topup_fmap_input),
+            eddy_phenc=get_eddy_phenc,
             dwi_concat=rules.concat_degibbs_dwi.output.dwi_concat,
-            phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
             eddy_index_txt=rules.get_eddy_index_txt.output.eddy_index_txt,
             brainmask=get_b0_mask(),
             bvals=bids(
@@ -285,7 +332,7 @@ if config["use_eddy_gpu"]:
             "singularity exec --nv --home $PWD"
             " -e {params.container} eddy_cuda9.1"
             " --imain={input.dwi_concat} --mask={input.brainmask}"
-            " --acqp={input.phenc_concat} --index={input.eddy_index_txt}"
+            " --acqp={input.eddy_phenc} --index={input.eddy_index_txt}"
             " --bvecs={input.bvecs} --bvals={input.bvals}"
             " --out={params.out_prefix}"
             " {params.s2v_opts}"
@@ -300,8 +347,8 @@ else:
         input:
             unpack(get_eddy_slspec_input),
             unpack(get_eddy_topup_fmap_input),
+            eddy_phenc=get_eddy_phenc,
             dwi_concat=rules.concat_degibbs_dwi.output.dwi_concat,
-            phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
             eddy_index_txt=rules.get_eddy_index_txt.output.eddy_index_txt,
             brainmask=get_b0_mask(),
             bvals=bids(
@@ -365,7 +412,7 @@ else:
         shell:
             "eddy_openmp"
             " --imain={input.dwi_concat} --mask={input.brainmask}"
-            " --acqp={input.phenc_concat} --index={input.eddy_index_txt}"
+            " --acqp={input.eddy_phenc} --index={input.eddy_index_txt}"
             " --bvecs={input.bvecs} --bvals={input.bvals}"
             " --out={params.out_prefix}"
             " {params.s2v_opts}"
