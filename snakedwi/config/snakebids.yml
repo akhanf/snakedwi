@@ -121,6 +121,7 @@ parse_args:
       - 'topup'
       - 'sdcflow'
       - 'synthsr'
+      - 'synb0'
       - 'none'
 
   --sdc_method_alternate:
@@ -131,6 +132,7 @@ parse_args:
     choices:
       - 'sdcflow'
       - 'synthsr'
+      - 'synb0'
           
   # Eddy options
   --use_eddy_s2v:
@@ -201,7 +203,12 @@ parse_args:
           to t1 rigid registration. (default: %(default)s)'
     default: '50x50'
 
-  # Workflow metadata
+  # Workflow options
+  --fs_license:
+    help: 'Path to the Freesurfer license file (needed for synb0 SDC method)'
+    type: Path
+    default: False 
+
   --version:
     help: 'Print the version of snakedwi'
     action: version
@@ -212,8 +219,8 @@ parse_args:
 singularity:
   ants: 'docker://kaczmarj/ants:2.3.4'
   connectome_workbench: 'docker://khanlab/autotop_deps:v0.4.2'
-  # fsl_cpu and fsl_gpu must have absolute paths (used to explicity singularitys
-  # exec calls in command (e.g. eddy, bedpost)
+  # fsl_cpu and fsl_gpu must have absolute paths (used to explicit call 
+  # singularity exec in command (e.g. eddy, bedpost)
   fsl_cpu: '/project/6050199/akhanf/singularity/bids-apps/brainlife_fsl_6.0.4-patched2.sif' # docker://brainlife/fsl:6.0.4-patched2
   fsl_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif' # docker://fnndsc/fsl:6.0.4-cuda9.1.sif
   gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
@@ -223,6 +230,8 @@ singularity:
   prepdwi: 'docker://khanlab/prepdwi:latest' 
   python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'
   sdcflows: 'docker://nipreps/fmriprep:22.1.1' #can't currently just use sdcflows docker as it is missing freesurfer's mri_robust_template
+  # synb0 must have absolute path (used to explictly make singularity exec call)
+  synb0:  '/project/6050199/tkai/singularity/MASILab_synb0-disco_v3.0.sif' # 'docker://leonyichencai/synb0-disco:v3.0'
   synthmorph: 'docker://freesurfer/synthmorph:1'
   synthsr: 'docker://akhanf/synthsr:main'
   synthstrip: 'docker://freesurfer/synthstrip:1.3'
