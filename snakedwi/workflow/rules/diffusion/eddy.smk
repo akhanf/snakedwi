@@ -118,7 +118,7 @@ def get_eddy_topup_fmap_input(wildcards):
             ).format(**wildcards)
         }
     # SDCFlow Syn
-    elif method == "syn":
+    elif method == "sdcflow":
         return {
             "fmap": bids(
                 root=work,
@@ -155,7 +155,7 @@ def get_eddy_topup_fmap_opt(wildcards, input):
         ).format(**wildcards)
         return f"--field={fmap_prefix}"
     # SDCFlow Syn
-    elif method == "syn":
+    elif method == "sdcflow":
         fmap_prefix = bids(
             root=work,
             datatype="dwi",
