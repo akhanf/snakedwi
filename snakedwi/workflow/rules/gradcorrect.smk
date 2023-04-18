@@ -29,7 +29,7 @@ sdc_methods = {
         desc="topup",
         method="synb0",
         datatype="dwi",
-        **subj_wildcards
+        **subj_wildcards,
     ),
     "none": bids(
         root=work,

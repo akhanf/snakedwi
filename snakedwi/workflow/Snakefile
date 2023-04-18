@@ -53,6 +53,7 @@ if (
     )
     sys.exit(1)
 
+
 rule all:
     input:
         **get_eddy_quad_all(),

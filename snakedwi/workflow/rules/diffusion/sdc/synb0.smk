@@ -1,6 +1,6 @@
 rule extract_phenc:
     input:
-        phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat
+        phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
     output:
         synb0_phenc=bids(
             root=work,
@@ -8,7 +8,7 @@ rule extract_phenc:
             desc="synb0",
             suffix="phenc.txt",
             **subj_wildcards
-        )
+        ),
     container:
         config["singularity"]["python"]
     group:
@@ -22,17 +22,13 @@ rule setup_synb0:
     input:
         synb0_phenc=rules.extract_phenc.output.synb0_phenc,
         b0=rules.moco_subj_bzeros_4d.output.nii_avg3d,
-        t1=rules.n4_t1_withmask.output.t1
+        t1=rules.n4_t1_withmask.output.t1,
     output:
         synb0_indir=directory(
             Path(
-                bids(
-                    root=work,
-                    datatype="synb0_in",
-                    **subj_wildcards
-                )
+                bids(root=work, datatype="synb0_in", **subj_wildcards)
             ).parent
-        )
+        ),
     group:
         "subj"
     shell:
@@ -56,7 +52,7 @@ rule run_synb0:
                     **subj_wildcards,
                 )
             ).parent
-        )
+        ),
     output:
         b0_all=bids(
             root=work,
@@ -83,7 +79,7 @@ rule run_synb0:
         ),
     log:
         bids(root="logs", suffix="synb0.log", **subj_wildcards),
-    group: 
+    group:
         "subj"
     shell:
         "mkdir -p {params.out_dir} && "
@@ -99,7 +95,7 @@ rule run_synb0:
 # Extract unwarped subject (non-syn) b0
 rule get_ref_synb0:
     input:
-        b0_all=rules.run_synb0.output.b0_all
+        b0_all=rules.run_synb0.output.b0_all,
     output:
         b0=bids(
             root=work,
@@ -108,7 +104,7 @@ rule get_ref_synb0:
             method="synb0",
             datatype="dwi",
             **subj_wildcards,
-        )
+        ),
     container:
         config["singularity"]["mrtrix"]
     group:

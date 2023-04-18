@@ -126,7 +126,7 @@ def get_eddy_topup_fmap_input(wildcards):
                 desc="topup",
                 suffix="fieldcoef.nii.gz",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ).format(**wildcards),
             "topup_movpar": bids(
                 root=work,
@@ -177,10 +177,10 @@ def get_eddy_topup_fmap_opt(wildcards, input):
     # synb0
     elif method == "synb0":
         topup_prefix = bids(
-            root=work, 
+            root=work,
             desc="topup",
-            method="synb0", 
-            datatype="dwi", 
+            method="synb0",
+            datatype="dwi",
             **subj_wildcards,
         ).format(**wildcards)
         return f"--topup={topup_prefix}"
@@ -246,21 +246,14 @@ def get_eddy_slspec_opt(wildcards, input):
 
 
 def get_eddy_phenc(wildcards):
-    method = get_sdc_method(wildcards)
-
     return bids(
-        root=work,
-        datatype="dwi",
-        desc="synb0",
-        suffix="phenc.txt",
-        **subj_wildcards
-    ) if method == "synb0" else bids(
         root=work,
         suffix="phenc.txt",
         datatype="dwi",
         desc="degibbs",
-        **subj_wildcards
+        **subj_wildcards,
     )
+
 
 if config["use_eddy_gpu"]:
 
