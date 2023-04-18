@@ -105,7 +105,7 @@ if config["use_bedpost_gpu"]:
         resources:
             gpus=1,
             mem_mb=16000,
-            time=360,
+            runtime=360,
         shell:
             #remove the logs to reduce # of files   
             "singularity exec --nv --home $PWD -e {params.container} "
@@ -146,7 +146,7 @@ else:
         threads: 32
         resources:
             mem_mb=16000,
-            time=360,
+            runtime=360,
         shell:
             "singularity exec --home $PWD "
             "-B {params.parallel_script}:{params.parallel_script_container} "

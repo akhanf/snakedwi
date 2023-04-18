@@ -277,7 +277,7 @@ if config["use_eddy_gpu"]:
         threads: 16  #this needs to be set in order to avoid multiple gpus from executing
         resources:
             gpus=1,
-            time=360,  #6 hours (this is a conservative estimate, may be shorter)
+            runtime=60,  #6 hours (this is a conservative estimate, may be shorter)
             mem_mb=32000,
         group:
             "subj"
@@ -354,7 +354,7 @@ else:
             ),
         threads: 16  #needs to be set to avoid multiple gpus from executing
         resources:
-            time=360,  #6 hours (conservative estimate, may be shorter)
+            runtime=360,  #6 hours (this is a conservative estimate, may be shorter)
             mem_mb=32000,
         log:
             bids(root="logs", suffix="run_eddy.log", **subj_wildcards),

@@ -348,7 +348,7 @@ rule ants_syn_affine_init:
     threads: 8
     resources:
         mem_mb=16000,  # right now these are on the high-end -- could implement benchmark rules to do this at some point..
-        time=60,  # 1 hrs
+        runtime=60,  # 1 hrs
     container:
         config["singularity"]["ants"]
     group:

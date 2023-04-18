@@ -90,7 +90,7 @@ rule ants_b0_to_template:
     threads: 8
     resources:
         mem_mb=16000,  # TODO: implement benchmark rule 
-        time=60,  # 1 hrs
+        runtime=60,  # 1 hrs
     container:
         config["singularity"]["ants"]
     group:
