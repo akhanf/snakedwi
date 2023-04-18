@@ -20,7 +20,7 @@ rule import_t1:
 
 
 def get_input_for_synthstrip(wildcards):
-    if config["gradcorrect_coeffs"]:
+    if config["gradcorrect_coeffs"] and not config["gradcorrect_skip_t1w"]:
         return bids(
             root=work,
             datatype="anat",
