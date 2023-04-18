@@ -39,10 +39,8 @@ pybids_inputs:
     filters:
       suffix: 'T1w'
       extension: '.nii.gz'
-      scope: 'raw' #raw, derivatives (or can be pipeline name too!)
       datatype: 'anat'
       invalid_filters: 'allow'
-      space: null
     wildcards:
       - subject
       - session
@@ -88,6 +86,13 @@ parse_args:
     help: 'Skip the denoising step of the workflow. By default, denoising is 
           performed if input diffusion data was acquired with at least 30 
           drections. (default: %(default)s)'
+
+  --derivatives:
+    action: 'store_true'
+    default: False
+
+  --no_topup:
+    help: 'Disable topup  (default: %(default)s)'
     action: 'store_true'
     default: False 
 
@@ -169,6 +174,10 @@ parse_args:
       - 'j-'
       - 'k'
       - 'k-'
+  --gradcorrect_skip_t1w:
+    action: 'store_true'
+    default: False
+
 
   # Bedpost options:
   --use_bedpost: 
