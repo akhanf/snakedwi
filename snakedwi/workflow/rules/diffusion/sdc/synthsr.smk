@@ -190,6 +190,7 @@ rule displacement_field_to_fmap:
         ),
     container:
         config["singularity"]["python"]
+    group: "subj"
     script:
         "../../../scripts/diffusion/sdc/displacement_field_to_fmap.py"
 
