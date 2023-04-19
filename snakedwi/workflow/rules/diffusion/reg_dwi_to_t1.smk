@@ -61,10 +61,83 @@ rule reg_dwi_to_t1:
         "-rm {input.avgb0} {output.warped_avgb0} -r {output.xfm_ras} &>> {log}"
 
 
+# rule qc_reg_dwi_t1:
+#     input:
+#         ref=bids(
+#             root=work,
+#             suffix="avgb0.nii.gz",
+#             space="T1w",
+#             desc="dwiref",
+#             datatype="dwi",
+#             **subj_wildcards
+#         ),
+#         flo=bids(
+#             root=root,
+#             suffix="T1w.nii.gz",
+#             desc="preproc",
+#             datatype="anat",
+#             **subj_wildcards
+#         ),
+#     output:
+#         png=report(
+#             bids(
+#                 root=root,
+#                 datatype="qc",
+#                 suffix="reg.png",
+#                 **subj_wildcards,
+#                 from_="dwiref",
+#                 to="T1w"
+#             ),
+#             caption="../report/reg_dwi_t1.rst",
+#             category="B0 T1w registration",
+#         ),
+#         html=bids(
+#             root=root,
+#             datatype="qc",
+#             suffix="reg.html",
+#             from_="dwiref",
+#             to="T1w",
+#             **subj_wildcards
+#         ),
+#     group:
+#         "subj"
+#     container:
+#         config["singularity"]["python"]
+#     script:
+#         "../scripts/vis_regqc.py"
+
+rule qc_get_t1_edges:
+    input:
+        brain=rules.n4_t1_withmask.output.t1,
+        mask=bids(
+            root=root,
+            datatype="anat",
+            desc="brain",
+            suffix="mask.nii.gz",
+            **subj_wildcards,
+        )
+    output:
+        temp(
+            bids(
+                work,
+                datatype="anat",
+                desc="cannyEdge",
+                suffix="T1w.nii.gz",
+                **subj_wildcards,
+            )
+        )
+    group: 'subj'
+    container:
+        config["singularity"]["itksnap"]
+    shell:
+        "c3d {input} -times -canny 1mm 10 20 {output}"
+
+
 rule qc_reg_dwi_t1:
     input:
-        ref=rules.reg_dwi_to_t1.output.warped_avgb0,
-        flo=rules.n4_t1_withmask.output.t1,
+        overlay=rules.reg_dwi_to_t1.output.warped_avgb0[0],
+        background=rules.n4_t1_withmask.output.t1[0],
+        lines=rules.qc_get_t1_edges.output[0],
     output:
         png=report(
             bids(
@@ -92,6 +165,7 @@ rule qc_reg_dwi_t1:
         config["singularity"]["python"]
     script:
         "../../scripts/qc/vis_regqc.py"
+
 
 
 rule convert_xfm_ras2itk:
