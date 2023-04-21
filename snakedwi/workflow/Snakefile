@@ -1,26 +1,44 @@
 configfile: "config/snakebids.yml"
 
 
+# Workflow setup
 include: "rules/setup.smk"
 include: "rules/common.smk"
 include: "rules/workflowopts.smk"
-include: "rules/prepdwi.smk"
-include: "rules/motioncorr.smk"
-include: "rules/sdc.smk"
-include: "rules/eddy.smk"
-include: "rules/bedpost.smk"
+# Anatomical
+include: "rules/anatomical/anatomical.smk"
+include: "rules/anatomical/reg_t1_to_template.smk"
+include: "rules/anatomical/seg_t1_brain_tissue.smk"
+# Pre-SDC
+include: "rules/diffusion/method_grabber.smk"
+include: "rules/diffusion/prepdwi.smk"
+include: "rules/diffusion/motioncorr.smk"
+# B0 Masking
+include: "rules/diffusion/masking/masking_bet_from-b0.smk"
+include: "rules/diffusion/masking/masking_b0_to_template.smk"
+include: "rules/diffusion/masking/masking_b0_synthstrip.smk"
+# SDC
 include: "rules/gradcorrect.smk"
-include: "rules/reg_dwi_to_t1.smk"
-include: "rules/masking_bet_from-b0.smk"
-include: "rules/masking_b0_to_template.smk"
-include: "rules/reg_t1_to_template.smk"
-include: "rules/seg_t1_brain_tissue.smk"
-include: "rules/masking_b0_synthstrip.smk"
+include: "rules/diffusion/sdc/topup.smk"
+include: "rules/diffusion/sdc/sdcflow.smk"
+include: "rules/diffusion/sdc/synthsr.smk"
+# Post-SDC
+include: "rules/diffusion/eddy.smk"
+include: "rules/diffusion/reg_dwi_to_t1.smk"
+include: "rules/diffusion/bedpost.smk"
 
 
+# Currently unused
+# include: rules/other.smk
+# include: rules/templateflow.smk
+# include: rules/visqc.smk
+
+
+# Incompatible config options
 if config["use_eddy_s2v"] and not config["use_eddy_gpu"]:
     print(
-        "ERROR: Eddy Slice-to-volume correction (--use-eddy-s2v) must be used with eddy GPU (--use-eddy-gpu)"
+        "ERROR: Eddy Slice-to-volume correction (--use-eddy-s2v) must be used "
+        "with eddy GPU (--use-eddy-gpu)."
     )
     sys.exit(1)
 
@@ -29,29 +47,8 @@ rule all:
     input:
         **get_eddy_quad_all(),
         **get_bedpost_all(),
-        mask_qc=expand(
-            bids(
-                root=root,
-                datatype="qc",
-                suffix="mask.png",
-                desc="brain",
-                **subj_wildcards
-            ),
-            zip,
-            **subj_zip_list
-        ),
-        reg_qc=expand(
-            bids(
-                root=root,
-                datatype="qc",
-                suffix="reg.png",
-                from_="dwiref",
-                to="T1w",
-                **subj_wildcards
-            ),
-            zip,
-            **subj_zip_list
-        ),
+        mask_qc=expand(rules.qc_b0_brainmask.output.png, zip, **subj_zip_list),
+        reg_qc=expand(rules.qc_reg_dwi_t1.output.png, zip, **subj_zip_list),
         dtifit=expand(
             bids(
                 root=root,
@@ -69,5 +66,5 @@ rule all:
 
 rule all_metacheck:
     input:
-        missing_subj_tsv=bids(root=root, suffix="missing.tsv"),
-        metadata_subj_tsv=bids(root=root, suffix="metadata.tsv"),
+        missing_subj_tsv=rules.create_missing_subj_tsv.output.tsv,
+        metadata_subj_tsv=rules.concat_subj_metadata.output.tsv,

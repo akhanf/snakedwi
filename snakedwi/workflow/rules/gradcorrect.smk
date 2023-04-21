@@ -1,39 +1,49 @@
+sdc_methods = {
+    "topup": bids(
+        root=work,
+        suffix="b0.nii.gz",
+        desc="topup",
+        method="jac",
+        datatype="dwi",
+        **subj_wildcards,
+    ),
+    "synthsr": bids(
+        root=work,
+        datatype="dwi",
+        suffix="b0.nii.gz",
+        desc="unwarped",
+        method="synthSRsdc",
+        **subj_wildcards,
+    ),
+    "sdcflow": bids(
+        root=work,
+        datatype="dwi",
+        suffix="b0.nii.gz",
+        desc="unwarped",
+        method="synsdc",
+        **subj_wildcards,
+    ),
+    "none": bids(
+        root=work,
+        suffix="b0.nii.gz",
+        datatype="dwi",
+        desc="moco",
+        **subj_wildcards,
+    ),
+}
+
+
 def get_dwi_ref_for_gradcorrect(wildcards):
     if config["gradcorrect_coeffs"]:
 
-        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[
-            0
-        ]
-        ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
+            **wildcards
+        ).output[0]
+        ([method],) = glob_wildcards(
+            os.path.join(checkpoint_output, "sdc-{method}")
+        )
 
-        if method == "topup":
-            return bids(
-                root=work,
-                suffix="b0.nii.gz",
-                desc="topup",
-                method="jac",
-                datatype="dwi",
-                **subj_wildcards
-            )
-        elif method == "syn":
-            return bids(
-                root=work,
-                datatype="dwi",
-                suffix="b0.nii.gz",
-                desc="unwarped",
-                method="synsdc",
-                **subj_wildcards
-            )
-        else:
-            return (
-                bids(
-                    root=work,
-                    suffix="b0.nii.gz",
-                    datatype="dwi",
-                    desc="moco",
-                    **subj_wildcards
-                ),
-            )
+        return sdc_methods[method]
     else:
         return ""
 
@@ -134,7 +144,9 @@ rule convert_gradcorrect_to_itk:
 
 rule gradcorrect_t1w:
     input:
-        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
+        t1=bids(
+            root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"
+        ),
         grad_coeff=config["gradcorrect_coeffs"] or "",
     output:
         t1=bids(

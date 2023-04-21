@@ -84,36 +84,16 @@ parse_args:
           participants can be specified with a space separated list.
     nargs: '+'
 
-  --no_topup:
-    help: 'Disable topup  (default: %(default)s)'
+  --skip_denoise:
+    help: 'Skip the denoising step of the workflow. By default, denoising is 
+          performed if input diffusion data was acquired with at least 30 
+          drections. (default: %(default)s)'
     action: 'store_true'
-    default: False
+    default: False 
 
-  --use_bedpost: 
-    help: 'Enable bedpost  (disabled by default)'
-    action: 'store_false'
-    dest: 'no_bedpost'
-    default: True
-
-    #  --no_bedpost:
-    #    help: 'Disable bedpost  (default: %(default)s)'
-    #    action: 'store_true'
-    #    default: True
-
-   
-  --use_eddy_s2v:
-    help: 'Enable slice-to-volume in eddy.  Your dwi json must either include
-        SliceTiming information, or you must specify it with the --slspec-txt CLI. If any subjects do not have this information, they will be run without slice-to-volume enabled. You must also use the --use_eddy_gpu option. (default: %(default)s)'
-    action: 'store_true'
-    default: False
-
-  --eddy_no_quad:
-    help: 'Disables eddy_quad QC report (default: %(default)s)'
-    action: 'store_true'
-    default: False
-
+  # B0 masking options
   --masking_method:
-    help: 'Brain masking method to use (default: %(default)s)'
+    help: 'Brain masking method to use for b0 (default: %(default)s)'
     nargs: '?'
     choices: 
       - 'b0_BET'
@@ -122,56 +102,65 @@ parse_args:
     default: 'b0_synthstrip'
 
   --b0_bet_frac:
-    help: 'BET fractional intensity threshold for b0 masking (default: %(default)s)'
+    help: 'BET fractional intensity threshold for b0 masking 
+          (default: %(default)s)'
     default: 0.5
 
-  --slspec_txt:
-    help: 'Path to custom slspec txt file for use with eddy. Must use this if SliceTiming does not exist in the JSON (default: %(default)s)'
-    default: False
-    type: Path
+  # SDC Options
+  --gradcorrect_coeffs:
+    help: 'Path to file containing scanner specific gradient correction 
+          coefficients. Use this to enable gradient non-linearity correction. 
+          (default: %(default)s)'
+    default: null
+    # default: '/project/ctb-akhanf/akhanf/opt/grad/.coeff_AC84.grad'
 
+  --sdc_method:
+    help: 'Set the susceptibility distortion correction (SDC) method to be used. 
+          By default, the optimal correction method is chosen based on the data 
+          available ("topup" if 2+ phase encoding directions or "synthsr" if 
+          single phase encoding direction). To skip SDC, set method to "none". 
+          (default: %(default)s)'
+    default: 'optimal'
+    choices:
+      - 'optimal'
+      - 'topup'
+      - 'sdcflow'
+      - 'synthsr'
+      - 'none'
+          
+  # Eddy options
+  --use_eddy_s2v:
+    help: 'Enable slice-to-volume correction in Eddy. Your dwi json must either 
+          include SliceTiming information, or you must specify it with the 
+          --slspec-txt flag. If any subjects do not have this information, 
+          they will be run without slice-to-volume enabled. You must also use 
+          the --use_eddy_gpu option. (default: %(default)s)'
+    action: 'store_true'
+    default: False
 
   --use_eddy_gpu:
     help: 'Use GPU-based version of eddy (must set container path in config)'
     action: 'store_true'
     default: False
 
-
-  --use_bedpost_gpu:
-    help: 'Use GPU-based version of bedpost (must set container path in config)'
+  --skip_eddy_quad:
+    help: 'Disables eddy_quad QC report (default: %(default)s)'
     action: 'store_true'
+    dest: 'eddy_no_quad'
     default: False
 
-  --rigid_dwi_t1_init:
-    help: 'Type of initialization to use for dwi to t1 rigid registration. (default: %(default)s)'
-    nargs: '?'
-    choices: 
-      - 'identity'
-      - 'image-centers'
-    default: 'identity'
-
-  --rigid_dwi_t1_iters:
-    help: 'Number of iterations to use at each multi-resolution stage for dwi to t1 rigid registration. (default: %(default)s)'
-    default: '50x50'
-
-  --use_syn_sdc:
-    help: "Use SyN fieldmap-less distortion-correction (warning: experimental!). (default: %(default)s)"
-    action: 'store_true'
+  # Metadata options
+  --slspec_txt:
+    help: 'Path to custom slspec txt file for use with eddy. Must use this if 
+          SliceTiming does not exist in the JSON (default: %(default)s)'
     default: False
-
-  --gradcorrect_coeffs:
-    help: "Path to file containing scanner specific gradient correction coefficients. Use this to enable gradient non-linearity correction. (default: %(default)s)"
-    default: null
-    # default: '/project/ctb-akhanf/akhanf/opt/grad/.coeff_AC84.grad'
-
-  --no_synthsr_sdc:
-    help: "Disable SynthSR+SyN fieldmap-less distortion-correction (enabled by default)"
-    action: 'store_false'
-    dest: 'use_synthsr_sdc'
-    default: True
+    type: Path
 
   --default_phase_encoding_direction:
-    help: "Sets the PhaseEncodingDirection to use for dwi acquisitions where it is not specified in the JSON file. By default, none will be assumed, and the workflow will fail for subjects where this JSON tag is missing (default: %(default)s)"
+    help: 'Sets the PhaseEncodingDirection to use for dwi acquisitions where it 
+          is not specified in the JSON file. By default, none will be assumed, 
+          and the workflow will fail for subjects where this JSON tag is 
+          missing (default: %(default)s)'
     default: ''
     choices:
       - 'i'
@@ -181,34 +170,58 @@ parse_args:
       - 'k'
       - 'k-'
 
+  # Bedpost options:
+  --use_bedpost: 
+    help: 'Enable bedpost (disabled by default)'
+    action: 'store_false'
+    dest: 'no_bedpost'
+    default: True
+
+  --use_bedpost_gpu:
+    help: 'Use GPU-based version of bedpost (must set container path in config)'
+    action: 'store_true'
+    default: False
+
+  # Registration options
+  --rigid_dwi_t1_init:
+    help: 'Type of initialization to use for dwi to t1 rigid registration. 
+          (default: %(default)s)'
+    nargs: '?'
+    choices: 
+      - 'identity'
+      - 'image-centers'
+    default: 'identity'
+
+  --rigid_dwi_t1_iters:
+    help: 'Number of iterations to use at each multi-resolution stage for dwi 
+          to t1 rigid registration. (default: %(default)s)'
+    default: '50x50'
+
 #---- to update below this
 
 singularity:
-  prepdwi: 'docker://khanlab/prepdwi:latest' 
-  mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'
-  fsl: 'docker://brainlife/fsl:6.0.4-patched2' 
-  fsl_cpu: '/project/6050199/akhanf/singularity/bids-apps/brainlife_fsl_6.0.4-patched2.sif' #fsl_cpu and fsl_gpu must have absolute paths instead of docker uri - since they are used for rules where we explicitly include singularity exec in the command (eddy, bedpost)
-  eddy_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.3_cuda9.1.sif' #note: 6.0.3_cuda9.1 seems to be missing imcp, so it doesn't work for bedpost
-  bedpost_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif' 
-  itksnap: 'docker://khanlab/itksnap:latest' 
-  ants: 'docker://kaczmarj/ants:2.3.4'  
-  niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
-  python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'  
-  synthstrip: 'docker://freesurfer/synthstrip:1.3'
-  sdcflows: 'docker://nipreps/fmriprep:22.1.1' #can't currently just use sdcflows docker as it is missing freesurfer's mri_robust_template
-  gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
+  ants: 'docker://kaczmarj/ants:2.3.4'
   connectome_workbench: 'docker://khanlab/autotop_deps:v0.4.2'
-  synthsr: 'docker://akhanf/synthsr:main'
+  # fsl_cpu and fsl_gpu must have absolute paths (used to explicity singularitys
+  # exec calls in command (e.g. eddy, bedpost)
+  fsl_cpu: '/project/6050199/akhanf/singularity/bids-apps/brainlife_fsl_6.0.4-patched2.sif' # docker://brainlife/fsl:6.0.4-patched2
+  fsl_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif' # docker://fnndsc/fsl:6.0.4-cuda9.1.sif
+  gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
+  itksnap: 'docker://khanlab/itksnap:latest' 
+  mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'
+  niftyreg: 'docker://vnmd/niftyreg_2014.14.11:latest'
+  prepdwi: 'docker://khanlab/prepdwi:latest' 
+  python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'
+  sdcflows: 'docker://nipreps/fmriprep:22.1.1' #can't currently just use sdcflows docker as it is missing freesurfer's mri_robust_template
   synthmorph: 'docker://freesurfer/synthmorph:1'
-
-
-
+  synthsr: 'docker://akhanf/synthsr:main'
+  synthstrip: 'docker://freesurfer/synthstrip:1.3'
+  
 
 # Options for resampling dwi in T1w space
 #  1. can resample as T1w resolution
 #  2. can resample as original dwi resolution 
 #  3. can resample as specified resolution
-
 resample_dwi:
   resample_scheme: 'orig' # should be one of: ['T1w', 'orig', 'custom']
   custom_resolution: #only needed if the 'custom' 
@@ -307,23 +320,3 @@ eddy:
 
 
 default_effective_echo_spacing: 0.0001 #if not defined in JSON files
-
-#for test data
-root: 'results'
-participant_label: 
-exclude_participant_label:
-masking_method: b0_synthstrip
-b0_bet_frac: 0.5
-slspec_txt: False
-use_eddy_s2v: False
-no_bedpost: True
-use_eddy_gpu: False
-use_bedpost_gpu: False
-rigid_dwi_t1_init: 'identity'
-rigid_dwi_t1_iters: '50x50'
-gradcorrect_coeffs: null
-eddy_no_quad: False
-no_topup: False
-use_syn_sdc: False
-use_synthsr_sdc: True 
-default_phase_encoding_direction: ''

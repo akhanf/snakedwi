@@ -38,12 +38,14 @@ rule qc_reg:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/vis_regqc.py"
+        "../scripts/qc/vis_regqc.py"
 
 
 rule qc_probseg:
     input:
-        img=bids(root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"),
+        img=bids(
+            root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"
+        ),
         seg4d=bids(
             root=work,
             subject="{subject}",
@@ -68,12 +70,14 @@ rule qc_probseg:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/vis_qc_probseg.py"
+        "../scripts/qc/vis_qc_probseg.py"
 
 
 rule qc_dseg:
     input:
-        img=bids(root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"),
+        img=bids(
+            root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"
+        ),
         seg=bids(
             root=work,
             subject="{subject}",
@@ -109,4 +113,4 @@ rule qc_dseg:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/vis_qc_dseg.py"
+        "../scripts/qc/vis_qc_dseg.py"

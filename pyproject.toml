@@ -1,37 +1,61 @@
 [tool.poetry]
 name = "snakedwi"
-version = "0.1.0"
+version = "0.2.0-alpha"
 description = "snakedwi - BIDS app and snakemake workflow for dwi pre-processing"
 authors = ["Ali Khan <alik@robarts.ca>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.11"
-snakebids = "^0.6.0"
-snakemake = "^7.0.0"
-Pygments = "^2.12.0" #required for report-generation only
+python = "^3.8, <3.11"
+snakebids = "^0.7.0"
 #snakeboost = "^0.2.0"
+Pygments = "^2.12.0" #required for report-generation only
 sdcflows = "^2.2.2"
 
-[tool.poetry.dev-dependencies]
-snakefmt = "^0.6.0"
+[tool.poetry.group.dev.dependencies]
 poethepoet = "^0.10.0"
-black = ">=22.1.0,<23.0.0"
+flake8 = "4.0"
+black = "^22.1.0"
 isort = "^5.10.1"
+yamlfix = "^1.1.0"
+snakefmt = "^0.6.0"
+
+[tool.poetry.scripts]
+snakedwi = "snakedwi.run:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-
-[tool.poetry.scripts]
-snakedwi = "snakedwi.run:main"
-
-
 [tool.poe.tasks]
-quality_check = { shell = "isort snakedwi/*.py -c && black snakedwi --check && snakefmt snakedwi --check" }
-quality_fix = { shell = "isort snakedwi/*.py && black snakedwi  && snakefmt snakedwi" }
+yamlfix = { shell = "find . -type f \\( -iname \\*.yaml -o -iname \\*.yml ! -iname snakemake* ! -iname snakebids* ! -iname *schema* \\) -exec yamlfix {} \\;" }
+yamlfix-check = { shell = "find . -type f \\( -iname \\*.yaml -o -iname \\*.yml ! -iname snakemake* ! -iname snakebids* ! -iname *schema* \\) -exec yamlfix --check {} \\;" }
+isort = "isort snakedwi"
+isort-check = "isort -c snakedwi"
+black = "black snakedwi"
+black-check = "black --check snakedwi"
+flake8 = "flake8 snakedwi"
+snakefmt = "snakefmt snakedwi"
+snakefmt-check = "snakefmt --check snakedwi"
+quality_fix = ["yamlfix", "isort", "black", "flake8", "snakefmt"]
+quality_check = [
+    "yamlfix-check",
+    "isort-check",
+    "black-check",
+    "flake8",
+    "snakefmt-check",
+]
+test_dryrun = { shell = "mkdir -p test_out/topup_multishell && snakedwi snakedwi/test_data/bids_AP_PA test_out/topup_multishell participant -np && rm -rf test_out/topup_multishell" }
+test_nosdc = { shell = "mkdir -p test_out/nosdc && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/nosdc participant --sdc_method none && rm -rf test_out/nosdc" }
+test_sdc_optimal = { shell = "mkdir -p test_out/sdc_optimal && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdc_optimal participant && rm -rf test_out/sdc_optimal" }
+test_singleshell_topup = { shell = "mkdir -p test_out/topup_singleshell && snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell participant --sdc_method topup && rm -rf test_out/topup_singleshell" }
+test_sdcflow = { shell = "mkdir -p test_out/sdcflow && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdcflow participant --sdc_method sdcflow && rm -rf test_out/sdcflow" }
+test_synthsr = { shell = "mkdir -p test_out/synthsr && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/synthsr participant --sdc_method synthsr && rm -rf test_out/synthsr" }
+test = ["test_dryrun", "test_nosdc", "test_sdc_optimal", "test_singleshell_topup", "test_sdcflow", "test_synthsr"]
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+
+[tool.black]
+line-length = 79

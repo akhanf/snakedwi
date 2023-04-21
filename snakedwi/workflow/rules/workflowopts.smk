@@ -7,12 +7,19 @@ checkpoint check_subj_dwi_metadata:
         ),
     params:
         index_col_value=bids(
-            **subj_wildcards, include_subject_dir=False, include_session_dir=False
+            include_subject_dir=False,
+            include_session_dir=False,
+            **subj_wildcards
         ),
         index_col_name="subj",
     output:
         workflowopts=directory(
-            bids(root=root, datatype="dwi", suffix="workflowopts", **subj_wildcards)
+            bids(
+                root=root,
+                datatype="dwi",
+                suffix="workflowopts",
+                **subj_wildcards
+            )
         ),
         metadata=bids(
             root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards
@@ -20,13 +27,13 @@ checkpoint check_subj_dwi_metadata:
     group:
         "subj"
     script:
-        "../scripts/check_subj_dwi_metadata.py"
+        "../scripts/metadata/check_subj_dwi_metadata.py"
 
 
 rule concat_subj_metadata:
     input:
         tsvs=expand(
-            bids(root=root, datatype="dwi", suffix="metadata.tsv", **subj_wildcards),
+            rules.check_subj_dwi_metadata.output.metadata,
             zip,
             **subj_zip_list
         ),
@@ -34,13 +41,12 @@ rule concat_subj_metadata:
         tsv=bids(root=root, suffix="metadata.tsv"),
     container:
         config["singularity"]["python"]
-    script:
-        "../scripts/concat_tsv.py"
+    shell:
+        "../scripts/metadata/concat_subj_metadata.py"
 
 
 rule create_missing_subj_tsv:
-    """creates a tsv file containing subjects that are 
-    skipped because they either don't have T1w or don't have dwi data"""
+    """Create tsv file of skipped subjects due to missing T1w / dwi data"""
     params:
         missing_subject_zip_list=missing_subj_zip_list,
     output:
@@ -48,11 +54,13 @@ rule create_missing_subj_tsv:
     container:
         config["singularity"]["python"]
     script:
-        "../scripts/create_missing_subj_tsv.py"
+        "../scripts/metadata/create_missing_subj_tsv.py"
 
 
 def get_dwi_indices(all_dwi, wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
+        **wildcards
+    ).output[0]
     ([indices_str],) = glob_wildcards(
         os.path.join(checkpoint_output, "indices-{indices}")
     )
@@ -61,7 +69,9 @@ def get_dwi_indices(all_dwi, wildcards):
 
 
 def get_dwi_indices_only(wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
+        **wildcards
+    ).output[0]
     ([indices_str],) = glob_wildcards(
         os.path.join(checkpoint_output, "indices-{indices}")
     )
@@ -70,15 +80,21 @@ def get_dwi_indices_only(wildcards):
 
 
 def get_sdc_method(wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
+        **wildcards
+    ).output[0]
     # this gets the sdc method for this subject(session)
-    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+    ([method],) = glob_wildcards(
+        os.path.join(checkpoint_output, "sdc-{method}")
+    )
     return method
 
 
 def get_dwi_num_scans(wildcards):
     # this gets the number of DWI scans for this subject(session)
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
+        **wildcards
+    ).output[0]
     ([indices_str],) = glob_wildcards(
         os.path.join(checkpoint_output, "indices-{indices}")
     )
@@ -88,13 +104,19 @@ def get_dwi_num_scans(wildcards):
 
 def get_pe_axis(wildcards):
 
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([peaxis],) = glob_wildcards(os.path.join(checkpoint_output, "PEaxis-{axis}"))
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
+        **wildcards
+    ).output[0]
+    ([peaxis],) = glob_wildcards(
+        os.path.join(checkpoint_output, "PEaxis-{axis}")
+    )
     return peaxis
 
 
 def get_enable_s2v(wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
+        **wildcards
+    ).output[0]
     ([s2v_is_enabled],) = glob_wildcards(
         os.path.join(checkpoint_output, "eddys2v-{isenabled}")
     )
@@ -104,7 +126,9 @@ def get_enable_s2v(wildcards):
 def get_index_of_dwi_scan(wildcards):
     """given wildcards into a specific dwi acquisition, this returns the 0-based
     index of that scan in the list of dwi scans in use for this acquisition"""
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
+    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
+        **wildcards
+    ).output[0]
     ([indices_str],) = glob_wildcards(
         os.path.join(checkpoint_output, "indices-{indices}")
     )
