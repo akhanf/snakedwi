@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@vmaster
+        uses: actions/checkout@master
       - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -103,8 +103,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}-${{ matrix.python-version
-            }}
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}-${{ matrix.python-version }}
     #----------------------------------------------
     # install dependencies if cache does not exist
     #----------------------------------------------
