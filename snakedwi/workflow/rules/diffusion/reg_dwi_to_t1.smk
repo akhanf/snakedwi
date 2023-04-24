@@ -18,7 +18,7 @@ rule reg_dwi_to_t1:
     params:
         general_opts="-d 3",
         rigid_opts=(
-            "-m SSD -a -dof 6 -ia-{rigid_dwi_t1_init} -n {rigid_dwi_t1_iters}"
+            "-m NMI -a -dof 6 -ia-{rigid_dwi_t1_init} -n {rigid_dwi_t1_iters}"
         ).format(
             rigid_dwi_t1_init=config["rigid_dwi_t1_init"],
             rigid_dwi_t1_iters=config["rigid_dwi_t1_iters"],
@@ -54,11 +54,15 @@ rule reg_dwi_to_t1:
         ),
     threads: 8
     shell:
-        "greedy -threads {threads} {params.general_opts} {params.rigid_opts} "
-        "-i {input.t1wsynth} {input.avgb0synth} -o {output.xfm_ras} "
-        "&> {log} && "
-        "greedy -threads {threads} {params.general_opts} -rf {input.t1wsynth} "
-        "-rm {input.avgb0} {output.warped_avgb0} -r {output.xfm_ras} &>> {log}"
+        """
+        greedy -threads {threads} {params.general_opts} {params.rigid_opts} \\
+            -i {input.t1wsynth} {input.avgb0synth} -o {output.xfm_ras} \\
+            &> {log}
+
+        greedy -threads {threads} {params.general_opts} -rf {input.t1wsynth} \\
+            -rm {input.avgb0} {output.warped_avgb0} -r {output.xfm_ras} \\
+             &>> {log}
+        """
 
 
 # rule qc_reg_dwi_t1:
