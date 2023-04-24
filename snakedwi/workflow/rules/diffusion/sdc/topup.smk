@@ -1,7 +1,25 @@
+def _get_mocorrected_b0s(wcards):
+    b0s = get_dwi_indices(
+        expand(
+            bids(
+                root=work,
+                suffix="b0.nii.gz",
+                datatype="dwi",
+                desc="moco",
+                **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wcards)
+        ),
+        wcards,
+    )
+    if len(b0s) == 1:
+        return b0s
+    return rules.moco_bzeros_3d.output['nii_4d']
 
 rule run_topup:
     input:
-        bzero_concat=rules.moco_bzeros_3d.output.nii_4d,
+        bzero_concat=_get_mocorrected_b0s,
         phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
     params:
         out_prefix=bids(
