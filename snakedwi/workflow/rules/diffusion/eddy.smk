@@ -274,10 +274,10 @@ if config["use_eddy_gpu"]:
                 ),
                 "dwi.eddy_rotated_bvecs",
             ),
-        threads: 16  #this needs to be set in order to avoid multiple gpus from executing
+        threads: 1
         resources:
             gpus=1,
-            runtime=60,  #6 hours (this is a conservative estimate, may be shorter)
+            runtime=180,  #6 hours (this is a conservative estimate, may be shorter)
             mem_mb=32000,
         group:
             "subj"
