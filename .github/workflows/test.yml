@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        uses: actions/checkout@vmaster
+        uses: actions/checkout@master
       - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
