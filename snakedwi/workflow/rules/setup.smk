@@ -16,7 +16,7 @@ inputs = generate_inputs(
     derivatives=config["derivatives"],
     participant_label=config["participant_label"],
     exclude_participant_label=config["exclude_participant_label"],
-    pybids_database_dir=config["pybids_db_dir"],
+    pybids_database_dir=config.get("pybids_db_dir"),
     use_bids_inputs=True,
 )
 
