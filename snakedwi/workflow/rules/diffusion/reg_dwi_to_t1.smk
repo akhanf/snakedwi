@@ -131,6 +131,7 @@ rule qc_get_t1_edges:
             )
         )
     group: 'subj'
+    shadow: 'minimal'
     container:
         config["singularity"]["itksnap"]
     shell:
