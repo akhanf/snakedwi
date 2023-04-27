@@ -213,8 +213,8 @@ singularity:
   connectome_workbench: 'docker://khanlab/autotop_deps:v0.4.2'
   # fsl_cpu and fsl_gpu must have absolute paths (used to explicity singularitys
   # exec calls in command (e.g. eddy, bedpost)
-  fsl_cpu: '/project/6050199/akhanf/singularity/bids-apps/brainlife_fsl_6.0.4-patched2.sif' # docker://brainlife/fsl:6.0.4-patched2
-  fsl_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif' # docker://fnndsc/fsl:6.0.4-cuda9.1.sif
+  fsl_abspath: '/project/6050199/akhanf/singularity/snakemake_containers/467a1ba62b1e41bec0cf97eddfc23922.simg'
+  fsl: 'docker://fnndsc/fsl:6.0.4-cuda9.1'
   gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
   itksnap: 'docker://khanlab/itksnap:latest' 
   mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'

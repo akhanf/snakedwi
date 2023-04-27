@@ -86,7 +86,7 @@ if config["use_bedpost_gpu"]:
             bvec=rules.copy_inputs_for_bedpost.output.bvec,
             brainmask=rules.copy_inputs_for_bedpost.output.brainmask,
         params:
-            container=config["singularity"]["fsl_gpu"],
+            container=config["singularity"]["fsl_abspath"],
         output:
             bedpost_dir=directory(
                 bids(
@@ -123,7 +123,7 @@ else:
             bvec=rules.copy_inputs_for_bedpost.output.bvec,
             brainmask=rules.copy_inputs_for_bedpost.output.brainmask,
         params:
-            container=config["singularity"]["fsl_cpu"],
+            container=config["singularity"]["fsl_abspath"],
             bedpost_script=os.path.join(
                 workflow.basedir, "scripts/bedpost/bedpostx-parallel"
             ),
