@@ -19,7 +19,7 @@ def _get_mocorrected_b0s(wcards):
 
 rule run_topup:
     input:
-        bzero_concat=_get_mocorrected_b0s,
+        bzero_concat=rules.concat_bzeros.output.bzero_concat,
         phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
     params:
         out_prefix=bids(
