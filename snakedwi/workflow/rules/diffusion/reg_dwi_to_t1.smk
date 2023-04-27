@@ -139,9 +139,9 @@ rule qc_get_t1_edges:
 
 rule qc_reg_dwi_t1:
     input:
-        overlay=rules.reg_dwi_to_t1.output.warped_avgb0[0],
-        background=rules.n4_t1_withmask.output.t1[0],
-        lines=rules.qc_get_t1_edges.output[0],
+        overlay=rules.reg_dwi_to_t1.output.warped_avgb0,
+        background=rules.n4_t1_withmask.output.t1,
+        lines=rules.qc_get_t1_edges.output,
     output:
         png=report(
             bids(
