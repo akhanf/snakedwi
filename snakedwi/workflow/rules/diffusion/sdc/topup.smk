@@ -15,7 +15,8 @@ def _get_mocorrected_b0s(wcards):
     )
     if len(b0s) == 1:
         return b0s
-    return rules.moco_bzeros_3d.output['nii_4d']
+    return rules.moco_bzeros_3d.output["nii_4d"]
+
 
 rule run_topup:
     input:
@@ -65,7 +66,6 @@ rule run_topup:
 
 
 def get_applytopup_inindex(wildcards):
-
     index = get_index_of_dwi_scan(wildcards)
     return index + 1  # adjust to start at 1 instead of 0
 

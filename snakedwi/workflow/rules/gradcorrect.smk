@@ -35,7 +35,6 @@ sdc_methods = {
 
 def get_dwi_ref_for_gradcorrect(wildcards):
     if config["gradcorrect_coeffs"]:
-
         checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
             **wildcards
         ).output[0]

@@ -127,8 +127,6 @@ rule moco_scan_bzeros_4d:
         """
 
 
-
-
 rule moco_bzeros_3d:
     """ motion-correct the avgb0 scans from each dwi acquisition"""
     input:
@@ -180,10 +178,10 @@ rule moco_bzeros_3d:
     group:
         "subj"
     params:
-        flo_indices = lambda wcards, input: (
+        flo_indices=lambda wcards, input: (
             " ".join([f"{i}" for i in range(1, len(input.b0s))])
         ),
-        flo_imgs = lambda wcards, input: " ".join(input.b0s[1:])
+        flo_imgs=lambda wcards, input: " ".join(input.b0s[1:]),
     shell:
         """
         dedent () {{

@@ -65,7 +65,6 @@ if not config["slspec_txt"]:
         script:
             "../../scripts/diffusion/eddy/get_slspec_txt.py"
 
-
 else:
 
     rule get_slspec_txt:
@@ -293,7 +292,6 @@ if config["use_eddy_gpu"]:
             " {params.topup_opt}"
             " {params.flags}"
 
-
 else:
 
     rule run_eddy_cpu:
@@ -418,7 +416,6 @@ rule cp_eddy_outputs:
     run:
         for in_file, out_file in zip(input, output):
             shell("cp -v {in_file} {out_file}")
-
 
 
 

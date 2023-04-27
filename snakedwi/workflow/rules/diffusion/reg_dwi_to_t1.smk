@@ -110,6 +110,7 @@ rule reg_dwi_to_t1:
 #     script:
 #         "../scripts/vis_regqc.py"
 
+
 rule qc_get_t1_edges:
     input:
         brain=rules.n4_t1_withmask.output.t1,
@@ -119,7 +120,7 @@ rule qc_get_t1_edges:
             desc="brain",
             suffix="mask.nii.gz",
             **subj_wildcards,
-        )
+        ),
     output:
         temp(
             bids(
@@ -129,9 +130,11 @@ rule qc_get_t1_edges:
                 suffix="T1w.nii.gz",
                 **subj_wildcards,
             )
-        )
-    group: 'subj'
-    shadow: 'minimal'
+        ),
+    group:
+        "subj"
+    shadow:
+        "minimal"
     container:
         config["singularity"]["itksnap"]
     shell:
@@ -170,7 +173,6 @@ rule qc_reg_dwi_t1:
         config["singularity"]["python"]
     script:
         "../../scripts/qc/vis_regqc.py"
-
 
 
 rule convert_xfm_ras2itk:

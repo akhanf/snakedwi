@@ -1,10 +1,8 @@
-from nilearn import plotting
-import nibabel as nib
-import matplotlib.pyplot as plt
-import skimage as skimg
-
-
 import matplotlib
+import matplotlib.pyplot as plt
+import nibabel as nib
+import skimage as skimg
+from nilearn import plotting
 
 matplotlib.use("Agg")
 
@@ -15,8 +13,8 @@ with plt.ioff():
     boundary = nib.Nifti1Image(
         skimg.segmentation.find_boundaries(
             mask.get_fdata(),
-            mode='inner',
-        ).astype('float32'),
+            mode="inner",
+        ).astype("float32"),
         mask.affine,
     )
 
@@ -24,37 +22,36 @@ with plt.ioff():
     ax_size = 2
     n_slices = 7
     fig = plt.figure(
-        figsize=(ax_size*n_slices, ax_size*4),
+        figsize=(ax_size * n_slices, ax_size * 4),
         layout="constrained",
-        facecolor='k',
-        edgecolor='k'
+        facecolor="k",
+        edgecolor="k",
     )
     ax = fig.add_subplot(111)
     display = plotting.plot_img(
         background,
         n_slices,
-        display_mode='mosaic',
+        display_mode="mosaic",
         black_bg=True,
         colorbar=False,
         annotate=False,
-        cmap='gray',
+        cmap="gray",
         axes=ax,
     )
-    display.add_overlay(boundary, cmap='autumn')
-    ax.axis('off')
+    display.add_overlay(boundary, cmap="autumn")
+    ax.axis("off")
     fig.savefig(snakemake.output.png, dpi=600)
     plt.close(fig)
-
 
     html_view = plotting.view_img(
         stat_map_img=boundary,
         bg_img=background,
         opacity=0.5,
-        cmap='autumn',
+        cmap="autumn",
         threshold=0.5,
         colorbar=False,
         symmetric_cmap=False,
-        resampling_interpolation='nearest',
+        resampling_interpolation="nearest",
         title="sub-{subject}".format(**snakemake.wildcards),
     )
 

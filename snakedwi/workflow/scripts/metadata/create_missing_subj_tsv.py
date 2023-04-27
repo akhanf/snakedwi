@@ -7,7 +7,6 @@ def create_missing_subj_tsv(
     missing_subj_list: dict,
     out_tsv: str,
 ) -> None:
-
     df = pd.DataFrame()
     df["participant_id"] = missing_subj_list["subject"]
 

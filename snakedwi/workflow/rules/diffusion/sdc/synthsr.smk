@@ -109,8 +109,8 @@ rule reg_b0_to_t1_synthsr:
         convergence="100x50x20",
         smoothing_sigmas="2x1x0vox",
         shrink_factors="4x2x1",
-        restrict_deformation=get_restrict_deformation,
         # "0x1x0", should be set to phase encode dir (can read from JSON)
+        restrict_deformation=get_restrict_deformation,
     output:
         unwarped=bids(
             root=work,
@@ -190,7 +190,8 @@ rule displacement_field_to_fmap:
         ),
     container:
         config["singularity"]["python"]
-    group: "subj"
+    group:
+        "subj"
     script:
         "../../../scripts/diffusion/sdc/displacement_field_to_fmap.py"
 

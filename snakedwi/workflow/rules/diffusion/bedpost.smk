@@ -112,7 +112,6 @@ if config["use_bedpost_gpu"]:
             "bedpostx_gpu {input.diff_dir} && "
             "rm -rf {output.bedpost_dir}/logs "
 
-
 else:
 
     rule run_bedpost_cpu:

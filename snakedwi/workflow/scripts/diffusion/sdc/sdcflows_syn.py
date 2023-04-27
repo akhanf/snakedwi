@@ -25,7 +25,6 @@ def sdcflows_syn(
     threads: int,
 ) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
-
         workflow = Workflow(name="nipype_wf")
 
         syn_preprocessing_wf = init_syn_preprocessing_wf(

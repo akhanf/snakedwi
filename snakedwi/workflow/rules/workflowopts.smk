@@ -103,7 +103,6 @@ def get_dwi_num_scans(wildcards):
 
 
 def get_pe_axis(wildcards):
-
     checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
         **wildcards
     ).output[0]
