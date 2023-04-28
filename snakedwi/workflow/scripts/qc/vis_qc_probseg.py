@@ -8,9 +8,7 @@ def vis_qc_probseg(img: str, seg4d: str, out_png: str) -> None:
     matplotlib.use("Agg")
 
     # Save output png
-    display = plotting.plot_prob_atlas(
-        bg_img=img, maps_img=seg4d, display_mode="ortho"
-    )
+    display = plotting.plot_prob_atlas(bg_img=img, maps_img=seg4d, display_mode="ortho")
     display.savefig(out_png)
     display.close()
 

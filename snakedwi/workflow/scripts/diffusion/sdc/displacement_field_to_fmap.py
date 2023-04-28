@@ -29,8 +29,7 @@ def displacement_field_to_fmap(
         else:
             if "PhaseEncodingAxis" in json_dwi:
                 print(
-                    "WARNING: assuming PhaseEncodingDirection from "
-                    "PhaseEncodingAxis"
+                    "WARNING: assuming PhaseEncodingDirection from " "PhaseEncodingAxis"
                 )
                 pe_dir = json_dwi["PhaseEncodingAxis"]
             else:

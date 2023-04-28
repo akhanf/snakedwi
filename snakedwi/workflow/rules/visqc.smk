@@ -43,9 +43,7 @@ rule qc_reg:
 
 rule qc_probseg:
     input:
-        img=bids(
-            root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"
-        ),
+        img=bids(root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"),
         seg4d=bids(
             root=work,
             subject="{subject}",
@@ -75,9 +73,7 @@ rule qc_probseg:
 
 rule qc_dseg:
     input:
-        img=bids(
-            root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"
-        ),
+        img=bids(root=work, subject="{subject}", desc="n4", suffix="T1w.nii.gz"),
         seg=bids(
             root=work,
             subject="{subject}",

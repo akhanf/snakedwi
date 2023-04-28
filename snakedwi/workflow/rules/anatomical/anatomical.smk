@@ -4,7 +4,7 @@ rule import_t1:
         nii=lambda wildcards: expand(
             input_path["T1w"],
             zip,
-            **filter_list(input_zip_lists["T1w"], wildcards)
+            **filter_list(input_zip_lists["T1w"], wildcards),
         )[0],
     output:
         nii=bids(

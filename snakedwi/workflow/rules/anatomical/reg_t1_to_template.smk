@@ -107,7 +107,10 @@ rule warp_brainmask_from_template_affine:
             os.path.join("..", "..", config["template_mask"])
         ).format(**wildcards),
         ref=bids(
-            root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"
+            root=work,
+            datatype="anat",
+            **subj_wildcards,
+            suffix="T1w.nii.gz",
         ),
         xfm=bids(
             root=root,
@@ -286,9 +289,7 @@ rule ants_syn_affine_init:
             dim=config["ants"]["dim"]
         ),
         intensity_opts=config["ants"]["intensity_opts"],
-        init_transform=lambda wildcards, input: "-r {xfm}".format(
-            xfm=input.init_xfm
-        ),
+        init_transform=lambda wildcards, input: "-r {xfm}".format(xfm=input.init_xfm),
         linear_multires=(
             "-c [{reg_iterations},1e-6,10] "
             "-f {shrink_factors} "
@@ -469,9 +470,7 @@ rule dilate_brainmask:
             desc="brain"
         ),
     params:
-        dil_opt=" ".join(
-            ["-dilD" for i in range(config["n_init_mask_dilate"])]
-        ),
+        dil_opt=" ".join(["-dilD" for i in range(config["n_init_mask_dilate"])]),
     output:
         mask=bids(
             root=work,

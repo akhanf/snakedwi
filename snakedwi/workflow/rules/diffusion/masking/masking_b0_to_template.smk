@@ -28,9 +28,7 @@ rule ants_b0_to_template:
             dim=config["ants"]["dim"]
         ),
         intensity_opts=config["ants"]["intensity_opts"],
-        init_transform=lambda wildcards, input: "-r {xfm}".format(
-            xfm=input.init_xfm
-        ),
+        init_transform=lambda wildcards, input: "-r {xfm}".format(xfm=input.init_xfm),
         linear_multires=(
             "-c [{reg_iterations},1e-6,10] "
             "-f {shrink_factors} "

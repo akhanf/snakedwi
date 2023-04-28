@@ -9,9 +9,7 @@ checkpoint split_shell_avgs:
             **subj_wildcards
         ),
     params:
-        out_prefix=(
-            lambda wildcards, output: os.path.join(output.nii_dir, "dwi.")
-        ),
+        out_prefix=(lambda wildcards, output: os.path.join(output.nii_dir, "dwi.")),
     output:
         nii_dir=directory(
             bids(
@@ -140,9 +138,9 @@ def get_diffweighted_shells_for_tissue_seg(wildcards):
                 **subj_wildcards
             ),
             **wildcards,
-            shell=glob_wildcards(
-                os.path.join(checkpoint_output, "dwi.{i}.nii.gz")
-            ).i[1:]
+            shell=glob_wildcards(os.path.join(checkpoint_output, "dwi.{i}.nii.gz")).i[
+                1:
+            ]
         )
     )
 

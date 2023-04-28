@@ -76,7 +76,7 @@ rule rigid_reg_t1_to_b0_synthsr:
         bids(
             root="logs",
             suffix="rigid_reg_t1_to_b0_synthsr.txt",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"

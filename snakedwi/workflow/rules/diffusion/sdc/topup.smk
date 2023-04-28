@@ -24,7 +24,10 @@ rule run_topup:
         phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
     params:
         out_prefix=bids(
-            root=work, suffix="topup", datatype="dwi", **subj_wildcards
+            root=work,
+            suffix="topup",
+            datatype="dwi",
+            **subj_wildcards,
         ),
         config="b02b0.cnf",  #sets the multi-res schedule and other params..
     output:
@@ -52,7 +55,7 @@ rule run_topup:
             root=work,
             suffix="topup_movpar.txt",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["fsl"]
@@ -83,7 +86,10 @@ rule apply_topup_jac:
     params:
         inindex=get_applytopup_inindex,
         topup_prefix=bids(
-            root=work, suffix="topup", datatype="dwi", **subj_wildcards
+            root=work,
+            suffix="topup",
+            datatype="dwi",
+            **subj_wildcards,
         ),
     output:
         nii=bids(

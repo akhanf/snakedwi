@@ -50,7 +50,7 @@ rule reg_dwi_to_t1:
             root="logs",
             suffix="reg_b0_to_t1.txt",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     threads: 8
     shell:
@@ -280,9 +280,7 @@ rule create_cropped_ref_t1_resolution:
 
 rule create_cropped_ref_dwi_resolution:
     input:
-        cropped=(
-            rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample
-        ),
+        cropped=(rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample),
         res_txt=bids(
             root=work,
             datatype="dwi",
@@ -311,9 +309,7 @@ rule create_cropped_ref_dwi_resolution:
 
 rule create_cropped_ref_custom_resolution:
     input:
-        cropped=(
-            rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample
-        ),
+        cropped=(rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample),
     params:
         resolution="x".join(
             [str(vox) for vox in config["resample_dwi"]["resample_mm"]]
@@ -428,23 +424,13 @@ rule resample_brainmask_to_t1w:
 rule rotate_bvecs_to_t1w:
     input:
         bvecs=bids(
-            root=root,
-            suffix="dwi.bvec",
-            desc="eddy",
-            datatype="dwi",
-            **subj_wildcards
+            root=root, suffix="dwi.bvec", desc="eddy", datatype="dwi", **subj_wildcards
         ),
         bvals=bids(
-            root=root,
-            suffix="dwi.bval",
-            desc="eddy",
-            datatype="dwi",
-            **subj_wildcards
+            root=root, suffix="dwi.bval", desc="eddy", datatype="dwi", **subj_wildcards
         ),
         xfm_fsl=rules.convert_xfm_ras2fsl.output.xfm_fsl,
-        script=os.path.join(
-            workflow.basedir, f"scripts/diffusion/rotate_bvecs.sh"
-        ),
+        script=os.path.join(workflow.basedir, f"scripts/diffusion/rotate_bvecs.sh"),
     output:
         bvecs=bids(
             root=root,
@@ -482,9 +468,7 @@ rule dtifit_resampled_t1w:
         bvecs=rules.rotate_bvecs_to_t1w.output.bvecs,
         brainmask=rules.resample_brainmask_to_t1w.output.brainmask,
     params:
-        out_basename=lambda wildcards, output: os.path.join(
-            output.out_folder, "dti"
-        ),
+        out_basename=lambda wildcards, output: os.path.join(output.out_folder, "dti"),
     output:
         out_folder=directory(
             bids(

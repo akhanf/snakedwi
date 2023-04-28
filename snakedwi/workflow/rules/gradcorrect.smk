@@ -35,12 +35,10 @@ sdc_methods = {
 
 def get_dwi_ref_for_gradcorrect(wildcards):
     if config["gradcorrect_coeffs"]:
-        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
-            **wildcards
-        ).output[0]
-        ([method],) = glob_wildcards(
-            os.path.join(checkpoint_output, "sdc-{method}")
-        )
+        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[
+            0
+        ]
+        ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
 
         return sdc_methods[method]
     else:
@@ -143,9 +141,7 @@ rule convert_gradcorrect_to_itk:
 
 rule gradcorrect_t1w:
     input:
-        t1=bids(
-            root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"
-        ),
+        t1=bids(root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"),
         grad_coeff=config["gradcorrect_coeffs"] or "",
     output:
         t1=bids(

@@ -26,7 +26,7 @@ rule dwidenoise:
                 root=work,
                 suffix="dwi",
                 datatype="dwi",
-                **input_wildcards["dwi"]
+                **input_wildcards["dwi"],
             ),
             ".nii.gz",
             ".bvec",
@@ -64,20 +64,14 @@ def get_degibbs_inputs(wildcards):
     # Denoise as input if at least 30 dirs or not skipped
     import numpy as np
 
-    in_dwi_bval = re.sub(
-        ".nii.gz", ".bval", input_path["dwi"].format(**wildcards)
-    )
+    in_dwi_bval = re.sub(".nii.gz", ".bval", input_path["dwi"].format(**wildcards))
     bvals = np.loadtxt(in_dwi_bval)
 
     if bvals.size < 30 or config["skip_denoise"]:
         prefix = bids(root=work, suffix="dwi", datatype="dwi", **wildcards)
     else:
         prefix = bids(
-            root=work,
-            suffix="dwi",
-            datatype="dwi",
-            desc="denoise",
-            **wildcards
+            root=work, suffix="dwi", datatype="dwi", desc="denoise", **wildcards
         )
     return multiext(prefix, ".nii.gz", ".bvec", ".bval", ".json")
 

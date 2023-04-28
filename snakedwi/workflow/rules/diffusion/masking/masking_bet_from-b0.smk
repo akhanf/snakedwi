@@ -8,7 +8,7 @@ rule n4_avg_b0:
             suffix="b0.nii.gz",
             desc="n4",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["ants"]
@@ -49,7 +49,7 @@ rule bet_avg_b0:
             suffix="b0.nii.gz",
             desc="bet",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["fsl"]
