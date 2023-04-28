@@ -14,7 +14,7 @@ sdcflows = "^2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.10.0"
-flake8 = "4.0"
+ruff = "^0.0.263"
 black = "^22.1.0"
 isort = "^5.10.1"
 yamlfix = "^1.1.0"
@@ -32,15 +32,16 @@ isort = "isort snakedwi"
 isort-check = "isort -c snakedwi"
 black = "black snakedwi"
 black-check = "black --check snakedwi"
-flake8 = "flake8 snakedwi"
+ruff-check = "ruff snakedwi"
+ruff = "ruff snakedwi --fix"
 snakefmt = "snakefmt snakedwi"
 snakefmt-check = "snakefmt --check snakedwi"
-quality_fix = ["yamlfix", "isort", "black", "flake8", "snakefmt"]
+quality_fix = ["yamlfix", "isort", "black", "ruff", "snakefmt"]
 quality_check = [
     "yamlfix-check",
     "isort-check",
     "black-check",
-    "flake8",
+    "ruff-check",
     "snakefmt-check",
 ]
 test = [
@@ -119,3 +120,6 @@ find . -type f \\( \
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+
+[tool.ruff]
+builtins = [ "snakemake" ]
