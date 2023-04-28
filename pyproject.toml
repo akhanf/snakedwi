@@ -28,8 +28,6 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poe.tasks]
-yamlfix = { shell = "find . -type f \\( -iname \\*.yaml -o -iname \\*.yml ! -iname snakemake* ! -iname snakebids* ! -iname *schema* \\) -exec yamlfix {} \\;" }
-yamlfix-check = { shell = "find . -type f \\( -iname \\*.yaml -o -iname \\*.yml ! -iname snakemake* ! -iname snakebids* ! -iname *schema* \\) -exec yamlfix --check {} \\;" }
 isort = "isort snakedwi"
 isort-check = "isort -c snakedwi"
 black = "black snakedwi"
@@ -45,13 +43,78 @@ quality_check = [
     "flake8",
     "snakefmt-check",
 ]
-test_dryrun = { shell = "mkdir -p test_out/topup_multishell && snakedwi snakedwi/test_data/bids_AP_PA test_out/topup_multishell participant -np && rm -rf test_out/topup_multishell" }
-test_nosdc = { shell = "mkdir -p test_out/nosdc && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/nosdc participant --sdc_method none && rm -rf test_out/nosdc" }
-test_sdc_optimal = { shell = "mkdir -p test_out/sdc_optimal && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdc_optimal participant && rm -rf test_out/sdc_optimal" }
-test_singleshell_topup = { shell = "mkdir -p test_out/topup_singleshell && snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell participant --sdc_method topup && rm -rf test_out/topup_singleshell" }
-test_sdcflow = { shell = "mkdir -p test_out/sdcflow && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdcflow participant --sdc_method sdcflow && rm -rf test_out/sdcflow" }
-test_synthsr = { shell = "mkdir -p test_out/synthsr && snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/synthsr participant --sdc_method synthsr && rm -rf test_out/synthsr" }
-test = ["test_dryrun", "test_nosdc", "test_sdc_optimal", "test_singleshell_topup", "test_sdcflow", "test_synthsr"]
+test = [
+    "test_dryrun",
+    "test_nosdc",
+    "test_sdc_optimal",
+    "test_singleshell_topup",
+    "test_sdcflow",
+    "test_synthsr"
+]
+
+[tool.poe.tasks.test_dryrun]
+shell = """
+mkdir -p test_out/topup_multishell && \
+snakedwi snakedwi/test_data/bids_AP_PA test_out/topup_multishell participant \
+    -np && \
+rm -rf test_out/topup_multishell
+"""
+
+[tool.poe.tasks.test_nosdc]
+shell = """
+mkdir -p test_out/nosdc && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/nosdc \
+    participant --sdc_method none && \
+rm -rf test_out/nosdc
+"""
+
+[tool.poe.tasks.test_sdc_optimal]
+shell = """
+mkdir -p test_out/sdc_optimal && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdc_optimal \
+    participant && \
+rm -rf test_out/sdc_optimal
+"""
+
+[tool.poe.tasks.test_singleshell_topup]
+shell = """
+mkdir -p test_out/topup_singleshell && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell \
+    participant --sdc_method topup && \
+rm -rf test_out/topup_singleshell
+"""
+
+[tool.poe.tasks.test_sdcflow]
+shell = """
+mkdir -p test_out/sdcflow && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdcflow \
+    participant --sdc_method sdcflow && \
+rm -rf test_out/sdcflow
+"""
+
+[tool.poe.tasks.test_synthsr]
+shell = """
+mkdir -p test_out/synthsr && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/synthsr \
+    participant --sdc_method synthsr && \
+rm -rf test_out/synthsr
+"""
+
+[tool.poe.tasks.yamlfix]
+shell = """
+find . -type f \\( \
+    -iname \\*.yaml -o -iname \\*.yml ! -iname snakemake* \
+    ! -iname snakebids* ! -iname *schema* \
+\\) -exec yamlfix {} \\;
+"""
+
+[tool.poe.tasks.yamlfix-check]
+shell = """
+find . -type f \\( \
+    -iname \\*.yaml -o -iname \\*.yml ! -iname snakemake* \
+    ! -iname snakebids* ! -iname *schema* \
+\\) -exec yamlfix --check {} \\;
+"""
 
 [tool.isort]
 profile = "black"
