@@ -65,7 +65,7 @@ rm -rf test_out/topup_multishell
 shell = """
 mkdir -p test_out/nosdc && \
 snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/nosdc \
-    participant --sdc_method none && \
+    participant --sdc_method none -c1 && \
 rm -rf test_out/nosdc
 """
 
@@ -73,7 +73,7 @@ rm -rf test_out/nosdc
 shell = """
 mkdir -p test_out/sdc_optimal && \
 snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdc_optimal \
-    participant && \
+    participant  -c1 && \
 rm -rf test_out/sdc_optimal
 """
 
@@ -81,7 +81,7 @@ rm -rf test_out/sdc_optimal
 shell = """
 mkdir -p test_out/topup_singleshell && \
 snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell \
-    participant --sdc_method topup && \
+    participant --sdc_method topup -c1 && \
 rm -rf test_out/topup_singleshell
 """
 
@@ -89,7 +89,7 @@ rm -rf test_out/topup_singleshell
 shell = """
 mkdir -p test_out/sdcflow && \
 snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdcflow \
-    participant --sdc_method sdcflow && \
+    participant --sdc_method sdcflow -c1 && \
 rm -rf test_out/sdcflow
 """
 
@@ -97,7 +97,7 @@ rm -rf test_out/sdcflow
 shell = """
 mkdir -p test_out/synthsr && \
 snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/synthsr \
-    participant --sdc_method synthsr && \
+    participant --sdc_method synthsr -c1 && \
 rm -rf test_out/synthsr
 """
 
