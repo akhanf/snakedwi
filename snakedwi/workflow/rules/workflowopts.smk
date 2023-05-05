@@ -27,8 +27,6 @@ checkpoint check_subj_dwi_metadata:
             suffix="metadata.tsv",
             **subj_wildcards,
         ),
-    group:
-        "subj"
     script:
         "../scripts/metadata/check_subj_dwi_metadata.py"
 
