@@ -15,10 +15,10 @@ sdcflows = "^2.2.2"
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.10.0"
 ruff = "^0.0.263"
-black = "^22.1.0"
+black = "^23.1.0"
 isort = "^5.10.1"
 yamlfix = "^1.1.0"
-snakefmt = "^0.6.0"
+snakefmt = "^0.8.4"
 
 [tool.poetry.scripts]
 snakedwi = "snakedwi.run:main"
