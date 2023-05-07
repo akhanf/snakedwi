@@ -9,7 +9,10 @@ import nibabel as nib
 import nipype.interfaces.io as nio
 import nipype.pipeline.engine as pe
 from nipype import Workflow
-from sdcflows.workflows.fit.syn import init_syn_preprocessing_wf, init_syn_sdc_wf
+from sdcflows.workflows.fit.syn import (
+    init_syn_preprocessing_wf,
+    init_syn_sdc_wf,
+)
 
 
 def sdcflows_syn(
