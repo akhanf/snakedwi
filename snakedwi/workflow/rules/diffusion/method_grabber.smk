@@ -53,12 +53,10 @@ def get_dwi_ref(wildcards):
             **subj_wildcards,
         )
     else:
-        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(
-            **wildcards
-        ).output[0]
-        ([method],) = glob_wildcards(
-            os.path.join(checkpoint_output, "sdc-{method}")
-        )
+        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[
+            0
+        ]
+        ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
 
         return sdc_methods[method]
 

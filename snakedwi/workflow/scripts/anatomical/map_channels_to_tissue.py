@@ -37,9 +37,7 @@ def map_channels_to_tissue(
     tissue_k_seg = nib.load(seg_channels)
     tissue_k_seg_shape = tissue_k_seg.shape
 
-    sim_prior_k = np.zeros(
-        [len(smk_config["tissue_labels"]), tissue_k_seg_shape[3]]
-    )
+    sim_prior_k = np.zeros([len(smk_config["tissue_labels"]), tissue_k_seg_shape[3]])
 
     # For each prior, find best fitting channel
     for idx, label in enumerate(smk_config["tissue_labels"]):

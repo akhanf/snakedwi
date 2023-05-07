@@ -29,9 +29,7 @@ def check_eddy_s2v(
             sys.exit(1)
 
 
-def check_pe_direction(
-    json_dwi: dict, default_pe_dir: str, json_file: str
-) -> None:
+def check_pe_direction(json_dwi: dict, default_pe_dir: str, json_file: str) -> None:
     """Check if phase encoding direction is defined"""
     if "PhaseEncodingDirection" not in json_dwi:
         if not default_pe_dir == "":
@@ -40,12 +38,9 @@ def check_pe_direction(
         else:
             if "PhaseEncodingAxis" in json_dwi:
                 print(
-                    "WARNING: assuming PhaseEncodingDirection from "
-                    "PhaseEncodingAxis"
+                    "WARNING: assuming PhaseEncodingDirection from " "PhaseEncodingAxis"
                 )
-                json_dwi["PhaseEncodingDirection"] = json_dwi[
-                    "PhaseEncodingAxis"
-                ]
+                json_dwi["PhaseEncodingDirection"] = json_dwi["PhaseEncodingAxis"]
             else:
                 print(
                     f"ERROR: PhaseEncodingDirection not found in {json_file}."
@@ -69,9 +64,7 @@ def check_echo_spacing(json_dwi: dict, default_echo_spacing: str) -> str:
     return eff_echo
 
 
-def get_pe_info(
-    json_dwi: dict, pe_axes: List[str], pe_dirs: List[str]
-) -> None:
+def get_pe_info(json_dwi: dict, pe_axes: List[str], pe_dirs: List[str]) -> None:
     """Extract phase encoding information"""
     pe_axes.append(json_dwi["PhaseEncodingDirection"][0])
 
@@ -175,9 +168,7 @@ def check_subj_dwi_metadata(
     write_indices = ",".join([f"{idx}" for idx in use_indices])
     shell(f"touch {workflowopts}/indices-{write_indices}")
     # Set SDC method
-    set_sdc_method(
-        workflowopts=workflowopts, pe_dirs=pe_dirs, smk_config=smk_config
-    )
+    set_sdc_method(workflowopts=workflowopts, pe_dirs=pe_dirs, smk_config=smk_config)
     # Slice-to-volume correction
     shell(f"touch {workflowopts}/eddys2v-{bool_map[eddy_s2v]}")
     # PE Axis
@@ -188,9 +179,7 @@ def check_subj_dwi_metadata(
         index_col[0]: [index_col[1]],
         "has_slice_timing": [bool_map[has_slice_timing]],
         "pedirs": [
-            ",".join(
-                [f"{pe_ax}{pe_dir}" for pe_ax, pe_dir in zip(pe_axes, pe_dirs)]
-            )
+            ",".join([f"{pe_ax}{pe_dir}" for pe_ax, pe_dir in zip(pe_axes, pe_dirs)])
         ],
     }
     df = pd.DataFrame.from_dict(metadata_dict)

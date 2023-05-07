@@ -17,9 +17,7 @@ def get_shell_vols(dwi: str, shells: str, bval: str, out_nii: str) -> None:
     indices = shells_dict["shell_to_vol"][bval]
 
     # Create output shape, with 4th dim = # of volumes at specified shell
-    newshape = np.array(
-        [dwi_shape[0], dwi_shape[1], dwi_shape[2], len(indices)]
-    )
+    newshape = np.array([dwi_shape[0], dwi_shape[1], dwi_shape[2], len(indices)])
     shell_vols = np.zeros(newshape.astype(int))
 
     # 3D vol (e.g. b0 only) - grab directly

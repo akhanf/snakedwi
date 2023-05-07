@@ -86,7 +86,7 @@ if config["use_bedpost_gpu"]:
             bvec=rules.copy_inputs_for_bedpost.output.bvec,
             brainmask=rules.copy_inputs_for_bedpost.output.brainmask,
         params:
-            container=config["singularity"]["fsl_gpu"],
+            container=config["singularity"]["fsl_abspath"],
         output:
             bedpost_dir=directory(
                 bids(
@@ -105,13 +105,12 @@ if config["use_bedpost_gpu"]:
         resources:
             gpus=1,
             mem_mb=16000,
-            time=360,
+            runtime=360,
         shell:
             #remove the logs to reduce # of files   
             "singularity exec --nv --home $PWD -e {params.container} "
             "bedpostx_gpu {input.diff_dir} && "
             "rm -rf {output.bedpost_dir}/logs "
-
 
 else:
 
@@ -123,7 +122,7 @@ else:
             bvec=rules.copy_inputs_for_bedpost.output.bvec,
             brainmask=rules.copy_inputs_for_bedpost.output.brainmask,
         params:
-            container=config["singularity"]["fsl_cpu"],
+            container=config["singularity"]["fsl_abspath"],
             bedpost_script=os.path.join(
                 workflow.basedir, "scripts/bedpost/bedpostx-parallel"
             ),
@@ -146,7 +145,7 @@ else:
         threads: 32
         resources:
             mem_mb=16000,
-            time=360,
+            runtime=360,
         shell:
             "singularity exec --home $PWD "
             "-B {params.parallel_script}:{params.parallel_script_container} "

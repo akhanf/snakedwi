@@ -107,7 +107,10 @@ rule warp_brainmask_from_template_affine:
             os.path.join("..", "..", config["template_mask"])
         ).format(**wildcards),
         ref=bids(
-            root=work, datatype="anat", **subj_wildcards, suffix="T1w.nii.gz"
+            root=work,
+            datatype="anat",
+            **subj_wildcards,
+            suffix="T1w.nii.gz",
         ),
         xfm=bids(
             root=root,
@@ -225,7 +228,7 @@ rule mask_template_t1w:
             suffix="T1w.nii.gz",
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
@@ -252,7 +255,7 @@ rule mask_subject_t1w:
             desc="masked"
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
@@ -286,9 +289,7 @@ rule ants_syn_affine_init:
             dim=config["ants"]["dim"]
         ),
         intensity_opts=config["ants"]["intensity_opts"],
-        init_transform=lambda wildcards, input: "-r {xfm}".format(
-            xfm=input.init_xfm
-        ),
+        init_transform=lambda wildcards, input: "-r {xfm}".format(xfm=input.init_xfm),
         linear_multires=(
             "-c [{reg_iterations},1e-6,10] "
             "-f {shrink_factors} "
@@ -348,7 +349,7 @@ rule ants_syn_affine_init:
     threads: 8
     resources:
         mem_mb=16000,  # right now these are on the high-end -- could implement benchmark rules to do this at some point..
-        time=60,  # 1 hrs
+        runtime=60,  # 1 hrs
     container:
         config["singularity"]["ants"]
     group:
@@ -469,9 +470,7 @@ rule dilate_brainmask:
             desc="brain"
         ),
     params:
-        dil_opt=" ".join(
-            ["-dilD" for i in range(config["n_init_mask_dilate"])]
-        ),
+        dil_opt=" ".join(["-dilD" for i in range(config["n_init_mask_dilate"])]),
     output:
         mask=bids(
             root=work,
@@ -483,7 +482,7 @@ rule dilate_brainmask:
             desc="braindilated"
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
@@ -507,7 +506,7 @@ rule dilate_atlas_labels:
             desc="dilated"
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:

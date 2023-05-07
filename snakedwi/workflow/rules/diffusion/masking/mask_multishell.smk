@@ -9,9 +9,7 @@ checkpoint split_shell_avgs:
             **subj_wildcards
         ),
     params:
-        out_prefix=(
-            lambda wildcards, output: os.path.join(output.nii_dir, "dwi.")
-        ),
+        out_prefix=(lambda wildcards, output: os.path.join(output.nii_dir, "dwi.")),
     output:
         nii_dir=directory(
             bids(
@@ -23,7 +21,7 @@ checkpoint split_shell_avgs:
             )
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     shell:
         "mkdir -p {output} && "
         "fslsplit {input} {params.out_prefix}"
@@ -74,7 +72,7 @@ rule bet_shell_avg:
     output:
         bet_nii="{infile}_bet.{shell}.nii.gz",
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     shell:
         "bet {input} {output} -f {params.frac}"
 
@@ -140,9 +138,9 @@ def get_diffweighted_shells_for_tissue_seg(wildcards):
                 **subj_wildcards
             ),
             **wildcards,
-            shell=glob_wildcards(
-                os.path.join(checkpoint_output, "dwi.{i}.nii.gz")
-            ).i[1:]
+            shell=glob_wildcards(os.path.join(checkpoint_output, "dwi.{i}.nii.gz")).i[
+                1:
+            ]
         )
     )
 
@@ -211,7 +209,7 @@ rule extract_posterior_bgnd:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     shell:
         "fslroi {input} {output} 0 1"
 
@@ -242,7 +240,7 @@ rule refine_mask_with_tissue_prob:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     shell:
         "fslmaths {input.mask} -sub {input.posterior_bgnd} {output.mask}"
 
