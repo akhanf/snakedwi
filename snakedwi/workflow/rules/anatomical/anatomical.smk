@@ -4,7 +4,7 @@ rule import_t1:
         nii=lambda wildcards: expand(
             input_path["T1w"],
             zip,
-            **filter_list(input_zip_lists["T1w"], wildcards)
+            **filter_list(input_zip_lists["T1w"], wildcards),
         )[0],
     output:
         nii=bids(
@@ -20,7 +20,7 @@ rule import_t1:
 
 
 def get_input_for_synthstrip(wildcards):
-    if config["gradcorrect_coeffs"]:
+    if config["gradcorrect_coeffs"] and not config["gradcorrect_skip_t1w"]:
         return bids(
             root=work,
             datatype="anat",

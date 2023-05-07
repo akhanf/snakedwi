@@ -65,7 +65,6 @@ if not config["slspec_txt"]:
         script:
             "../../scripts/diffusion/eddy/get_slspec_txt.py"
 
-
 else:
 
     rule get_slspec_txt:
@@ -210,9 +209,7 @@ def get_eddy_slspec_input(wildcards):
 def get_eddy_slspec_opt(wildcards, input):
     s2v_is_enabled = get_enable_s2v(wildcards)
 
-    return (
-        f"--slspec={input.eddy_slspec_txt}" if s2v_is_enabled == "yes" else ""
-    )
+    return f"--slspec={input.eddy_slspec_txt}" if s2v_is_enabled == "yes" else ""
 
 
 if config["use_eddy_gpu"]:
@@ -251,33 +248,27 @@ if config["use_eddy_gpu"]:
                     if value == True
                 ]
             ),
-            container=config["singularity"]["fsl_gpu"],
+            container=config["singularity"]["fsl_abspath"],
             topup_opt=get_eddy_topup_fmap_opt,
             s2v_opts=get_eddy_s2v_opts,
             slspec_opt=get_eddy_slspec_opt,
         output:
             #eddy creates many files, so write them to a eddy subfolder instead
             out_folder=directory(
-                bids(
-                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
-                )
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards)
             ),
             dwi=os.path.join(
-                bids(
-                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
-                ),
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
                 "dwi.nii.gz",
             ),
             bvec=os.path.join(
-                bids(
-                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
-                ),
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
                 "dwi.eddy_rotated_bvecs",
             ),
-        threads: 16  #this needs to be set in order to avoid multiple gpus from executing
+        threads: 1
         resources:
             gpus=1,
-            time=360,  #6 hours (this is a conservative estimate, may be shorter)
+            runtime=180,  #6 hours (this is a conservative estimate, may be shorter)
             mem_mb=32000,
         group:
             "subj"
@@ -292,7 +283,6 @@ if config["use_eddy_gpu"]:
             " {params.slspec_opt}"
             " {params.topup_opt}"
             " {params.flags}"
-
 
 else:
 
@@ -336,30 +326,24 @@ else:
         output:
             #eddy creates many files, so write them to a eddy subfolder instead
             out_folder=directory(
-                bids(
-                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
-                )
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards)
             ),
             dwi=os.path.join(
-                bids(
-                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
-                ),
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
                 "dwi.nii.gz",
             ),
             bvec=os.path.join(
-                bids(
-                    root=work, suffix="eddy", datatype="dwi", **subj_wildcards
-                ),
+                bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
                 "dwi.eddy_rotated_bvecs",
             ),
         threads: 16  #needs to be set to avoid multiple gpus from executing
         resources:
-            time=360,  #6 hours (conservative estimate, may be shorter)
+            runtime=360,  #6 hours (this is a conservative estimate, may be shorter)
             mem_mb=32000,
         log:
             bids(root="logs", suffix="run_eddy.log", **subj_wildcards),
         container:
-            config["singularity"]["fsl_cpu"]
+            config["singularity"]["fsl"]
         group:
             "subj"
         shell:
@@ -396,11 +380,7 @@ rule cp_eddy_outputs:
     output:
         multiext(
             bids(
-                root=root,
-                suffix="dwi",
-                desc="eddy",
-                datatype="dwi",
-                **subj_wildcards
+                root=root, suffix="dwi", desc="eddy", datatype="dwi", **subj_wildcards
             ),
             ".nii.gz",
             ".bvec",
@@ -418,7 +398,6 @@ rule cp_eddy_outputs:
     run:
         for in_file, out_file in zip(input, output):
             shell("cp -v {in_file} {out_file}")
-
 
 
 
@@ -442,13 +421,9 @@ rule eddy_quad:
             datatype="dwi",
             **subj_wildcards
         ),
-        eddy_dir=bids(
-            root=work, suffix="eddy", datatype="dwi", **subj_wildcards
-        ),
+        eddy_dir=bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
     params:
-        eddy_prefix=lambda wildcards, input: (
-            os.path.join(input.eddy_dir, "dwi")
-        ),
+        eddy_prefix=lambda wildcards, input: (os.path.join(input.eddy_dir, "dwi")),
         slspec_opt=get_eddy_slspec_opt,
     output:
         out_dir=directory(
@@ -458,7 +433,7 @@ rule eddy_quad:
             root=root, suffix="eddyqc/qc.pdf", datatype="qc", **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:

@@ -5,9 +5,7 @@ import numpy as np
 
 
 def concat_bv(bv_files: List[str], out_bv: str) -> None:
-    stacked_bv = np.hstack(
-        [np.loadtxt(bv_file, ndmin=2) for bv_file in bv_files]
-    )
+    stacked_bv = np.hstack([np.loadtxt(bv_file, ndmin=2) for bv_file in bv_files])
     np.savetxt(out_bv, stacked_bv, fmt="%.5f")
 
 

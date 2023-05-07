@@ -39,10 +39,8 @@ pybids_inputs:
     filters:
       suffix: 'T1w'
       extension: '.nii.gz'
-      scope: 'raw' #raw, derivatives (or can be pipeline name too!)
       datatype: 'anat'
       invalid_filters: 'allow'
-      space: null
     wildcards:
       - subject
       - session
@@ -88,6 +86,13 @@ parse_args:
     help: 'Skip the denoising step of the workflow. By default, denoising is 
           performed if input diffusion data was acquired with at least 30 
           drections. (default: %(default)s)'
+
+  --derivatives:
+    action: 'store_true'
+    default: False
+
+  --no_topup:
+    help: 'Disable topup  (default: %(default)s)'
     action: 'store_true'
     default: False 
 
@@ -169,6 +174,10 @@ parse_args:
       - 'j-'
       - 'k'
       - 'k-'
+  --gradcorrect_skip_t1w:
+    action: 'store_true'
+    default: False
+
 
   # Bedpost options:
   --use_bedpost: 
@@ -204,8 +213,8 @@ singularity:
   connectome_workbench: 'docker://khanlab/autotop_deps:v0.4.2'
   # fsl_cpu and fsl_gpu must have absolute paths (used to explicity singularitys
   # exec calls in command (e.g. eddy, bedpost)
-  fsl_cpu: '/project/6050199/akhanf/singularity/bids-apps/brainlife_fsl_6.0.4-patched2.sif' # docker://brainlife/fsl:6.0.4-patched2
-  fsl_gpu: '/project/6050199/akhanf/singularity/bids-apps/fsl_6.0.4_cuda9.1.sif' # docker://fnndsc/fsl:6.0.4-cuda9.1.sif
+  fsl_abspath: '/project/6050199/akhanf/singularity/snakemake_containers/467a1ba62b1e41bec0cf97eddfc23922.simg'
+  fsl: 'docker://fnndsc/fsl:6.0.4-cuda9.1'
   gradcorrect: 'docker://khanlab/gradcorrect:v0.0.3a'
   itksnap: 'docker://khanlab/itksnap:latest' 
   mrtrix: 'docker://mrtrix3/mrtrix3:3.0.3'

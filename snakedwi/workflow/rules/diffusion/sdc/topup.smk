@@ -1,11 +1,33 @@
+def _get_mocorrected_b0s(wcards):
+    b0s = get_dwi_indices(
+        expand(
+            bids(
+                root=work,
+                suffix="b0.nii.gz",
+                datatype="dwi",
+                desc="moco",
+                **input_wildcards["dwi"]
+            ),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wcards)
+        ),
+        wcards,
+    )
+    if len(b0s) == 1:
+        return b0s
+    return rules.moco_bzeros_3d.output["nii_4d"]
+
 
 rule run_topup:
     input:
-        bzero_concat=rules.moco_bzeros_3d.output.nii_4d,
+        bzero_concat=rules.concat_bzeros.output.bzero_concat,
         phenc_concat=rules.concat_phase_encode_txt.output.phenc_concat,
     params:
         out_prefix=bids(
-            root=work, suffix="topup", datatype="dwi", **subj_wildcards
+            root=work,
+            suffix="topup",
+            datatype="dwi",
+            **subj_wildcards,
         ),
         config="b02b0.cnf",  #sets the multi-res schedule and other params..
     output:
@@ -33,10 +55,10 @@ rule run_topup:
             root=work,
             suffix="topup_movpar.txt",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     log:
         bids(root="logs", suffix="topup.log", **subj_wildcards),
     group:
@@ -47,7 +69,6 @@ rule run_topup:
 
 
 def get_applytopup_inindex(wildcards):
-
     index = get_index_of_dwi_scan(wildcards)
     return index + 1  # adjust to start at 1 instead of 0
 
@@ -65,7 +86,10 @@ rule apply_topup_jac:
     params:
         inindex=get_applytopup_inindex,
         topup_prefix=bids(
-            root=work, suffix="topup", datatype="dwi", **subj_wildcards
+            root=work,
+            suffix="topup",
+            datatype="dwi",
+            **subj_wildcards,
         ),
     output:
         nii=bids(
@@ -77,7 +101,7 @@ rule apply_topup_jac:
             **input_wildcards["dwi"]
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     shadow:
         "minimal"
     group:

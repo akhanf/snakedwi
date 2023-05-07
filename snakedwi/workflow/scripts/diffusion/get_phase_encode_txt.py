@@ -28,8 +28,7 @@ def get_phase_encode_txt(
         else:
             if "PhaseEncodingAxis" in json_dwi:
                 print(
-                    "WARNING: assuming PhaseEncodingDirection from "
-                    "PhaseEncodingAxis"
+                    "WARNING: assuming PhaseEncodingDirection from " "PhaseEncodingAxis"
                 )
                 phenc_dir = json_dwi["PhaseEncodingAxis"]
             else:

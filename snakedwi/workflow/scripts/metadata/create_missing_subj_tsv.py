@@ -7,7 +7,6 @@ def create_missing_subj_tsv(
     missing_subj_list: dict,
     out_tsv: str,
 ) -> None:
-
     df = pd.DataFrame()
     df["participant_id"] = missing_subj_list["subject"]
 
@@ -19,8 +18,6 @@ def create_missing_subj_tsv(
 
 if __name__ == "__main__":
     create_missing_subj_tsv(
-        missing_subj_list=(
-            snakemake.params.missing_subj_zip_list,  # noqa: F821,
-        ),
+        missing_subj_list=(snakemake.params.missing_subj_zip_list,),  # noqa: F821,
         out_tsv=snakemake.output.tsv,  # noqa: F821
     )

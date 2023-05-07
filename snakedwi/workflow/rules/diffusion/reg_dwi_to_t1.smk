@@ -18,7 +18,7 @@ rule reg_dwi_to_t1:
     params:
         general_opts="-d 3",
         rigid_opts=(
-            "-m SSD -a -dof 6 -ia-{rigid_dwi_t1_init} -n {rigid_dwi_t1_iters}"
+            "-m NMI -a -dof 6 -ia-{rigid_dwi_t1_init} -n {rigid_dwi_t1_iters}"
         ).format(
             rigid_dwi_t1_init=config["rigid_dwi_t1_init"],
             rigid_dwi_t1_iters=config["rigid_dwi_t1_iters"],
@@ -50,21 +50,102 @@ rule reg_dwi_to_t1:
             root="logs",
             suffix="reg_b0_to_t1.txt",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     threads: 8
     shell:
-        "greedy -threads {threads} {params.general_opts} {params.rigid_opts} "
-        "-i {input.t1wsynth} {input.avgb0synth} -o {output.xfm_ras} "
-        "&> {log} && "
-        "greedy -threads {threads} {params.general_opts} -rf {input.t1wsynth} "
-        "-rm {input.avgb0} {output.warped_avgb0} -r {output.xfm_ras} &>> {log}"
+        """
+        greedy -threads {threads} {params.general_opts} {params.rigid_opts} \\
+            -i {input.t1wsynth} {input.avgb0synth} -o {output.xfm_ras} \\
+            &> {log}
+
+        greedy -threads {threads} {params.general_opts} -rf {input.t1wsynth} \\
+            -rm {input.avgb0} {output.warped_avgb0} -r {output.xfm_ras} \\
+             &>> {log}
+        """
+
+
+# rule qc_reg_dwi_t1:
+#     input:
+#         ref=bids(
+#             root=work,
+#             suffix="avgb0.nii.gz",
+#             space="T1w",
+#             desc="dwiref",
+#             datatype="dwi",
+#             **subj_wildcards
+#         ),
+#         flo=bids(
+#             root=root,
+#             suffix="T1w.nii.gz",
+#             desc="preproc",
+#             datatype="anat",
+#             **subj_wildcards
+#         ),
+#     output:
+#         png=report(
+#             bids(
+#                 root=root,
+#                 datatype="qc",
+#                 suffix="reg.png",
+#                 **subj_wildcards,
+#                 from_="dwiref",
+#                 to="T1w"
+#             ),
+#             caption="../report/reg_dwi_t1.rst",
+#             category="B0 T1w registration",
+#         ),
+#         html=bids(
+#             root=root,
+#             datatype="qc",
+#             suffix="reg.html",
+#             from_="dwiref",
+#             to="T1w",
+#             **subj_wildcards
+#         ),
+#     group:
+#         "subj"
+#     container:
+#         config["singularity"]["python"]
+#     script:
+#         "../scripts/vis_regqc.py"
+
+
+rule qc_get_t1_edges:
+    input:
+        brain=rules.n4_t1_withmask.output.t1,
+        mask=bids(
+            root=root,
+            datatype="anat",
+            desc="brain",
+            suffix="mask.nii.gz",
+            **subj_wildcards,
+        ),
+    output:
+        temp(
+            bids(
+                work,
+                datatype="anat",
+                desc="cannyEdge",
+                suffix="T1w.nii.gz",
+                **subj_wildcards,
+            )
+        ),
+    group:
+        "subj"
+    shadow:
+        "minimal"
+    container:
+        config["singularity"]["itksnap"]
+    shell:
+        "c3d {input} -times -canny 1mm 10 20 {output}"
 
 
 rule qc_reg_dwi_t1:
     input:
-        ref=rules.reg_dwi_to_t1.output.warped_avgb0,
-        flo=rules.n4_t1_withmask.output.t1,
+        overlay=rules.reg_dwi_to_t1.output.warped_avgb0,
+        background=rules.n4_t1_withmask.output.t1,
+        lines=rules.qc_get_t1_edges.output[0],
     output:
         png=report(
             bids(
@@ -199,9 +280,7 @@ rule create_cropped_ref_t1_resolution:
 
 rule create_cropped_ref_dwi_resolution:
     input:
-        cropped=(
-            rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample
-        ),
+        cropped=(rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample),
         res_txt=bids(
             root=work,
             datatype="dwi",
@@ -230,9 +309,7 @@ rule create_cropped_ref_dwi_resolution:
 
 rule create_cropped_ref_custom_resolution:
     input:
-        cropped=(
-            rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample
-        ),
+        cropped=(rules.create_cropped_ref_t1_resolution.output.avgb0_crop_resample),
     params:
         resolution="x".join(
             [str(vox) for vox in config["resample_dwi"]["resample_mm"]]
@@ -347,23 +424,13 @@ rule resample_brainmask_to_t1w:
 rule rotate_bvecs_to_t1w:
     input:
         bvecs=bids(
-            root=root,
-            suffix="dwi.bvec",
-            desc="eddy",
-            datatype="dwi",
-            **subj_wildcards
+            root=root, suffix="dwi.bvec", desc="eddy", datatype="dwi", **subj_wildcards
         ),
         bvals=bids(
-            root=root,
-            suffix="dwi.bval",
-            desc="eddy",
-            datatype="dwi",
-            **subj_wildcards
+            root=root, suffix="dwi.bval", desc="eddy", datatype="dwi", **subj_wildcards
         ),
         xfm_fsl=rules.convert_xfm_ras2fsl.output.xfm_fsl,
-        script=os.path.join(
-            workflow.basedir, f"scripts/diffusion/rotate_bvecs.sh"
-        ),
+        script=os.path.join(workflow.basedir, f"scripts/diffusion/rotate_bvecs.sh"),
     output:
         bvecs=bids(
             root=root,
@@ -384,7 +451,7 @@ rule rotate_bvecs_to_t1w:
             **subj_wildcards
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:
@@ -401,9 +468,7 @@ rule dtifit_resampled_t1w:
         bvecs=rules.rotate_bvecs_to_t1w.output.bvecs,
         brainmask=rules.resample_brainmask_to_t1w.output.brainmask,
     params:
-        out_basename=lambda wildcards, output: os.path.join(
-            output.out_folder, "dti"
-        ),
+        out_basename=lambda wildcards, output: os.path.join(output.out_folder, "dti"),
     output:
         out_folder=directory(
             bids(
@@ -431,7 +496,7 @@ rule dtifit_resampled_t1w:
             "dti_FA.nii.gz",
         ),
     container:
-        config["singularity"]["fsl_cpu"]
+        config["singularity"]["fsl"]
     group:
         "subj"
     shell:

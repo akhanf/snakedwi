@@ -8,10 +8,7 @@ import nibabel as nib
 import nipype.interfaces.io as nio
 import nipype.pipeline.engine as pe
 from nipype import Workflow
-from sdcflows.workflows.fit.syn import (
-    init_syn_preprocessing_wf,
-    init_syn_sdc_wf,
-)
+from sdcflows.workflows.fit.syn import init_syn_preprocessing_wf, init_syn_sdc_wf
 
 
 def sdcflows_syn(
@@ -25,7 +22,6 @@ def sdcflows_syn(
     threads: int,
 ) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
-
         workflow = Workflow(name="nipype_wf")
 
         syn_preprocessing_wf = init_syn_preprocessing_wf(
@@ -56,9 +52,7 @@ def sdcflows_syn(
         syn_preprocessing_wf.inputs.inputnode.std2anat_xfm = Path(
             std2anat_xfm
         ).resolve()
-        syn_preprocessing_wf.inputs.inputnode.mask_anat = Path(
-            mask_anat
-        ).resolve()
+        syn_preprocessing_wf.inputs.inputnode.mask_anat = Path(mask_anat).resolve()
 
         epi_shape = nib.load(in_epis).get_fdata().shape
 
@@ -104,9 +98,7 @@ def sdcflows_syn(
         workflow.base_dir = str(Path(tmpdirname).resolve() / "nipype_wf")
 
         datasink = pe.Node(nio.DataSink(), name="sinker")
-        datasink.inputs.base_directory = str(
-            Path(tmpdirname).resolve() / "datasink"
-        )
+        datasink.inputs.base_directory = str(Path(tmpdirname).resolve() / "datasink")
 
         # mapping from outputnode of syn_sdc_wf to the smk rule output names
         out_file_mapping = {
