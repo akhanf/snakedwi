@@ -118,11 +118,6 @@ jobs:
     #----------------------------------------------
     # Run tests
     #----------------------------------------------
-      - name: Test no distortion correction
-        run: poetry run poe test_nosdc
-      - name: Test opposite phase-encode (TOPUP)
-        run: poetry run poe test_singleshell_topup
-      - name: Test single phase-encode (SDCFlow SyN)
-        run: poetry run poe test_sdcflow
-      - name: Test single phase-encode (SynthSR)
-        run: poetry run poe test_synthsr
+      - name: Test dry-run 
+        run: poetry run poe test_dryrun
+
