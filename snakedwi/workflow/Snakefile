@@ -48,8 +48,7 @@ if config["use_eddy_s2v"] and not config["use_eddy_gpu"]:
     sys.exit(1)
 
 if (
-    config["sdc_method"] == "synb0"
-    or config["sdc_method_alternate"] == "synb0"
+    config["sdc_method"] == "synb0" or config["sdc_method_alternate"] == "synb0"
 ) and not config["fs_license"]:
     print(
         "ERROR: Freesurfer license (--fs-license) must be provided with synb0 "

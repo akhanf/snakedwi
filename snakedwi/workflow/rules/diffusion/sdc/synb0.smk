@@ -25,9 +25,7 @@ rule setup_synb0:
         t1=rules.n4_t1_withmask.output.t1,
     output:
         synb0_indir=directory(
-            Path(
-                bids(root=work, datatype="synb0_in", **subj_wildcards)
-            ).parent
+            Path(bids(root=work, datatype="synb0_in", **subj_wildcards)).parent
         ),
     group:
         "subj"
