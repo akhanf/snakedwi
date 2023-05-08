@@ -97,7 +97,6 @@ def get_restrict_deformation(wildcards, input, output):
 
 rule reg_b0_to_t1_synthsr:
     input:
-        rules.check_subj_dwi_metadata.output,
         t1synth=rules.rigid_reg_t1_to_b0_synthsr.output.warped_subj,
         b0synth=rules.reslice_synthSR_b0.output.synthsr,
     params:

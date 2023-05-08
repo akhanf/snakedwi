@@ -1,4 +1,16 @@
-checkpoint check_subj_dwi_metadata:
+@lru_cache(None)
+def _get_settings(**wildcards):
+    return check_subj_dwi_metadata(
+        json_files=expand(
+            re.sub(".nii.gz", ".json", input_path["dwi"]),
+            zip,
+            **filter_list(input_zip_lists["dwi"], wildcards)
+        ),
+        smk_config=config,
+    )
+
+
+rule check_subj_dwi_metadata:
     input:
         dwi_jsons=lambda wildcards: expand(
             re.sub(".nii.gz", ".json", input_path["dwi"]),
@@ -13,14 +25,6 @@ checkpoint check_subj_dwi_metadata:
         ),
         index_col_name="subj",
     output:
-        workflowopts=directory(
-            bids(
-                root=root,
-                datatype="dwi",
-                suffix="workflowopts",
-                **subj_wildcards,
-            )
-        ),
         metadata=bids(
             root=root,
             datatype="dwi",
@@ -59,62 +63,36 @@ rule create_missing_subj_tsv:
 
 
 def get_dwi_indices(all_dwi, wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([indices_str],) = glob_wildcards(
-        os.path.join(checkpoint_output, "indices-{indices}")
-    )
-    indices = indices_str.split(",")
-    return [all_dwi[int(i)] for i in indices]
+    return [all_dwi[i] for i in _get_settings(**wildcards)["indices"]]
 
 
 def get_dwi_indices_only(wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([indices_str],) = glob_wildcards(
-        os.path.join(checkpoint_output, "indices-{indices}")
-    )
-    indices = indices_str.split(",")
-    return [int(i) for i in indices]
+    return _get_settings(**wildcards)["indices"]
 
 
 def get_sdc_method(wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    # this gets the sdc method for this subject(session)
-    ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
-    return method
+    return _get_settings(**wildcards)["sdc"]
 
 
 def get_dwi_num_scans(wildcards):
     # this gets the number of DWI scans for this subject(session)
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([indices_str],) = glob_wildcards(
-        os.path.join(checkpoint_output, "indices-{indices}")
-    )
-    indices = indices_str.split(",")
-    return len(indices)
+    return len(_get_settings(**wildcards)["indices"])
 
 
 def get_pe_axis(wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([peaxis],) = glob_wildcards(os.path.join(checkpoint_output, "PEaxis-{axis}"))
-    return peaxis
+    return _get_settings(**wildcards)["PEaxis"]
 
 
 def get_enable_s2v(wildcards):
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([s2v_is_enabled],) = glob_wildcards(
-        os.path.join(checkpoint_output, "eddys2v-{isenabled}")
-    )
-    return s2v_is_enabled
+    return _get_settings(**wildcards)["eddys2v"]
 
 
 def get_index_of_dwi_scan(wildcards):
     """given wildcards into a specific dwi acquisition, this returns the 0-based
     index of that scan in the list of dwi scans in use for this acquisition"""
-    checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[0]
-    ([indices_str],) = glob_wildcards(
-        os.path.join(checkpoint_output, "indices-{indices}")
+    dwi_indices = get_dwi_indices_only(
+        {wcard: wildcards[wcard] for wcard in inputs.subj_wildcards}
     )
-    dwi_indices = [int(i) for i in indices_str.split(",")]
 
     # first filter the ziplist to get the subject(+session)
     subj_filter = {"subject": wildcards.subject}

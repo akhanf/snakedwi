@@ -35,10 +35,7 @@ sdc_methods = {
 
 def get_dwi_ref_for_gradcorrect(wildcards):
     if config["gradcorrect_coeffs"]:
-        checkpoint_output = checkpoints.check_subj_dwi_metadata.get(**wildcards).output[
-            0
-        ]
-        ([method],) = glob_wildcards(os.path.join(checkpoint_output, "sdc-{method}"))
+        method = get_sdc_method(wildcards)
 
         return sdc_methods[method]
     else:

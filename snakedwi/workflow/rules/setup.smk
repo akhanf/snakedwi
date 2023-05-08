@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 from snakebids import (
     bids,
@@ -7,6 +8,7 @@ from snakebids import (
 )
 
 # from snakeboost import PipEnv
+from workflow.lib.check_subj_dwi_metadata import check_subj_dwi_metadata
 
 
 # writes inputs_config.yml and updates config dict
