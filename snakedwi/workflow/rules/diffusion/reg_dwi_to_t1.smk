@@ -175,6 +175,22 @@ rule qc_reg_dwi_t1:
         "../../scripts/qc/vis_regqc.py"
 
 
+rule compile_qc_reg_dwi_t1_manifest:
+    input:
+        reg_qc=expand(rules.qc_reg_dwi_t1.output.png, zip, **subj_zip_list),
+    output:
+        os.path.join(qc, "data", "reg.json"),
+    run:
+        with open(output[0], "w") as f:
+            json.dump(
+                {
+                    "title": "T1w Registration",
+                    "images": sorted(input["reg_qc"]),
+                },
+                f,
+            )
+
+
 rule convert_xfm_ras2itk:
     input:
         xfm_ras=rules.reg_dwi_to_t1.output.xfm_ras,
