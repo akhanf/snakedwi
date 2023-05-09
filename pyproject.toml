@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "snakedwi"
-version = "0.2.0-alpha"
+version = "0.2.0"
 description = "snakedwi - BIDS app and snakemake workflow for dwi pre-processing"
 authors = ["Ali Khan <alik@robarts.ca>"]
 license = "MIT"
@@ -120,6 +120,7 @@ find . -type f \\( \
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+line_length = 79
 
 [tool.ruff]
 builtins = [ "snakemake" ]
