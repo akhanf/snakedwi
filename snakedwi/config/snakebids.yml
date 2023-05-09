@@ -85,16 +85,11 @@ parse_args:
   --skip_denoise:
     help: 'Skip the denoising step of the workflow. By default, denoising is 
           performed if input diffusion data was acquired with at least 30 
-          drections. (default: %(default)s)'
+          directions. (default: %(default)s)'
 
   --derivatives:
     action: 'store_true'
     default: False
-
-  --no_topup:
-    help: 'Disable topup  (default: %(default)s)'
-    action: 'store_true'
-    default: False 
 
   # B0 masking options
   --masking_method:
@@ -132,6 +127,15 @@ parse_args:
       - 'sdcflow'
       - 'synthsr'
       - 'none'
+
+  --sdc_method_alternate:
+    help: 'Set alternate method to be used for single phase encoding SDC when 
+          "--sdc_method" is set to "optimal", otherwise this flag is ignored.
+          (default: %(default)s)'
+    default: 'synthsr'
+    choices:
+      - 'sdcflow'
+      - 'synthsr'
           
   # Eddy options
   --use_eddy_s2v:
