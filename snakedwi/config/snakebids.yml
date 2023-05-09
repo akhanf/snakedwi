@@ -80,16 +80,11 @@ parse_args:
   --skip_denoise:
     help: 'Skip the denoising step of the workflow. By default, denoising is 
           performed if input diffusion data was acquired with at least 30 
-          drections. (default: %(default)s)'
+          directions. (default: %(default)s)'
 
   --derivatives:
     action: 'store_true'
     default: False
-
-  --no_topup:
-    help: 'Disable topup  (default: %(default)s)'
-    action: 'store_true'
-    default: False 
 
   # B0 masking options
   --masking_method:
@@ -218,6 +213,7 @@ parse_args:
     type: Path
     default: False 
 
+  # Workflow metadata
   --version:
     help: 'Print the version of snakedwi'
     action: version
