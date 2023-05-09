@@ -8,7 +8,7 @@ from snakebids import (
 )
 
 # from snakeboost import PipEnv
-from workflow.lib.check_subj_dwi_metadata import check_subj_dwi_metadata
+from lib.check_subj_dwi_metadata import check_subj_dwi_metadata
 
 
 # writes inputs_config.yml and updates config dict
