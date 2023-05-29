@@ -22,6 +22,7 @@ include: "rules/gradcorrect.smk"
 include: "rules/diffusion/sdc/topup.smk"
 include: "rules/diffusion/sdc/sdcflow.smk"
 include: "rules/diffusion/sdc/synthsr.smk"
+include: "rules/diffusion/sdc/synb0.smk"
 # Post-SDC
 include: "rules/diffusion/eddy.smk"
 include: "rules/diffusion/reg_dwi_to_t1.smk"
@@ -43,6 +44,15 @@ if config["use_eddy_s2v"] and not config["use_eddy_gpu"]:
     print(
         "ERROR: Eddy Slice-to-volume correction (--use-eddy-s2v) must be used "
         "with eddy GPU (--use-eddy-gpu)."
+    )
+    sys.exit(1)
+
+if (
+    config["sdc_method"] == "synb0" or config["sdc_method_alternate"] == "synb0"
+) and not config["fs_license"]:
+    print(
+        "ERROR: Freesurfer license (--fs-license) must be provided with synb0 "
+        "SDC method (--sdc-method[-alternate] synb0)"
     )
     sys.exit(1)
 

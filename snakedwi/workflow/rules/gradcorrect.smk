@@ -23,6 +23,14 @@ sdc_methods = {
         method="synsdc",
         **subj_wildcards,
     ),
+    "synb0": bids(
+        root=work,
+        suffix="b0.nii.gz",
+        desc="topup",
+        method="synb0",
+        datatype="dwi",
+        **subj_wildcards,
+    ),
     "none": bids(
         root=work,
         suffix="b0.nii.gz",

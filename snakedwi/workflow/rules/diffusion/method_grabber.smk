@@ -23,6 +23,14 @@ sdc_methods = {
         method="synsdc",
         **subj_wildcards,
     ),
+    "synb0": bids(
+        root=work,
+        suffix="b0.nii.gz",
+        desc="topup",
+        method="synb0",
+        datatype="dwi",
+        **subj_wildcards,
+    ),
     "none": bids(
         root=work,
         suffix="b0.nii.gz",
@@ -31,23 +39,6 @@ sdc_methods = {
         **subj_wildcards,
     ),
 }
-
-
-def get_dwi_ref(wildcards):
-    method = get_sdc_method(wildcards)
-
-    if config["gradcorrect_coeffs"]:
-        # if using gradcorrect, checkpoint for sdc method will be
-        # done in the find_gradcorrect_warp rule instead
-        return bids(
-            root=work,
-            datatype="dwi",
-            desc="gradcorrect",
-            suffix="b0.nii.gz",
-            **subj_wildcards,
-        )
-    else:
-        return sdc_methods[method]
 
 
 def get_dwi_ref(wildcards):
