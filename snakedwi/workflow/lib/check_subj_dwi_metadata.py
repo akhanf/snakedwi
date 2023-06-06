@@ -144,7 +144,9 @@ def check_subj_dwi_metadata(
         "PEaxis": pe_axes[0],
     }
     if smk_config["sdc_method"] == "optimal":
-        settings["sdc"] = "topup" if len(set(pe_dirs)) >= 2 else smk_config['sdc_method_alternate']
+        settings["sdc"] = (
+            "topup" if len(set(pe_dirs)) >= 2 else smk_config["sdc_method_alternate"]
+        )
     else:
         settings["sdc"] = smk_config["sdc_method"]
 
