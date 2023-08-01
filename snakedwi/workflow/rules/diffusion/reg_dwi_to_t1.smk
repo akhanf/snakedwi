@@ -4,14 +4,14 @@ rule reg_dwi_to_t1:
             root=root,
             datatype="anat",
             desc="preproc",
-            suffix="T1wSynthSR.nii.gz",
+            suffix="T1w.nii.gz",
             **subj_wildcards
         ),
         avgb0synth=bids(
             root=work,
             datatype="dwi",
             desc="dwiref",
-            suffix="b0SynthSR.nii.gz",
+            suffix="b0.nii.gz",
             **subj_wildcards
         ),
         avgb0=rules.cp_dwi_ref.output.dwi_ref,
