@@ -458,3 +458,19 @@ rule qc_b0_brainmask:
         config["singularity"]["python"]
     script:
         "../../scripts/qc/vis_qc_dseg.py"
+
+
+rule compile_qc_b0_brainmask_manifest:
+    input:
+        mask_qc=expand(rules.qc_b0_brainmask.output.png, zip, **subj_zip_list),
+    output:
+        os.path.join(qc, "data", "mask.json"),
+    run:
+        with open(output[0], "w") as f:
+            json.dump(
+                {
+                    "title": "DWI Brainmask",
+                    "images": sorted(input["mask_qc"]),
+                },
+                f,
+            )

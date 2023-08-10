@@ -27,10 +27,7 @@ include: "rules/diffusion/sdc/synb0.smk"
 include: "rules/diffusion/eddy.smk"
 include: "rules/diffusion/reg_dwi_to_t1.smk"
 include: "rules/diffusion/bedpost.smk"
-
-
-localrules:
-    check_subj_dwi_metadata,
+include: "rules/qc_app.smk"
 
 
 # Currently unused
@@ -61,8 +58,8 @@ rule all:
     input:
         **get_eddy_quad_all(),
         **get_bedpost_all(),
-        mask_qc=expand(rules.qc_b0_brainmask.output.png, zip, **subj_zip_list),
-        reg_qc=expand(rules.qc_reg_dwi_t1.output.png, zip, **subj_zip_list),
+        qc=rules.qc.output,
+        qc_app=rules.unpack_qc_app.output,
         dtifit=expand(
             bids(
                 root=root,

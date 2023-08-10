@@ -3,8 +3,6 @@ import json
 import sys
 from typing import List, Tuple
 
-import pandas as pd
-
 
 def check_eddy_s2v(
     eddy_s2v: bool,
@@ -100,8 +98,6 @@ def get_pe_indices(
 
 def check_subj_dwi_metadata(
     json_files: List[str],
-    index_col: Tuple[str, str],
-    metadata: dict,
     smk_config: dict,
 ) -> None:
     bool_map = {True: "yes", False: "no"}
@@ -141,27 +137,17 @@ def check_subj_dwi_metadata(
         pe_axes=pe_axes, pe_dirs=pe_dirs, json_files=json_files
     )
 
-    # Write workflow opts (as workflow trigger):
-
-    # Write metadata dict
-    metadata_dict = {
-        index_col[0]: [index_col[1]],
-        "has_slice_timing": [bool_map[has_slice_timing]],
-        "pedirs": [
-            ",".join([f"{pe_ax}{pe_dir}" for pe_ax, pe_dir in zip(pe_axes, pe_dirs)])
-        ],
+    # Indices
+    settings = {
+        "indices": use_indices,
+        "eddys2v": bool_map[eddy_s2v],
+        "PEaxis": pe_axes[0],
     }
-    df = pd.DataFrame.from_dict(metadata_dict)
-    df.to_csv(metadata, sep="\t", index=False)
+    if smk_config["sdc_method"] == "optimal":
+        settings["sdc"] = (
+            "topup" if len(set(pe_dirs)) >= 2 else smk_config["sdc_method_alternate"]
+        )
+    else:
+        settings["sdc"] = smk_config["sdc_method"]
 
-
-if __name__ == "__main__":
-    check_subj_dwi_metadata(
-        json_files=snakemake.input.dwi_jsons,  # noqa: F821
-        index_col=(
-            snakemake.params.index_col_value,  # noqa: F821
-            snakemake.params.index_col_name,  # noqa: F821
-        ),
-        metadata=snakemake.output.metadata,  # noqa: F821
-        smk_config=snakemake.config,  # noqa: F821
-    )
+    return settings

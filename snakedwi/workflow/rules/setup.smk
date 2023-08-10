@@ -1,3 +1,5 @@
+from functools import lru_cache
+import json
 from pathlib import Path
 from snakebids import (
     bids,
@@ -5,8 +7,10 @@ from snakebids import (
     filter_list,
     get_wildcard_constraints,
 )
+import subprocess as sp
 
 # from snakeboost import PipEnv
+from lib.check_subj_dwi_metadata import check_subj_dwi_metadata
 
 
 # writes inputs_config.yml and updates config dict
@@ -39,6 +43,7 @@ input_path = inputs.input_path
 
 root = os.path.join(config["root"], "snakedwi")
 work = os.path.join(config["root"], "work")
+qc = os.path.join(config["root"], "qc")
 # setup pipenvs - all my python rules use the script: directive, so will be some work to use snakeboost for this..
 # dwi_env = PipEnv(
 #            root=Path('work'),
