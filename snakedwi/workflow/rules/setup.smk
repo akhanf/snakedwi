@@ -42,9 +42,13 @@ input_zip_lists = inputs.input_zip_lists
 input_path = inputs.input_path
 
 # if no acquisiton, run or direction specified for diffusion image add acquisition wildcard to input_wildcards and add 'notspecified' for acquisition in corresponding images in input_zip_lists
-if not any([ item in ['acq','run','dir'] for item in list(input_wildcards['dwi'].keys())]):
-    input_wildcards['dwi']['acq'] = '{acquisition}'
-    input_zip_lists['dwi']['acquisition'] = ['notspecified']*len(input_zip_lists['dwi']['subject'])
+if not any(
+    [item in ["acq", "run", "dir"] for item in list(input_wildcards["dwi"].keys())]
+):
+    input_wildcards["dwi"]["acq"] = "{acquisition}"
+    input_zip_lists["dwi"]["acquisition"] = ["notspecified"] * len(
+        input_zip_lists["dwi"]["subject"]
+    )
 
 root = os.path.join(config["root"], "snakedwi")
 work = os.path.join(config["root"], "work")
