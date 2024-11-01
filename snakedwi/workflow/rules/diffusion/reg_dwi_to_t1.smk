@@ -471,7 +471,6 @@ rule rotate_bvecs_to_t1w:
     group:
         "subj"
     shell:
-        "chmod a+x {input.script} && "
         "{input.script} {input.bvecs} {input.xfm_fsl} {output.bvecs} && "
         "cp -v {input.bvals} {output.bvals}"
 
