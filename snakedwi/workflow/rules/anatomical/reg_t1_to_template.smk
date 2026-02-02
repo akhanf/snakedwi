@@ -11,7 +11,7 @@ rule affine_to_template:
             **subj_wildcards,
             suffix="T1w.nii.gz",
             space="{template}",
-            desc="affine"
+            desc="affine",
         ),
         xfm_ras=bids(
             root=work,
@@ -21,7 +21,7 @@ rule affine_to_template:
             from_="subject",
             to="{template}",
             desc="affine",
-            type_="ras"
+            type_="ras",
         ),
     log:
         bids(
@@ -49,7 +49,7 @@ rule convert_template_xfm_ras2itk:
             from_="{from}",
             to="{to}",
             desc="{desc}",
-            type_="ras"
+            type_="ras",
         ),
     output:
         bids(
@@ -60,7 +60,7 @@ rule convert_template_xfm_ras2itk:
             from_="{from}",
             to="{to}",
             desc="{desc}",
-            type_="itk"
+            type_="itk",
         ),
     container:
         config["singularity"]["itksnap"]
@@ -80,7 +80,7 @@ rule invert_subj_to_template_xfm:
             from_="subject",
             to=config["template"],
             desc="affine",
-            type_="ras"
+            type_="ras",
         ),
     output:
         xfm=bids(
@@ -91,7 +91,7 @@ rule invert_subj_to_template_xfm:
             desc="affine",
             type_="itk",
             **subj_wildcards,
-            suffix="xfm.txt"
+            suffix="xfm.txt",
         ),
     container:
         config["singularity"]["itksnap"]
@@ -120,7 +120,7 @@ rule warp_brainmask_from_template_affine:
             from_="subject",
             to="{template}",
             desc="affine",
-            type_="itk"
+            type_="itk",
         ),
     output:
         mask=bids(
@@ -130,7 +130,7 @@ rule warp_brainmask_from_template_affine:
             suffix="mask.nii.gz",
             from_="{template}",
             reg="affine",
-            desc="brain"
+            desc="brain",
         ),
     container:
         config["singularity"]["ants"]
@@ -155,7 +155,7 @@ rule warp_tissue_probseg_from_template_affine:
             from_="subject",
             to="{template}",
             desc="{desc}",
-            type_="itk"
+            type_="itk",
         ),
     output:
         probseg=bids(
@@ -165,7 +165,7 @@ rule warp_tissue_probseg_from_template_affine:
             suffix="probseg.nii.gz",
             label="{tissue}",
             from_="{template}",
-            reg="{desc}"
+            reg="{desc}",
         ),
     container:
         config["singularity"]["ants"]
@@ -191,7 +191,7 @@ rule n4biasfield:
             suffix="mask.nii.gz",
             from_="{template}".format(template=config["template"]),
             reg="affine",
-            desc="brain"
+            desc="brain",
         ),
     output:
         t1=bids(
@@ -199,7 +199,7 @@ rule n4biasfield:
             datatype="anat",
             **subj_wildcards,
             desc="n4",
-            suffix="T1w.nii.gz"
+            suffix="T1w.nii.gz",
         ),
     threads: 8
     container:
@@ -243,7 +243,7 @@ rule mask_subject_t1w:
             **subj_wildcards,
             suffix="mask.nii.gz",
             from_="atropos3seg",
-            desc="brain"
+            desc="brain",
         ),
     output:
         t1=bids(
@@ -252,7 +252,7 @@ rule mask_subject_t1w:
             **subj_wildcards,
             suffix="T1w.nii.gz",
             from_="atropos3seg",
-            desc="masked"
+            desc="masked",
         ),
     container:
         config["singularity"]["fsl"]
@@ -274,7 +274,7 @@ rule ants_syn_affine_init:
             from_="subject",
             to="{template}",
             desc="affine",
-            type_="itk"
+            type_="itk",
         ),
     params:
         out_prefix=bids(
@@ -283,7 +283,7 @@ rule ants_syn_affine_init:
             suffix="",
             from_="subject",
             to="{template}",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         base_opts="--write-composite-transform -d {dim} --float 1 ".format(
             dim=config["ants"]["dim"]
@@ -328,7 +328,7 @@ rule ants_syn_affine_init:
             suffix="Composite.h5",
             from_="subject",
             to="{template}",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         out_inv_composite=bids(
             root=work,
@@ -336,7 +336,7 @@ rule ants_syn_affine_init:
             suffix="InverseComposite.h5",
             from_="subject",
             to="{template}",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         warped_flo=bids(
             root=work,
@@ -344,7 +344,7 @@ rule ants_syn_affine_init:
             suffix="T1w.nii.gz",
             space="{template}",
             desc="SyN",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     threads: 8
     resources:
@@ -377,7 +377,7 @@ rule warp_dseg_from_template:
             suffix="dseg.nii.gz",
             atlas="{atlas}",
             from_="{template}",
-            reg="SyN"
+            reg="SyN",
         ),
     container:
         config["singularity"]["ants"]
@@ -409,7 +409,7 @@ rule warp_tissue_probseg_from_template:
             suffix="probseg.nii.gz",
             label="{tissue}",
             from_="{template}",
-            reg="SyN"
+            reg="SyN",
         ),
     container:
         config["singularity"]["ants"]
@@ -441,7 +441,7 @@ rule warp_brainmask_from_template:
             suffix="mask.nii.gz",
             from_="{template}",
             reg="SyN",
-            desc="brain"
+            desc="brain",
         ),
     container:
         config["singularity"]["ants"]
@@ -467,7 +467,7 @@ rule dilate_brainmask:
             suffix="mask.nii.gz",
             from_="{template}",
             reg="{desc}",
-            desc="brain"
+            desc="brain",
         ),
     params:
         dil_opt=" ".join(["-dilD" for i in range(config["n_init_mask_dilate"])]),
@@ -479,7 +479,7 @@ rule dilate_brainmask:
             suffix="mask.nii.gz",
             from_="{template}",
             reg="{desc}",
-            desc="braindilated"
+            desc="braindilated",
         ),
     container:
         config["singularity"]["fsl"]
@@ -503,7 +503,7 @@ rule dilate_atlas_labels:
             suffix="dseg.nii.gz",
             atlas="{atlas}",
             from_="{template}",
-            desc="dilated"
+            desc="dilated",
         ),
     container:
         config["singularity"]["fsl"]
@@ -522,7 +522,7 @@ rule resample_mask_to_dwi:
             datatype="dwi",
             method="jac",
             **subj_wildcards,
-            suffix="b0.nii.gz"
+            suffix="b0.nii.gz",
         ),
     params:
         interpolation="NearestNeighbor",
@@ -535,7 +535,7 @@ rule resample_mask_to_dwi:
             method="template",
             from_="{template}",
             reg="SyN",
-            datatype="dwi"
+            datatype="dwi",
         ),
     container:
         config["singularity"]["ants"]

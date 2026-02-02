@@ -5,7 +5,7 @@ rule synthstrip_b0:
             suffix="b0.nii.gz",
             desc="{desc}",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         temp(
@@ -16,7 +16,7 @@ rule synthstrip_b0:
                 method="synthstrip",
                 from_="{desc}b0",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             )
         ),
     container:
@@ -37,7 +37,7 @@ rule synthstrip_b0_fix_header:
             suffix="b0.nii.gz",
             desc="{desc}",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         mask=bids(
             root=work,
@@ -46,7 +46,7 @@ rule synthstrip_b0_fix_header:
             method="synthstrip",
             from_="{desc}b0",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         mask=bids(
@@ -56,7 +56,7 @@ rule synthstrip_b0_fix_header:
             method="synthstrip",
             from_="{desc}b0",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"

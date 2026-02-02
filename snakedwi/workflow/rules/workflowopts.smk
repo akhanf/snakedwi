@@ -4,7 +4,7 @@ def _get_settings(**wildcards):
         json_files=expand(
             re.sub(".nii.gz", ".json", input_path["dwi"]),
             zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            **filter_list(input_zip_lists["dwi"], wildcards),
         ),
         smk_config=config,
     )
@@ -15,7 +15,7 @@ rule check_subj_dwi_metadata:
         dwi_jsons=lambda wildcards: expand(
             re.sub(".nii.gz", ".json", input_path["dwi"]),
             zip,
-            **filter_list(input_zip_lists["dwi"], wildcards)
+            **filter_list(input_zip_lists["dwi"], wildcards),
         ),
     params:
         index_col_value=bids(

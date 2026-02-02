@@ -7,7 +7,7 @@ rule extract_phenc:
             datatype="dwi",
             desc="synb0",
             suffix="phenc.txt",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["python"]
@@ -57,7 +57,7 @@ rule run_synb0:
             suffix="b0all.nii.gz",
             desc="synb0topup",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         fieldcoef=bids(
             root=work,
@@ -65,7 +65,7 @@ rule run_synb0:
             suffix="fieldcoef.nii.gz",
             method="synb0",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         movpar=bids(
             root=work,
@@ -73,7 +73,7 @@ rule run_synb0:
             suffix="movpar.txt",
             method="synb0",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     log:
         bids(root="logs", suffix="synb0.log", **subj_wildcards),

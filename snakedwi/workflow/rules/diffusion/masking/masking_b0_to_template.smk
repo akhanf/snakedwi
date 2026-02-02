@@ -13,7 +13,7 @@ rule ants_b0_to_template:
             to="{template}",
             desc="affine",
             type_="itk",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     params:
         out_prefix=bids(
@@ -67,7 +67,7 @@ rule ants_b0_to_template:
             suffix="Composite.h5",
             from_="subject",
             to="{template}",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         out_inv_composite=bids(
             root=work,
@@ -75,7 +75,7 @@ rule ants_b0_to_template:
             suffix="InverseComposite.h5",
             from_="subject",
             to="{template}",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         warped_flo=bids(
             root=work,
@@ -83,7 +83,7 @@ rule ants_b0_to_template:
             suffix="b0.nii.gz",
             space="{template}",
             desc="SyN",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     threads: 8
     resources:

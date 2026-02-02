@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import os
 from pathlib import Path
 
 from snakebids import bidsapp, plugins
@@ -19,4 +18,3 @@ def get_parser():
 
 if __name__ == "__main__":
     app.run()
-

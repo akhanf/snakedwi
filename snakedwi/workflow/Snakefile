@@ -1,8 +1,9 @@
 configfile: "config/snakebids.yml"
 
-from snakebids import set_bids_spec
-set_bids_spec("v0_0_0")
 
+from snakebids import set_bids_spec
+
+set_bids_spec("v0_0_0")
 
 
 # Workflow setup
@@ -73,10 +74,10 @@ rule all:
                 desc="eddy",
                 space="T1w",
                 res=config["resample_dwi"]["resample_scheme"],
-                **subj_wildcards
+                **subj_wildcards,
             ),
             zip,
-            **subj_zip_list
+            **subj_zip_list,
         ),
 
 

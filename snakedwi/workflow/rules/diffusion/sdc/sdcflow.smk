@@ -23,10 +23,10 @@ rule syn_sdc:
                     root=work,
                     suffix="dwi.json",
                     datatype="dwi",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         )[0],
@@ -37,7 +37,7 @@ rule syn_sdc:
             suffix="b0.nii.gz",
             desc="unwarped",
             method="synsdc",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         unwarped_mask=bids(
             root=work,
@@ -45,7 +45,7 @@ rule syn_sdc:
             suffix="mask.nii.gz",
             desc="brain",
             method="synsdc",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         xfm=bids(
             root=work,
@@ -53,7 +53,7 @@ rule syn_sdc:
             suffix="xfm.nii.gz",
             desc="itk",
             method="synsdc",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         fmap=bids(
             root=work,
@@ -61,7 +61,7 @@ rule syn_sdc:
             suffix="fmap.nii.gz",
             desc="b0",
             method="synsdc",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     threads: 8
     group:

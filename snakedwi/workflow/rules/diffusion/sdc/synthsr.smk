@@ -24,7 +24,7 @@ rule reslice_synthSR_b0:
             suffix="b0SynthSR.nii.gz",
             datatype="dwi",
             desc="moco",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         synthsr=bids(
@@ -32,7 +32,7 @@ rule reslice_synthSR_b0:
             suffix="b0SynthSRresliced.nii.gz",
             datatype="dwi",
             desc="moco",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["itksnap"]
@@ -58,7 +58,7 @@ rule rigid_reg_t1_to_b0_synthsr:
             suffix="T1wSynthSRreg.nii.gz",
             space="rigidb0",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         xfm_ras=bids(
             root=work,
@@ -68,7 +68,7 @@ rule rigid_reg_t1_to_b0_synthsr:
             type_="ras",
             desc="rigid",
             datatype="transforms",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["prepdwi"]
@@ -116,7 +116,7 @@ rule reg_b0_to_t1_synthsr:
             suffix="b0SynthSRunwarped.nii.gz",
             desc="Syn",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         fwd_xfm=bids(
             root=root,
@@ -126,7 +126,7 @@ rule reg_b0_to_t1_synthsr:
             type_="itk",
             desc="SyN",
             datatype="transforms",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     shadow:
         "minimal"
@@ -156,10 +156,10 @@ rule displacement_field_to_fmap:
                     root=work,
                     suffix="dwi.nii.gz",
                     datatype="dwi",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         )[0],
@@ -169,10 +169,10 @@ rule displacement_field_to_fmap:
                     root=work,
                     suffix="dwi.json",
                     datatype="dwi",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         )[0],
@@ -185,7 +185,7 @@ rule displacement_field_to_fmap:
             suffix="fmap.nii.gz",
             desc="b0",
             method="synthSRsdc",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["python"]
@@ -206,7 +206,7 @@ rule apply_unwarp_synthsr:
             datatype="dwi",
             desc="unwarped",
             method="synthSRsdc",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["ants"]

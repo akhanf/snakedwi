@@ -28,7 +28,7 @@ rule rescale_avg_b0:
             suffix="b0.nii.gz",
             desc="rescale",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["itksnap"]
@@ -69,7 +69,7 @@ rule binarize_avg_b0:
             desc="brain",
             method="bet_from-b0",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["itksnap"]

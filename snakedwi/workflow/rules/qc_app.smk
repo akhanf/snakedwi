@@ -17,14 +17,13 @@ rule qc:
 
 _qc_app = os.path.join(workflow.basedir, "..", "resources", "qc-app.tar.gz")
 
+
 def _get_tar_contents(tar_path):
     import tarfile
+
     with tarfile.open(tar_path, "r:gz") as tar:
-        return [
-            member.name
-            for member in tar.getmembers()
-            if member.isfile()
-        ]
+        return [member.name for member in tar.getmembers() if member.isfile()]
+
 
 rule unpack_qc_app:
     input:

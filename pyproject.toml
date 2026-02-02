@@ -4,9 +4,9 @@ version = "0.2.0"
 description = "snakedwi - BIDS app and snakemake workflow for dwi pre-processing"
 authors = [{name="Ali Khan", email="alik@robarts.ca"}]
 license = "MIT"
-requires-python = ">= 3.9, <3.11"
-dependencies = []
+requires-python = ">= 3.11, <3.13"
 scripts = { snakedwi = "snakedwi.run:app.run" }
+dependencies = ["sdcflows>=2.15.0,<3"]
 
 [build-system]
 build-backend = "hatchling.build"
@@ -22,16 +22,12 @@ appdirs   = ">=1.4.4,<2.0.0"
 conda = ">=25.5.0,<26"
 
 [tool.pixi.feature.dev.dependencies]
-flake8 = ">=4.0.1,<5.0.0"
-pytest-console-scripts = ">=1.2.1,<2.0.0"
-pytest = "*"
-black = ">=24.0.0,<25.0.0"
-pylint = ">=2.11.1,<3.0.0"
-isort = ">=5.10.1,<6.0.0"
-poethepoet = ">=0.10.0,<0.11.0"
-snakefmt = ">=0.10.0,<0.11.0"
-pygraphviz = "*"
-Jinja2 = ">=3.0.3,<4.0.0"
+ruff = ">=0.14.14,<0.15"
+black = ">=24.10.0,<25"
+isort = ">=5.13.2,<6"
+yamlfix = ">=1.19.1,<2"
+snakefmt = ">=0.11.3,<0.12"
+
 
 [tool.pixi.environments.default]
 features = ["runtime"]
@@ -49,9 +45,85 @@ multi_line_output = 3
 [tool.pixi.pypi-dependencies]
 snakedwi = { path = ".", editable = true }
 
+
 [tool.pixi.tasks]
-quality_check = "isort snakedwi/*.py snakedwi/plugins/*.py -c && black snakedwi --check && snakefmt snakedwi --check"
-quality_fix = "isort snakedwi/*.py snakedwi/plugins/*.py && black snakedwi  && snakefmt snakedwi"
+# --- Formatting / linting ---
+isort = "isort snakedwi"
+isort-check = "isort -c snakedwi"
+
+black = "black snakedwi"
+black-check = "black --check snakedwi"
+
+ruff-check = "ruff check snakedwi"
+ruff = "ruff check snakedwi --fix"
+
+snakefmt = "snakefmt snakedwi"
+snakefmt-check = "snakefmt --check snakedwi"
+
+# --- Tests ---
+test_dryrun = { cmd = """
+mkdir -p test_out/topup_multishell && \
+snakedwi snakedwi/test_data/bids_AP_PA test_out/topup_multishell participant -np && \
+rm -rf test_out/topup_multishell
+""" }
+
+test_nosdc = { cmd = """
+mkdir -p test_out/nosdc && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/nosdc participant --sdc_method none -np && \
+rm -rf test_out/nosdc
+""" }
+
+test_sdc_optimal = { cmd = """
+mkdir -p test_out/sdc_optimal && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdc_optimal participant -np && \
+rm -rf test_out/sdc_optimal
+""" }
+
+test_singleshell_topup = { cmd = """
+mkdir -p test_out/topup_singleshell && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell participant --sdc_method topup -np && \
+rm -rf test_out/topup_singleshell
+""" }
+
+test_sdcflow = { cmd = """
+mkdir -p test_out/sdcflow && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdcflow participant --sdc_method sdcflow -np && \
+rm -rf test_out/sdcflow
+""" }
+
+test_synthsr = { cmd = """
+mkdir -p test_out/synthsr && \
+snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/synthsr participant --sdc_method synthsr -np && \
+rm -rf test_out/synthsr
+""" }
 
 
+
+# --- Meta tasks (run other tasks) ---
+[tool.pixi.tasks.quality_fix]
+ depends-on = [ {task="isort", environment="dev-only"},
+{task="black", environment="dev-only"},
+{task="ruff", environment="dev-only"},
+{task="snakefmt", environment="dev-only"}]
+
+[tool.pixi.tasks.quality_check]
+depends-on = [ {task="isort-check", environment="dev-only"},
+{task="black-check", environment="dev-only"},
+{task="ruff-check", environment="dev-only"},
+{task="snakefmt-check", environment="dev-only"}]
+
+
+
+[tools.pixi.tasks.test]
+test = { depends-on = [
+  "test_dryrun",
+  "test_nosdc",
+  "test_sdc_optimal",
+  "test_singleshell_topup",
+  "test_sdcflow",
+  "test_synthsr",
+] }
+
+[tool.ruff]
+builtins = [ "snakemake" ]
 
