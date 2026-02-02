@@ -1,6 +1,11 @@
 configfile: "config/snakebids.yml"
 
 
+from snakebids import set_bids_spec
+
+set_bids_spec("v0_0_0")
+
+
 # Workflow setup
 include: "rules/setup.smk"
 include: "rules/common.smk"
@@ -44,6 +49,7 @@ if config["use_eddy_s2v"] and not config["use_eddy_gpu"]:
     )
     sys.exit(1)
 
+
 if (
     config["sdc_method"] == "synb0" or config["sdc_method_alternate"] == "synb0"
 ) and not config["fs_license"]:
@@ -68,10 +74,10 @@ rule all:
                 desc="eddy",
                 space="T1w",
                 res=config["resample_dwi"]["resample_scheme"],
-                **subj_wildcards
+                **subj_wildcards,
             ),
             zip,
-            **subj_zip_list
+            **subj_zip_list,
         ),
 
 

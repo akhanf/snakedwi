@@ -11,7 +11,7 @@ rule import_dwi:
             root=work,
             suffix="dwi.{ext,nii.gz|bval|bvec|json}",
             datatype="dwi",
-            **input_wildcards["dwi"]
+            **input_wildcards["dwi"],
         ),
     group:
         "subj"
@@ -40,7 +40,7 @@ rule dwidenoise:
                 suffix="dwi",
                 desc="denoise",
                 datatype="dwi",
-                **input_wildcards["dwi"]
+                **input_wildcards["dwi"],
             ),
             ".nii.gz",
             ".bvec",
@@ -86,7 +86,7 @@ rule mrdegibbs:
                 suffix="dwi",
                 datatype="dwi",
                 desc="degibbs",
-                **input_wildcards["dwi"]
+                **input_wildcards["dwi"],
             ),
             ".nii.gz",
             ".bvec",
@@ -127,10 +127,10 @@ rule concat_degibbs_dwi:
                     suffix="dwi.nii.gz",
                     desc="degibbs",
                     datatype="dwi",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -142,7 +142,7 @@ rule concat_degibbs_dwi:
             suffix="dwi.nii.gz",
             desc="degibbs",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["mrtrix"]
@@ -163,10 +163,10 @@ rule concat_runs_bvec:
                     suffix="dwi.bvec",
                     desc="{{desc}}",
                     datatype="dwi",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -176,7 +176,7 @@ rule concat_runs_bvec:
             suffix="dwi.bvec",
             desc="{desc}",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"
@@ -195,10 +195,10 @@ rule concat_runs_bval:
                     suffix="dwi.bval",
                     desc="{{desc}}",
                     datatype="dwi",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -208,7 +208,7 @@ rule concat_runs_bval:
             suffix="dwi.bval",
             desc="{desc}",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"
@@ -228,10 +228,10 @@ rule concat_runs_json:
                     suffix="dwi.json",
                     desc="{{desc}}",
                     datatype="dwi",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -241,7 +241,7 @@ rule concat_runs_json:
             suffix="dwi.json",
             desc="{desc}",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"
@@ -319,14 +319,14 @@ rule get_phase_encode_txt:
             suffix="b0.nii.gz",
             datatype="dwi",
             desc="degibbs",
-            **input_wildcards["dwi"]
+            **input_wildcards["dwi"],
         ),
         json=bids(
             root=work,
             suffix="dwi.json",
             datatype="dwi",
             desc="degibbs",
-            **input_wildcards["dwi"]
+            **input_wildcards["dwi"],
         ),
     output:
         phenc_txt=bids(
@@ -334,7 +334,7 @@ rule get_phase_encode_txt:
             suffix="phenc.txt",
             datatype="dwi",
             desc="degibbs",
-            **input_wildcards["dwi"]
+            **input_wildcards["dwi"],
         ),
     group:
         "subj"
@@ -353,10 +353,10 @@ rule concat_phase_encode_txt:
                     suffix="phenc.txt",
                     datatype="dwi",
                     desc="degibbs",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -366,7 +366,7 @@ rule concat_phase_encode_txt:
             suffix="phenc.txt",
             datatype="dwi",
             desc="degibbs",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"
@@ -383,10 +383,10 @@ rule concat_bzeros:
                     suffix="b0.nii.gz",
                     datatype="dwi",
                     desc="degibbs",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -398,7 +398,7 @@ rule concat_bzeros:
             suffix="concatb0.nii.gz",
             datatype="dwi",
             desc="degibbs",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["mrtrix"]
@@ -440,7 +440,7 @@ rule qc_b0_brainmask:
                 datatype="qc",
                 suffix="mask.png",
                 desc="brain",
-                **subj_wildcards
+                **subj_wildcards,
             ),
             caption="../report/brainmask_dwi.rst",
             category="Brainmask",
@@ -450,7 +450,7 @@ rule qc_b0_brainmask:
             datatype="qc",
             suffix="mask.html",
             desc="brain",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"

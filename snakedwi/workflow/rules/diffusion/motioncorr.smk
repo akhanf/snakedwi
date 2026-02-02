@@ -8,7 +8,7 @@ rule moco_subj_bzeros_4d:
             suffix="b0s.nii.gz",
             datatype="dwi",
             desc="degibbs",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         affine_dir=directory(
@@ -17,7 +17,7 @@ rule moco_subj_bzeros_4d:
                 suffix="transforms",
                 desc="moco",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             )
         ),
         nii_4d=bids(
@@ -25,14 +25,14 @@ rule moco_subj_bzeros_4d:
             suffix="b0s.nii.gz",
             desc="moco",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         nii_avg3d=bids(
             root=work,
             suffix="b0.nii.gz",
             desc="moco",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     threads: 8  #doesn't need to be more than the number of bzeros 
     resources:
@@ -69,7 +69,7 @@ rule moco_scan_bzeros_4d:
             suffix="b0s.nii.gz",
             datatype="dwi",
             desc="degibbs",
-            **input_wildcards["dwi"]
+            **input_wildcards["dwi"],
         ),
     output:
         affine_dir=directory(
@@ -78,7 +78,7 @@ rule moco_scan_bzeros_4d:
                 suffix="transforms",
                 desc="moco",
                 datatype="dwi",
-                **input_wildcards["dwi"]
+                **input_wildcards["dwi"],
             )
         ),
         nii_avg3d=bids(
@@ -86,7 +86,7 @@ rule moco_scan_bzeros_4d:
             suffix="b0.nii.gz",
             desc="moco",
             datatype="dwi",
-            **input_wildcards["dwi"]
+            **input_wildcards["dwi"],
         ),
     threads: 8  #doesn't need to be more than the number of bzeros 
     resources:
@@ -137,10 +137,10 @@ rule moco_bzeros_3d:
                     suffix="b0.nii.gz",
                     datatype="dwi",
                     desc="moco",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -151,7 +151,7 @@ rule moco_bzeros_3d:
                 suffix="transforms",
                 desc="mocoavgb0",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             )
         ),
         nii_4d=bids(
@@ -159,14 +159,14 @@ rule moco_bzeros_3d:
             suffix="b0s.nii.gz",
             desc="mocoavgb0",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         nii_avg3d=bids(
             root=work,
             suffix="b0.nii.gz",
             desc="mocoavgb0",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     threads: 8  #doesn't need to be more than the number of bzeros 
     resources:

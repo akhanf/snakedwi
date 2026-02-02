@@ -6,7 +6,7 @@ checkpoint split_shell_avgs:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     params:
         out_prefix=(lambda wildcards, output: os.path.join(output.nii_dir, "dwi.")),
@@ -17,7 +17,7 @@ checkpoint split_shell_avgs:
                 desc="topup",
                 method="jac",
                 suffix="dwi.avgshells",
-                **subj_wildcards
+                **subj_wildcards,
             )
         ),
     container:
@@ -35,7 +35,7 @@ rule n4_shell_avg:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi.{shell}.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         n4_nii=bids(
@@ -43,7 +43,7 @@ rule n4_shell_avg:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi_n4.{shell}.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["ants"]
@@ -102,14 +102,14 @@ rule n4_shell_avg_withb0mask:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi.{shell}.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         mask_nii=bids(
             root=work,
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         n4_nii=bids(
@@ -117,7 +117,7 @@ rule n4_shell_avg_withb0mask:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/dwi_n4withb0mask.{shell}.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["ants"]
@@ -135,12 +135,12 @@ def get_diffweighted_shells_for_tissue_seg(wildcards):
                 desc="topup",
                 method="jac",
                 suffix="dwi.avgshells/dwi_n4_rescale.{shell}.nii.gz",
-                **subj_wildcards
+                **subj_wildcards,
             ),
             **wildcards,
             shell=glob_wildcards(os.path.join(checkpoint_output, "dwi.{i}.nii.gz")).i[
                 1:
-            ]
+            ],
         )
     )
 
@@ -154,7 +154,7 @@ rule tissue_seg_kmeans_init:
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     params:
         intensity_images=lambda wildcards, input: " ".join(
@@ -169,14 +169,14 @@ rule tissue_seg_kmeans_init:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_dseg.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         posteriors=bids(
             root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     shadow:
         "minimal"
@@ -198,7 +198,7 @@ rule extract_posterior_bgnd:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_probseg.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         posterior_bgnd=bids(
@@ -206,7 +206,7 @@ rule extract_posterior_bgnd:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["fsl"]
@@ -222,14 +222,14 @@ rule refine_mask_with_tissue_prob:
             suffix="mask.nii.gz",
             desc="brain",
             from_="avgb0",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         posterior_bgnd=bids(
             root=work,
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-bg_probseg.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         mask=bids(
@@ -237,7 +237,7 @@ rule refine_mask_with_tissue_prob:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["fsl"]
@@ -253,7 +253,7 @@ rule smooth_threshold_refined_mask:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_probseg.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     params:
         smooth="{smooth}",
@@ -263,7 +263,7 @@ rule smooth_threshold_refined_mask:
             desc="topup",
             method="jac",
             suffix="dwi.avgshells/atropos_k-{k}_initmasking_label-brain_smooth-{smooth}_mask.nii.gz",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["itksnap"]

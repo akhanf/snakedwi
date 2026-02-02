@@ -6,10 +6,10 @@ def _get_mocorrected_b0s(wcards):
                 suffix="b0.nii.gz",
                 datatype="dwi",
                 desc="moco",
-                **input_wildcards["dwi"]
+                **input_wildcards["dwi"],
             ),
             zip,
-            **filter_list(input_zip_lists["dwi"], wcards)
+            **filter_list(input_zip_lists["dwi"], wcards),
         ),
         wcards,
     )
@@ -36,20 +36,20 @@ rule run_topup:
             suffix="concatb0.nii.gz",
             desc="topup",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         fieldmap=bids(
             root=work,
             suffix="fmap.nii.gz",
             desc="topup",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         topup_fieldcoef=bids(
             root=work,
             suffix="topup_fieldcoef.nii.gz",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         topup_movpar=bids(
             root=work,
@@ -95,7 +95,7 @@ rule apply_topup_jac:
             desc="topup",
             method="jac",
             datatype="dwi",
-            **input_wildcards["dwi"]
+            **input_wildcards["dwi"],
         ),
     container:
         config["singularity"]["fsl"]
@@ -117,7 +117,7 @@ rule avg_b0s_topup_jac:
             expand(
                 rules.apply_topup_jac.output.nii,
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -128,7 +128,7 @@ rule avg_b0s_topup_jac:
             desc="topup",
             method="jac",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     container:
         config["singularity"]["mrtrix"]

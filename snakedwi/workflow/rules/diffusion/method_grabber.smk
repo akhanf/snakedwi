@@ -67,7 +67,7 @@ rule cp_dwi_ref:
             suffix="b0.nii.gz",
             desc="dwiref",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"

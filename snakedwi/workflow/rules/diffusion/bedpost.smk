@@ -14,7 +14,7 @@ rule copy_inputs_for_bedpost:
                     space="T1w",
                     res=config["resample_dwi"]["resample_scheme"],
                     datatype="dwi",
-                    **subj_wildcards
+                    **subj_wildcards,
                 )
             )
         ),
@@ -26,7 +26,7 @@ rule copy_inputs_for_bedpost:
                 space="T1w",
                 res=config["resample_dwi"]["resample_scheme"],
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
             "data.nii.gz",
         ),
@@ -38,7 +38,7 @@ rule copy_inputs_for_bedpost:
                 space="T1w",
                 res=config["resample_dwi"]["resample_scheme"],
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
             "nodif_brain_mask.nii.gz",
         ),
@@ -50,7 +50,7 @@ rule copy_inputs_for_bedpost:
                 space="T1w",
                 res=config["resample_dwi"]["resample_scheme"],
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
             "bvals",
         ),
@@ -62,7 +62,7 @@ rule copy_inputs_for_bedpost:
                 space="T1w",
                 res=config["resample_dwi"]["resample_scheme"],
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
             "bvecs",
         ),
@@ -85,8 +85,7 @@ if config["use_bedpost_gpu"]:
             bval=rules.copy_inputs_for_bedpost.output.bval,
             bvec=rules.copy_inputs_for_bedpost.output.bvec,
             brainmask=rules.copy_inputs_for_bedpost.output.brainmask,
-        params:
-            container=config["singularity"]["fsl_abspath"],
+            container="resources/containers/designer2.sif",
         output:
             bedpost_dir=directory(
                 bids(
@@ -96,7 +95,7 @@ if config["use_bedpost_gpu"]:
                     space="T1w",
                     res=config["resample_dwi"]["resample_scheme"],
                     datatype="dwi",
-                    **subj_wildcards
+                    **subj_wildcards,
                 )
             ),
         group:
@@ -108,7 +107,7 @@ if config["use_bedpost_gpu"]:
             runtime=360,
         shell:
             #remove the logs to reduce # of files   
-            "singularity exec --nv --home $PWD -e {params.container} "
+            "singularity exec --nv --home $PWD -e {input.container} "
             "bedpostx_gpu {input.diff_dir} && "
             "rm -rf {output.bedpost_dir}/logs "
 
@@ -121,8 +120,8 @@ else:
             bval=rules.copy_inputs_for_bedpost.output.bval,
             bvec=rules.copy_inputs_for_bedpost.output.bvec,
             brainmask=rules.copy_inputs_for_bedpost.output.brainmask,
+            container="resources/containers/designer2.sif",
         params:
-            container=config["singularity"]["fsl_abspath"],
             bedpost_script=os.path.join(
                 workflow.basedir, "scripts/bedpost/bedpostx-parallel"
             ),
@@ -137,7 +136,7 @@ else:
                     space="T1w",
                     res=config["resample_dwi"]["resample_scheme"],
                     datatype="dwi",
-                    **subj_wildcards
+                    **subj_wildcards,
                 )
             ),
         group:
@@ -149,7 +148,7 @@ else:
         shell:
             "singularity exec --home $PWD "
             "-B {params.parallel_script}:{params.parallel_script_container} "
-            "-e {params.container} {params.bedpost_script} "
+            "-e {input.container} {params.bedpost_script} "
             "{input.diff_dir} -P {threads} && "
             "rm -rf {output.bedpost_dir}/logs "
 
@@ -163,7 +162,7 @@ rule cp_bedpost_to_results:
             space="T1w",
             res=config["resample_dwi"]["resample_scheme"],
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     output:
         bedpost_dir=directory(
@@ -174,7 +173,7 @@ rule cp_bedpost_to_results:
                 space="T1w",
                 res=config["resample_dwi"]["resample_scheme"],
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             )
         ),
     group:

@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-import os
+from pathlib import Path
 
-from snakebids.app import SnakeBidsApp
+from snakebids import bidsapp, plugins
+
+app = bidsapp.app(
+    [
+        plugins.SnakemakeBidsApp(Path(__file__).resolve().parent),
+        plugins.Version(distribution="snakedwi"),
+    ]
+)
 
 
 def get_parser():
-    """Exposes parser for sphinx doc generation, cwd is the docs dir"""
-    app = SnakeBidsApp("../snakedwi", skip_parse_args=True)
-    return app.parser
-
-
-def main():
-    app = SnakeBidsApp(
-        os.path.abspath(os.path.dirname(__file__)),
-        configfile_path="config/snakebids.yml",
-    )
-    app.run_snakemake()
+    """Exposes parser for sphinx doc generation, cwd is the docs dir."""
+    return app.build_parser().parser
 
 
 if __name__ == "__main__":
-    main()
+    app.run()

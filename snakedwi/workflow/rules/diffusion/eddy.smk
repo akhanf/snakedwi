@@ -7,10 +7,10 @@ rule get_eddy_index_txt:
                     suffix="dwi.nii.gz",
                     desc="degibbs",
                     datatype="dwi",
-                    **input_wildcards["dwi"]
+                    **input_wildcards["dwi"],
                 ),
                 zip,
-                **filter_list(input_zip_lists["dwi"], wildcards)
+                **filter_list(input_zip_lists["dwi"], wildcards),
             ),
             wildcards,
         ),
@@ -20,7 +20,7 @@ rule get_eddy_index_txt:
             suffix="dwi_eddy_index.txt",
             desc="degibbs",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"
@@ -43,10 +43,10 @@ if not config["slspec_txt"]:
                         suffix="dwi.json",
                         desc="degibbs",
                         datatype="dwi",
-                        **input_wildcards["dwi"]
+                        **input_wildcards["dwi"],
                     ),
                     zip,
-                    **filter_list(input_zip_lists["dwi"], wildcards)
+                    **filter_list(input_zip_lists["dwi"], wildcards),
                 ),
                 wildcards,
             ),
@@ -56,7 +56,7 @@ if not config["slspec_txt"]:
                 suffix="dwi.eddy_slspec.txt",
                 desc="degibbs",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
         group:
             "subj"
@@ -76,7 +76,7 @@ else:
                 suffix="dwi.eddy_slspec.txt",
                 desc="degibbs",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
         group:
             "subj"
@@ -254,6 +254,15 @@ def get_eddy_phenc(wildcards):
 
 if config["use_eddy_gpu"]:
 
+    rule symlink_container:
+        container:
+            lambda wildcards: config["singularity"][wildcards.name]
+        output:
+            "resources/containers/{name}.sif",
+        localrule: True
+        shell:
+            "ln -sv $SINGULARITY_CONTAINER {output}"
+
     rule run_eddy_gpu:
         input:
             unpack(get_eddy_slspec_input),
@@ -267,15 +276,16 @@ if config["use_eddy_gpu"]:
                 suffix="dwi.bval",
                 desc="degibbs",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
             bvecs=bids(
                 root=work,
                 suffix="dwi.bvec",
                 desc="degibbs",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
+            container="resources/containers/designer2.sif",
         params:
             #set eddy output prefix to 'dwi' inside the output folder
             out_prefix=lambda wildcards, output: (
@@ -288,7 +298,6 @@ if config["use_eddy_gpu"]:
                     if value == True
                 ]
             ),
-            container=config["singularity"]["fsl_abspath"],
             topup_opt=get_eddy_topup_fmap_opt,
             s2v_opts=get_eddy_s2v_opts,
             slspec_opt=get_eddy_slspec_opt,
@@ -314,7 +323,7 @@ if config["use_eddy_gpu"]:
             "subj"
         shell:
             "singularity exec --nv --home $PWD"
-            " -e {params.container} eddy_cuda9.1"
+            " -e {input.container} eddy_cuda10.2"
             " --imain={input.dwi_concat} --mask={input.brainmask}"
             " --acqp={input.eddy_phenc} --index={input.eddy_index_txt}"
             " --bvecs={input.bvecs} --bvals={input.bvals}"
@@ -339,14 +348,14 @@ else:
                 suffix="dwi.bval",
                 desc="degibbs",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
             bvecs=bids(
                 root=work,
                 suffix="dwi.bvec",
                 desc="degibbs",
                 datatype="dwi",
-                **subj_wildcards
+                **subj_wildcards,
             ),
         params:
             #set eddy output prefix to 'dwi' inside the output folder
@@ -414,7 +423,7 @@ rule cp_eddy_outputs:
             suffix="dwi.bval",
             desc="degibbs",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         mask=get_b0_mask(),
     output:
@@ -431,7 +440,7 @@ rule cp_eddy_outputs:
             suffix="mask.nii.gz",
             desc="brain",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
     group:
         "subj"
@@ -452,14 +461,14 @@ rule eddy_quad:
             suffix="dwi.bval",
             desc="degibbs",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         bvecs=bids(
             root=work,
             suffix="dwi.bvec",
             desc="degibbs",
             datatype="dwi",
-            **subj_wildcards
+            **subj_wildcards,
         ),
         eddy_dir=bids(root=work, suffix="eddy", datatype="dwi", **subj_wildcards),
     params:

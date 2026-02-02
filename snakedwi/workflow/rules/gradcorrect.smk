@@ -162,7 +162,7 @@ rule gradcorrect_t1w:
             suffix="xfm.nii.gz",
             desc="gradcorrect",
             space="T1w",
-            datatype="transforms"
+            datatype="transforms",
         ),
     log:
         f"logs/gradcorrect_t1w/{'.'.join(subj_wildcards.values())}.log",

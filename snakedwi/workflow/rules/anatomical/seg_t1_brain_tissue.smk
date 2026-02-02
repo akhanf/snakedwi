@@ -34,14 +34,14 @@ rule tissue_seg_kmeans_init:
             datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="dseg.nii.gz",
-            desc="atroposKseg"
+            desc="atroposKseg",
         ),
         posteriors=bids(
             root=work,
             datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="probseg.nii.gz",
-            desc="atroposKseg"
+            desc="atroposKseg",
         ),
     shadow:
         "minimal"
@@ -66,7 +66,7 @@ rule map_channels_to_tissue:
                 suffix="probseg.nii.gz",
                 label="{tissue}",
                 from_="{template}".format(template=config["template"]),
-                reg="affine"
+                reg="affine",
             ),
             tissue=config["tissue_labels"],
             allow_missing=True,
@@ -78,7 +78,7 @@ rule map_channels_to_tissue:
             datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="mapping.json",
-            desc="atropos3seg"
+            desc="atropos3seg",
         ),
         tissue_segs=expand(
             bids(
@@ -87,7 +87,7 @@ rule map_channels_to_tissue:
                 **subj_wildcards,
                 suffix="probseg.nii.gz",
                 label="{tissue}",
-                desc="atropos3seg"
+                desc="atropos3seg",
             ),
             tissue=config["tissue_labels"],
             allow_missing=True,
@@ -109,7 +109,7 @@ rule tissue_seg_to_4d:
             datatype="seg_t1_brain_tissue",
             **subj_wildcards,
             suffix="probseg.nii.gz",
-            desc="atropos3seg"
+            desc="atropos3seg",
         ),
     group:
         "subj"
@@ -131,7 +131,7 @@ rule brainmask_from_tissue:
             **subj_wildcards,
             suffix="mask.nii.gz",
             from_="atropos3seg",
-            desc="brain"
+            desc="brain",
         ),
     container:
         config["singularity"]["fsl"]
