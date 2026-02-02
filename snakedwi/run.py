@@ -9,6 +9,7 @@ try:
 except NameError:
     # Fallback for Sphinx - use current working directory or find snakedwi module
     import snakedwi
+
     app_path = Path(snakedwi.__file__).parent
 
 app = bidsapp.app(
