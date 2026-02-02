@@ -21,3 +21,6 @@ report.html
 
 # other
 *jobs/
+
+# Documentation builds
+docs/_build/
