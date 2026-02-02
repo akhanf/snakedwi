@@ -1,5 +1,9 @@
 configfile: "config/snakebids.yml"
 
+from snakebids import set_bids_spec
+set_bids_spec("v0_0_0")
+
+
 
 # Workflow setup
 include: "rules/setup.smk"
@@ -27,7 +31,7 @@ include: "rules/diffusion/sdc/synb0.smk"
 include: "rules/diffusion/eddy.smk"
 include: "rules/diffusion/reg_dwi_to_t1.smk"
 include: "rules/diffusion/bedpost.smk"
-include: "rules/qc_app.smk"
+#include: "rules/qc_app.smk"
 
 
 # Currently unused
@@ -44,6 +48,7 @@ if config["use_eddy_s2v"] and not config["use_eddy_gpu"]:
     )
     sys.exit(1)
 
+
 if (
     config["sdc_method"] == "synb0" or config["sdc_method_alternate"] == "synb0"
 ) and not config["fs_license"]:
@@ -58,8 +63,8 @@ rule all:
     input:
         **get_eddy_quad_all(),
         **get_bedpost_all(),
-        qc=rules.qc.output,
-        qc_app=rules.unpack_qc_app.output,
+        #qc=rules.qc.output,
+        #qc_app=rules.unpack_qc_app.output,
         dtifit=expand(
             bids(
                 root=root,

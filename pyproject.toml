@@ -1,127 +1,57 @@
-[tool.poetry]
+[project]
 name = "snakedwi"
 version = "0.2.0"
 description = "snakedwi - BIDS app and snakemake workflow for dwi pre-processing"
-authors = ["Ali Khan <alik@robarts.ca>"]
+authors = [{name="Ali Khan", email="alik@robarts.ca"}]
 license = "MIT"
-
-[tool.poetry.dependencies]
-python = "^3.8, <3.11"
-snakebids = "^0.7.0"
-#snakeboost = "^0.2.0"
-Pygments = "^2.12.0" #required for report-generation only
-sdcflows = "^2.2.2"
-
-[tool.poetry.group.dev.dependencies]
-poethepoet = "^0.10.0"
-ruff = "^0.0.263"
-black = "^23.1.0"
-isort = "^5.10.1"
-yamlfix = "^1.1.0"
-snakefmt = "^0.8.4"
-
-[tool.poetry.scripts]
-snakedwi = "snakedwi.run:main"
+requires-python = ">= 3.9, <3.11"
+dependencies = []
+scripts = { snakedwi = "snakedwi.run:app.run" }
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+build-backend = "hatchling.build"
+requires = ["hatchling"]
 
-[tool.poe.tasks]
-isort = "isort snakedwi"
-isort-check = "isort -c snakedwi"
-black = "black snakedwi"
-black-check = "black --check snakedwi"
-ruff-check = "ruff snakedwi"
-ruff = "ruff snakedwi --fix"
-snakefmt = "snakefmt snakedwi"
-snakefmt-check = "snakefmt --check snakedwi"
-quality_fix = ["yamlfix", "isort", "black", "ruff", "snakefmt"]
-quality_check = [
-    "yamlfix-check",
-    "isort-check",
-    "black-check",
-    "ruff-check",
-    "snakefmt-check",
-]
+[tool.pixi.workspace]
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
 
-test = [
-    "test_dryrun",
-    "test_nosdc",
-    "test_sdc_optimal",
-    "test_singleshell_topup",
-    "test_sdcflow",
-    "test_synthsr"
-]
+[tool.pixi.feature.runtime.dependencies]
+snakebids = ">=0.14.0,<0.15"
+appdirs   = ">=1.4.4,<2.0.0"
+conda = ">=25.5.0,<26"
 
-[tool.poe.tasks.test_dryrun]
-shell = """
-mkdir -p test_out/topup_multishell && \
-snakedwi snakedwi/test_data/bids_AP_PA test_out/topup_multishell participant \
-    -np && \
-rm -rf test_out/topup_multishell
-"""
+[tool.pixi.feature.dev.dependencies]
+flake8 = ">=4.0.1,<5.0.0"
+pytest-console-scripts = ">=1.2.1,<2.0.0"
+pytest = "*"
+black = ">=24.0.0,<25.0.0"
+pylint = ">=2.11.1,<3.0.0"
+isort = ">=5.10.1,<6.0.0"
+poethepoet = ">=0.10.0,<0.11.0"
+snakefmt = ">=0.10.0,<0.11.0"
+pygraphviz = "*"
+Jinja2 = ">=3.0.3,<4.0.0"
 
-[tool.poe.tasks.test_nosdc]
-shell = """
-mkdir -p test_out/nosdc && \
-snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/nosdc \
-    participant --sdc_method none -np && \
-rm -rf test_out/nosdc
-"""
+[tool.pixi.environments.default]
+features = ["runtime"]
 
-[tool.poe.tasks.test_sdc_optimal]
-shell = """
-mkdir -p test_out/sdc_optimal && \
-snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdc_optimal \
-    participant  -np && \
-rm -rf test_out/sdc_optimal
-"""
+[tool.pixi.environments.dev]
+features = ["runtime", "dev"]
 
-[tool.poe.tasks.test_singleshell_topup]
-shell = """
-mkdir -p test_out/topup_singleshell && \
-snakedwi snakedwi/test_data/bids_downsampled_1bzero test_out/topup_singleshell \
-    participant --sdc_method topup -np && \
-rm -rf test_out/topup_singleshell
-"""
-
-[tool.poe.tasks.test_sdcflow]
-shell = """
-mkdir -p test_out/sdcflow && \
-snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/sdcflow \
-    participant --sdc_method sdcflow -np && \
-rm -rf test_out/sdcflow
-"""
-
-[tool.poe.tasks.test_synthsr]
-shell = """
-mkdir -p test_out/synthsr && \
-snakedwi snakedwi/test_data/bids_downsampled_1bzero_1scan test_out/synthsr \
-    participant --sdc_method synthsr -np && \
-rm -rf test_out/synthsr
-"""
-
-[tool.poe.tasks.yamlfix]
-shell = """
-find . -type f \\( \
-    -iname \\*.yaml -o -iname \\*.yml ! -iname snakemake* \
-    ! -iname snakebids* ! -iname *schema* \
-\\) -exec yamlfix {} \\;
-"""
-
-[tool.poe.tasks.yamlfix-check]
-shell = """
-find . -type f \\( \
-    -iname \\*.yaml -o -iname \\*.yml ! -iname snakemake* \
-    ! -iname snakebids* ! -iname *schema* \
-\\) -exec yamlfix --check {} \\;
-"""
+[tool.pixi.environments.dev-only]
+features = ["dev"]
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
-line_length = 79
 
-[tool.ruff]
-builtins = [ "snakemake" ]
+[tool.pixi.pypi-dependencies]
+snakedwi = { path = ".", editable = true }
+
+[tool.pixi.tasks]
+quality_check = "isort snakedwi/*.py snakedwi/plugins/*.py -c && black snakedwi --check && snakefmt snakedwi --check"
+quality_fix = "isort snakedwi/*.py snakedwi/plugins/*.py && black snakedwi  && snakefmt snakedwi"
+
+
+
