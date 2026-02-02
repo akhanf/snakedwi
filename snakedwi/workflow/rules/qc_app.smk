@@ -17,17 +17,14 @@ rule qc:
 
 _qc_app = os.path.join(workflow.basedir, "..", "resources", "qc-app.tar.gz")
 
-
-def _get_tar_contents(file):
-    try:
+def _get_tar_contents(tar_path):
+    import tarfile
+    with tarfile.open(tar_path, "r:gz") as tar:
         return [
-            p
-            for p in sp.check_output(["tar", "-tf", _qc_app]).decode().splitlines()
-            if p[-1] != "/"
+            member.name
+            for member in tar.getmembers()
+            if member.isfile()
         ]
-    except sp.CalledProcessError as err:
-        raise Exception("Unable to find qc-app.tar.gz...") from err
-
 
 rule unpack_qc_app:
     input:
