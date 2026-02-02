@@ -4878,7 +4878,7 @@ packages:
 - pypi: ./
   name: snakedwi
   version: 0.2.0
-  sha256: 8763a1258f3c13cacac8dee67885d319044bf5c7159a644b2031ff72be1a5a8d
+  sha256: e0160e78c8db351789c1136701b1f7adb1d21cdd372680238ab6a64679508561
   requires_dist:
   - sdcflows>=2.15.0,<3
   requires_python: '>=3.11,<3.13'

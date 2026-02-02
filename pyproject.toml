@@ -113,16 +113,15 @@ depends-on = [ {task="isort-check", environment="dev-only"},
 {task="snakefmt-check", environment="dev-only"}]
 
 
-
-[tools.pixi.tasks.test]
-test = { depends-on = [
+[tool.pixi.tasks.test_all]
+depends-on = [
   "test_dryrun",
   "test_nosdc",
   "test_sdc_optimal",
   "test_singleshell_topup",
   "test_sdcflow",
   "test_synthsr",
-] }
+] 
 
 [tool.ruff]
 builtins = [ "snakemake" ]
