@@ -32,6 +32,7 @@ author = 'Ali Khan'
 extensions = [
     "sphinx_rtd_theme",
     "sphinxarg.ext",
+    "myst_parser",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -44,6 +45,19 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
 master_doc = 'index'
+
+# -- MyST Parser configuration -----------------------------------------------
+
+# Support for Markdown files
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
+
+# MyST parser options
+myst_enable_extensions = [
+    "colon_fence",
+]
 
 
 # -- Options for HTML output -------------------------------------------------
