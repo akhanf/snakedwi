@@ -57,7 +57,7 @@ def get_dtifit_t1w_all():
 
 def get_dtifit_dwi_all():
     """Get dtifit outputs in dwi (native) space"""
-    if 'dwi' not in config.get("output_spaces", []):
+    if 'dwi' not in config.get("output_spaces", ['T1w']):
         return {}
     else:
         return {
