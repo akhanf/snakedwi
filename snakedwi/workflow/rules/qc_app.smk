@@ -15,7 +15,7 @@ rule qc:
         # Only add reg QC if T1w space is selected
         if 'T1w' in config.get("output_spaces", ['T1w']):
             qc_data["reg"] = json.loads(Path(input["reg_qc"]).read_text())
-        
+
         with open(output[0], "w") as f:
             json.dump(qc_data, f)
 
