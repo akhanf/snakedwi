@@ -77,6 +77,17 @@ parse_args:
           participants can be specified with a space separated list.
     nargs: '+'
 
+  --output-spaces:
+    help: 'Output space(s) for the final preprocessed DWI data. Options are 
+          "T1w" (registered to T1w anatomical image) and "dwi" (native DWI 
+          space). Multiple spaces can be specified. If only "dwi" is selected, 
+          T1w images will not be required or processed. (default: %(default)s)'
+    nargs: '+'
+    choices:
+      - 'T1w'
+      - 'dwi'
+    default: ['T1w']
+
   --skip_denoise:
     help: 'Skip the denoising step of the workflow. By default, denoising is 
           performed if input diffusion data was acquired with at least 30 

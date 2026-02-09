@@ -64,21 +64,10 @@ rule all:
     input:
         **get_eddy_quad_all(),
         **get_bedpost_all(),
+        **get_dtifit_t1w_all(),
+        **get_dtifit_dwi_all(),
         qc=rules.qc.output,
         qc_app=rules.unpack_qc_app.output,
-        dtifit=expand(
-            bids(
-                root=root,
-                datatype="dwi",
-                suffix="dtifit",
-                desc="eddy",
-                space="T1w",
-                res=config["resample_dwi"]["resample_scheme"],
-                **subj_wildcards,
-            ),
-            zip,
-            **subj_zip_list,
-        ),
 
 
 rule all_metacheck:

@@ -490,3 +490,60 @@ rule eddy_quad:
         "eddy_quad {params.eddy_prefix} -idx {input.eddy_index_txt} "
         "-par {input.phenc_concat} -m {input.brainmask} -b {input.bvals} "
         "-g {input.bvecs} -o {output.out_dir} {params.slspec_opt} -v"
+
+
+# dti fitting on dwi in native dwi space
+rule dtifit_dwi:
+    input:
+        dwi=bids(
+            root=root,
+            suffix="dwi.nii.gz",
+            desc="eddy",
+            datatype="dwi",
+            **subj_wildcards,
+        ),
+        bvals=bids(
+            root=root, suffix="dwi.bval", desc="eddy", datatype="dwi", **subj_wildcards
+        ),
+        bvecs=bids(
+            root=root, suffix="dwi.bvec", desc="eddy", datatype="dwi", **subj_wildcards
+        ),
+        brainmask=bids(
+            root=root,
+            suffix="mask.nii.gz",
+            desc="brain",
+            datatype="dwi",
+            **subj_wildcards,
+        ),
+    params:
+        out_basename=lambda wildcards, output: os.path.join(output.out_folder, "dti"),
+    output:
+        out_folder=directory(
+            bids(
+                root=root,
+                suffix="dtifit",
+                desc="eddy",
+                datatype="dwi",
+                **subj_wildcards,
+            )
+        ),
+        out_fa=os.path.join(
+            directory(
+                bids(
+                    root=root,
+                    suffix="dtifit",
+                    desc="eddy",
+                    datatype="dwi",
+                    **subj_wildcards,
+                )
+            ),
+            "dti_FA.nii.gz",
+        ),
+    container:
+        config["singularity"]["fsl"]
+    group:
+        "subj"
+    shell:
+        "mkdir -p {output.out_folder} && "
+        "dtifit --data={input.dwi} --bvecs={input.bvecs} --bvals={input.bvals} "
+        "--mask={input.brainmask} --out={params.out_basename}"

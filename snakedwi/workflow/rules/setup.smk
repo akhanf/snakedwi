@@ -13,10 +13,16 @@ import subprocess as sp
 from lib.check_subj_dwi_metadata import check_subj_dwi_metadata
 
 
+# Filter pybids_inputs based on output_spaces
+# If 'T1w' is not in output_spaces, remove T1w from pybids_inputs
+pybids_inputs_filtered = config["pybids_inputs"].copy()
+if "T1w" not in config.get("output_spaces", ["T1w"]):
+    pybids_inputs_filtered.pop("T1w", None)
+
 # writes inputs_config.yml and updates config dict
 inputs = generate_inputs(
     bids_dir=config["bids_dir"],
-    pybids_inputs=config["pybids_inputs"],
+    pybids_inputs=pybids_inputs_filtered,
     derivatives=config["derivatives"],
     participant_label=config["participant_label"],
     exclude_participant_label=config["exclude_participant_label"],
@@ -69,7 +75,7 @@ subj_set_intersection = None
 subj_set_union = None  # union not really used except for finding set union - intersection (skipped subjects)
 subj_zip_list = None
 
-for bidsinput in config["pybids_inputs"].keys():
+for bidsinput in pybids_inputs_filtered.keys():
     zipl = inputs.input_zip_lists[bidsinput]
     if "session" in zipl:
         # has session, so we have to zip, then use set to remove duplicates
