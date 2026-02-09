@@ -496,7 +496,11 @@ rule eddy_quad:
 rule dtifit_dwi:
     input:
         dwi=bids(
-            root=root, suffix="dwi.nii.gz", desc="eddy", datatype="dwi", **subj_wildcards
+            root=root,
+            suffix="dwi.nii.gz",
+            desc="eddy",
+            datatype="dwi",
+            **subj_wildcards,
         ),
         bvals=bids(
             root=root, suffix="dwi.bval", desc="eddy", datatype="dwi", **subj_wildcards
@@ -543,4 +547,3 @@ rule dtifit_dwi:
         "mkdir -p {output.out_folder} && "
         "dtifit --data={input.dwi} --bvecs={input.bvecs} --bvals={input.bvals} "
         "--mask={input.brainmask} --out={params.out_basename}"
-

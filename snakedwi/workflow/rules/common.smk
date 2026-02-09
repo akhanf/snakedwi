@@ -13,7 +13,7 @@ def get_eddy_quad_all():
 
 def get_bedpost_all():
     # Only run bedpost if T1w space is in output_spaces
-    if config["no_bedpost"] or 'T1w' not in config.get("output_spaces", ['T1w']):
+    if config["no_bedpost"] or "T1w" not in config.get("output_spaces", ["T1w"]):
         return {}
     else:
         return {
@@ -35,7 +35,7 @@ def get_bedpost_all():
 
 def get_dtifit_t1w_all():
     """Get dtifit outputs in T1w space"""
-    if 'T1w' not in config.get("output_spaces", ['T1w']):
+    if "T1w" not in config.get("output_spaces", ["T1w"]):
         return {}
     else:
         return {
@@ -57,7 +57,7 @@ def get_dtifit_t1w_all():
 
 def get_dtifit_dwi_all():
     """Get dtifit outputs in dwi (native) space"""
-    if 'dwi' not in config.get("output_spaces", ['T1w']):
+    if "dwi" not in config.get("output_spaces", ["T1w"]):
         return {}
     else:
         return {

@@ -3,7 +3,7 @@ rule qc:
         mask_qc=rules.compile_qc_b0_brainmask_manifest.output[0],
         reg_qc=(
             rules.compile_qc_reg_dwi_t1_manifest.output[0]
-            if 'T1w' in config.get("output_spaces", ['T1w'])
+            if "T1w" in config.get("output_spaces", ["T1w"])
             else []
         ),
     output:
@@ -13,7 +13,7 @@ rule qc:
             "mask": json.loads(Path(input["mask_qc"]).read_text()),
         }
         # Only add reg QC if T1w space is selected
-        if 'T1w' in config.get("output_spaces", ['T1w']):
+        if "T1w" in config.get("output_spaces", ["T1w"]):
             qc_data["reg"] = json.loads(Path(input["reg_qc"]).read_text())
 
         with open(output[0], "w") as f:

@@ -16,8 +16,8 @@ from lib.check_subj_dwi_metadata import check_subj_dwi_metadata
 # Filter pybids_inputs based on output_spaces
 # If 'T1w' is not in output_spaces, remove T1w from pybids_inputs
 pybids_inputs_filtered = config["pybids_inputs"].copy()
-if 'T1w' not in config.get("output_spaces", ['T1w']):
-    pybids_inputs_filtered.pop('T1w', None)
+if "T1w" not in config.get("output_spaces", ["T1w"]):
+    pybids_inputs_filtered.pop("T1w", None)
 
 # writes inputs_config.yml and updates config dict
 inputs = generate_inputs(
